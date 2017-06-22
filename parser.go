@@ -4,6 +4,8 @@ import(
     "fmt"
     "regexp"
     "runtime"
+    "path/filepath"
+    "strings"
 )
 
 type ParserResult struct {
@@ -213,6 +215,25 @@ func parse(argList []string) ParserResult {
     }
 
     return pr
+}
+
+// Return the object and bc filenames that correspond to the i-th source file
+func getArtifactNames(pr ParserResult, srcFileIndex int, hidden bool) (objBase string, bcBase string) {
+    if len(pr.InputFiles) == 1 && pr.IsCompileOnly && len(pr.OutputFilename) > 0 {
+        objBase = pr.OutputFilename
+        bcBase = fmt.Sprintf(".%s.bc", objBase)
+    } else {
+        srcFile := pr.InputFiles[srcFileIndex]
+        var baseNameWithExt = filepath.Base(srcFile)
+        var baseName = strings.TrimSuffix(baseNameWithExt, filepath.Ext(baseNameWithExt))
+        bcBase = fmt.Sprintf(".%s.o.bc", baseName)
+        if hidden {
+            objBase = fmt.Sprintf(".%s.o", baseName)
+        } else {
+            objBase = fmt.Sprintf("%s.o", baseName)
+        }
+    }
+    return
 }
 
 func inputFileCallback(pr ParserResult, flag string, _ []string) {
