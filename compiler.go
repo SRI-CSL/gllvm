@@ -104,7 +104,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
             attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, tmpFile.Name(), "-o", objFile}
         } else {
             attachCmd = "objcopy"
-            attachCmdArgs = []string{"objcopy", "--add-section", ELF_SECTION_NAME, "=", tmpFile.Name(), objFile}
+            attachCmdArgs = []string{"objcopy", "--add-section", ELF_SECTION_NAME+"="+tmpFile.Name(), objFile}
         }
 
         // Run the attach command and ignore errors
@@ -163,7 +163,7 @@ func execCompile(compilerExecName string, pr ParserResult) {
 
 // Executes a command then returns true if there was an error
 func execCmd(cmdExecName string, args []string) bool {
-    cmd := exec.Command(cmdExecName, listToArgString(args))
+    cmd := exec.Command(cmdExecName, args...)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
     if cmd.Run() == nil {
@@ -171,11 +171,6 @@ func execCmd(cmdExecName string, args []string) bool {
     } else {
         return true
     }
-}
-
-// Joins a list of arguments to create a string
-func listToArgString(argList []string) string {
-    return strings.Join(argList, " ")
 }
 
 func getCompilerExecName(compilerName string) string {
