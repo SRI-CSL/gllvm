@@ -127,8 +127,8 @@ func linkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
     if outputFile == "" {
         outputFile = "a.out"
     }
-    args := append(pr.ObjectFiles, objFiles...)
-    args = append(args, pr.LinkArgs...)
+    args := append(pr.ObjectFiles, pr.LinkArgs...)
+    args = append(args, objFiles...)
     args = append(args, "-o", outputFile)
     if execCmd(compilerExecName, args) {
         log.Fatal("Failed to link.")
