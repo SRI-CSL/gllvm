@@ -5,6 +5,7 @@ import (
     "os/exec"
     "log"
     "strings"
+    "fmt"
 )
 
 func compile(args []string) {
@@ -19,6 +20,7 @@ func compile(args []string) {
     }
     args = args[1:]
     var pr = parse(args)
+    fmt.Println(pr)
 
     // If configure only is set, try to execute normal compiling command then exit silently
     if configureOnly {
@@ -88,7 +90,7 @@ func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, o
     args := pr.CompileArgs[:]
     args = append(args, srcFile, "-c", "-o", objFile)
     if execCmd(compilerExecName, args) {
-        log.Fatal("Failed to build object file for", srcFile)
+        log.Fatal("Failed to build object file for ", srcFile)
     }
 }
 
@@ -97,7 +99,7 @@ func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, 
     args := pr.CompileArgs[:]
     args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
     if execCmd(compilerExecName, args) {
-        log.Fatal("Failed to build bitcode file for", srcFile)
+        log.Fatal("Failed to build bitcode file for ", srcFile)
     }
 }
 
@@ -143,7 +145,7 @@ func getCompilerExecName(compilerName string) string {
             return compilerPath + compilerName
         }
     default:
-        log.Fatal("The compiler", compilerName, "is not supported by this tool.")
+        log.Fatal("The compiler ", compilerName, " is not supported by this tool.")
         return ""
     }
 }

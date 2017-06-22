@@ -1,13 +1,15 @@
 package main
 
-// Environment variables
-var CONFIGURE_ONLY = "GOWLLVM_CONFIGURE_ONLY"
-var COMPILER_PATH = "GOWLLVM_COMPILER_PATH"
-var C_COMPILER_NAME = "GOWLLVM_CC_NAME"
-var CXX_COMPILER_NAME = "GOWLLVM_CXX_NAME"
-var BC_STORE_PATH = "GOWLLVM_BC_STORE"
+const(
+    // Environment variables
+    CONFIGURE_ONLY = "GOWLLVM_CONFIGURE_ONLY"
+    COMPILER_PATH = "GOWLLVM_COMPILER_PATH"
+    C_COMPILER_NAME = "GOWLLVM_CC_NAME"
+    CXX_COMPILER_NAME = "GOWLLVM_CXX_NAME"
+    BC_STORE_PATH = "GOWLLVM_BC_STORE"
 
-// Gowllvm functioning
-var ELF_SECTION_NAME = ".llvm_bc"
-var DARWIN_SEGMENT_NAME = "__WLLVM"
-var DARWIN_SECTION_NAME = "__llvm_bc"
+    // Gowllvm functioning
+    ELF_SECTION_NAME = ".llvm_bc"
+    DARWIN_SEGMENT_NAME = "__WLLVM"
+    DARWIN_SECTION_NAME = "__llvm_bc"
+)
