@@ -6,6 +6,7 @@ import(
     "runtime"
     "path/filepath"
     "strings"
+    "crypto/sha256"
 )
 
 type ParserResult struct {
@@ -234,6 +235,13 @@ func getArtifactNames(pr ParserResult, srcFileIndex int, hidden bool) (objBase s
         }
     }
     return
+}
+
+// Return a hash for the absolute object path
+func getHashedPath(path string) string {
+    inputBytes := []byte(path)
+    hash := sha256.Sum256(inputBytes)
+    return string(hash[:])
 }
 
 func (pr *ParserResult) inputFileCallback(flag string, _ []string) {

@@ -3,9 +3,13 @@ package main
 import (
     "os"
     "os/exec"
+    "io/ioutil"
     "log"
     "strings"
-    "fmt"
+    "path"
+    "path/filepath"
+    "runtime"
+    "io"
 )
 
 func compile(args []string) {
@@ -20,7 +24,6 @@ func compile(args []string) {
     }
     args = args[1:]
     var pr = parse(args)
-    fmt.Println(pr)
 
     // If configure only is set, try to execute normal compiling command then exit silently
     if configureOnly {
@@ -69,7 +72,55 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult) {
 }
 
 func attachBitcodePathToObject(bcFile, objFile string) {
-    // TODO
+    // We can only attach a bitcode path to certain file types
+    switch filepath.Ext(objFile) {
+    case
+        ".o",
+        ".lo",
+        ".os",
+        ".So",
+        ".po":
+
+        // Store bitcode path to temp file
+        var absBcPath, _= filepath.Abs(bcFile)
+        tmpContent := []byte(absBcPath+"\n")
+        tmpFile, err := ioutil.TempFile("", "gowllvm")
+        if err != nil {
+            log.Fatal(err)
+        }
+        defer os.Remove(tmpFile.Name())
+        if _, err := tmpFile.Write(tmpContent); err != nil {
+            log.Fatal(err)
+    	}
+    	if err := tmpFile.Close(); err != nil {
+    		log.Fatal(err)
+    	}
+
+        // Let's write the bitcode section
+        var attachCmd string
+        var attachCmdArgs []string
+        if runtime.GOOS == "darwin" {
+            attachCmd = "ld"
+            attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, tmpFile.Name(), "-o", objFile}
+        } else {
+            attachCmd = "objcopy"
+            attachCmdArgs = []string{"objcopy", "--add-section", ELF_SECTION_NAME, "=", tmpFile.Name(), objFile}
+        }
+
+        // Run the attach command and ignore errors
+        execCmd(attachCmd, attachCmdArgs)
+
+        // Copy bitcode file to store, if necessary
+        if bcStorePath := os.Getenv(BC_STORE_PATH); bcStorePath != "" {
+            destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
+            in, _ := os.Open(absBcPath)
+            defer in.Close()
+            out, _ := os.Create(destFilePath)
+            defer  out.Close()
+            io.Copy(out, in)
+            out.Sync()
+        }
+    }
 }
 
 func linkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
