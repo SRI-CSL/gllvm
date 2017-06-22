@@ -10,7 +10,6 @@ import (
     "path/filepath"
     "runtime"
     "io"
-    "fmt"
 )
 
 func compile(args []string) {
@@ -38,7 +37,7 @@ func compile(args []string) {
 // Compiles bitcode files and attach path to the object files
 func buildAndAttachBitcode(compilerExecName string, pr ParserResult) {
     // If nothing to do, exit silently
-    if len(pr.InputFiles) == 0 || pr.IsEmitLLVM || pr.IsAssembly || pr.IsAssembleOnly ||
+    if pr.IsEmitLLVM || pr.IsAssembly || pr.IsAssembleOnly ||
         (pr.IsDependencyOnly && !pr.IsCompileOnly) || pr.IsPreprocessOnly {
         os.Exit(0)
     }
@@ -163,7 +162,6 @@ func execCompile(compilerExecName string, pr ParserResult) {
 
 // Executes a command then returns true if there was an error
 func execCmd(cmdExecName string, args []string) bool {
-    fmt.Println(args)
     cmd := exec.Command(cmdExecName, args...)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr

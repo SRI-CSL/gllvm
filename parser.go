@@ -215,7 +215,6 @@ func parse(argList []string) ParserResult {
         }
 
     }
-    fmt.Println(pr)
     return pr
 }
 
