@@ -10,6 +10,7 @@ import (
     "path/filepath"
     "runtime"
     "io"
+    "fmt"
 )
 
 func compile(args []string) {
@@ -80,7 +81,6 @@ func attachBitcodePathToObject(bcFile, objFile string) {
         ".os",
         ".So",
         ".po":
-
         // Store bitcode path to temp file
         var absBcPath, _= filepath.Abs(bcFile)
         tmpContent := []byte(absBcPath+"\n")
@@ -163,6 +163,7 @@ func execCompile(compilerExecName string, pr ParserResult) {
 
 // Executes a command then returns true if there was an error
 func execCmd(cmdExecName string, args []string) bool {
+    fmt.Println(args)
     cmd := exec.Command(cmdExecName, args...)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr

@@ -4,6 +4,7 @@ import(
     "fmt"
     "regexp"
     "runtime"
+    "path"
     "path/filepath"
     "strings"
     "crypto/sha256"
@@ -214,7 +215,7 @@ func parse(argList []string) ParserResult {
         }
 
     }
-
+    fmt.Println(pr)
     return pr
 }
 
@@ -222,16 +223,18 @@ func parse(argList []string) ParserResult {
 func getArtifactNames(pr ParserResult, srcFileIndex int, hidden bool) (objBase string, bcBase string) {
     if len(pr.InputFiles) == 1 && pr.IsCompileOnly && len(pr.OutputFilename) > 0 {
         objBase = pr.OutputFilename
-        bcBase = fmt.Sprintf(".%s.bc", objBase)
+        dir, baseName := path.Split(objBase)
+        bcBaseName := fmt.Sprintf(".%s.bc", baseName)
+        bcBase = path.Join(dir, bcBaseName)
     } else {
         srcFile := pr.InputFiles[srcFileIndex]
-        var baseNameWithExt = filepath.Base(srcFile)
+        var dir, baseNameWithExt = path.Split(srcFile)
         var baseName = strings.TrimSuffix(baseNameWithExt, filepath.Ext(baseNameWithExt))
         bcBase = fmt.Sprintf(".%s.o.bc", baseName)
         if hidden {
-            objBase = fmt.Sprintf(".%s.o", baseName)
+            objBase = path.Join(dir, fmt.Sprintf(".%s.o", baseName))
         } else {
-            objBase = fmt.Sprintf("%s.o", baseName)
+            objBase = path.Join(dir, fmt.Sprintf("%s.o", baseName))
         }
     }
     return
