@@ -8,7 +8,7 @@ import(
     "path/filepath"
     "strings"
     "crypto/sha256"
-    "encoding/base64"
+    "encoding/hex"
 )
 
 type ParserResult struct {
@@ -245,7 +245,7 @@ func getHashedPath(path string) string {
     inputBytes := []byte(path)
     hasher := sha256.New()
     hasher.Write(inputBytes)
-    hash := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+    hash := hex.EncodeToString(hasher.Sum(nil))
     return hash
 }
 
