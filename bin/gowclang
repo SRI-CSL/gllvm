@@ -1,3 +1,2 @@
 #!/bin/sh
-echo HELLO
 exec gowllvm compile clang "$@"
