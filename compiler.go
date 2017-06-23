@@ -2,7 +2,6 @@ package main
 
 import (
     "os"
-    "os/exec"
     "io/ioutil"
     "log"
     "strings"
@@ -157,18 +156,6 @@ func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, 
 func execCompile(compilerExecName string, pr ParserResult) {
     if execCmd(compilerExecName, pr.InputList) {
         log.Fatal("Failed to execute compile command.")
-    }
-}
-
-// Executes a command then returns true if there was an error
-func execCmd(cmdExecName string, args []string) bool {
-    cmd := exec.Command(cmdExecName, args...)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-    if cmd.Run() == nil {
-        return false
-    } else {
-        return true
     }
 }
 

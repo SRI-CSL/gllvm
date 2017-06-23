@@ -2,6 +2,7 @@ package main
 
 import(
   "os"
+  "os/exec"
   "log"
   )
 
@@ -16,11 +17,24 @@ func main() {
 
     switch modeFlag {
     case "compile":
-        // Call main compile function with args
+        // Call main compiling function with args
         compile(args)
     case "extract":
-        log.Fatal("The extract feature is not implemented yet.")
+        // Call main extracting function with args
+        extract(args)
     default:
         log.Fatal("You should call gowllvm with a valid mode.")
+    }
+}
+
+// Executes a command then returns true if there was an error
+func execCmd(cmdExecName string, args []string) bool {
+    cmd := exec.Command(cmdExecName, args...)
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    if cmd.Run() == nil {
+        return false
+    } else {
+        return true
     }
 }
