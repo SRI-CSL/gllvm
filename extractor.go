@@ -171,7 +171,6 @@ func extractSectionDarwin(ea ExtractingArgs) (contents []string) {
 }
 
 func extractSectionUnix(ea ExtractingArgs) (contents []string) {
-    // TODO CORRECT -D to -w
     cmd := exec.Command("objcopy", "--dump-section", ELF_SECTION_NAME + "=/dev/stdout", ea.InputFile)
     out, err := cmd.Output()
     if err != nil {
