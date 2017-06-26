@@ -5,10 +5,13 @@ import (
     "os/exec"
     "log"
     "runtime"
+    "path"
     "path/filepath"
     "strings"
     "regexp"
     "encoding/hex"
+    "io/ioutil"
+    "fmt"
 )
 
 type ExtractingArgs struct {
@@ -19,7 +22,7 @@ type ExtractingArgs struct {
     ArchiverName string
     ArArgs []string
     ObjectTypeInArchive int // Type of file that can be put into an archive
-    Extractor func(ExtractingArgs) []string
+    Extractor func(string) string
     IsVerbose bool
     IsWriteManifest bool
     IsBuildBitcodeArchive bool
@@ -110,8 +113,7 @@ func parseExtractingArgs(args []string) ExtractingArgs {
         }
         ea.ObjectTypeInArchive = FT_ELF_OBJECT
     case "darwin":
-        ea.Extractor = extractSectionUnix
-        //ea.Extractor = extractSectionDarwin
+        ea.Extractor = extractSectionDarwin
         ea.ArArgs = append(ea.ArArgs, "-x")
         if ea.IsVerbose {
             ea.ArArgs = append(ea.ArArgs, "-v")
@@ -121,11 +123,13 @@ func parseExtractingArgs(args []string) ExtractingArgs {
     // Create output filename if not given
     if ea.OutputFile == "" {
         if ea.InputType == FT_ARCHIVE {
+            var ext string
             if ea.IsBuildBitcodeArchive {
-                ea.OutputFile = ea.InputFile + ".a.bc"
+                ext = ".a.bc"
             } else {
-                ea.OutputFile = ea.InputFile + ".bca"
+                ext = ".bca"
             }
+            ea.OutputFile = strings.TrimSuffix(ea.InputFile, ".a") + ext
         } else {
             ea.OutputFile = ea.InputFile + ".bc"
         }
@@ -139,20 +143,103 @@ func parseExtractingArgs(args []string) ExtractingArgs {
 }
 
 func handleExecutable(ea ExtractingArgs) {
-    filesToLink := ea.Extractor(ea)
-    var _ = filesToLink
+    filesToLink := []string{resolveBitcodePath(ea.Extractor(ea.InputFile))}
+    extractTimeLinkFiles(ea, filesToLink)
 
+    // Write manifest
+    if ea.IsWriteManifest {
+        writeManifest(ea, filesToLink)
+    }
 }
 
-func handleArchive(_ ExtractingArgs) {
-    // TODO
+func handleArchive(ea ExtractingArgs) {
+    // List bitcode files to link
+    var bcFiles []string
+
+    // Create tmp dir
+    tmpDirName, err := ioutil.TempDir("", "gowllvm")
+    if err != nil {
+        log.Fatal("The temporary directory in which to extract object files could not be created.")
+    }
+    defer os.RemoveAll(tmpDirName)
+
+    // Extract objects to tmpDir
+    arArgs := ea.ArArgs
+    inputAbsPath, _ := filepath.Abs(ea.InputFile)
+    arArgs = append(arArgs, inputAbsPath)
+    if execCmd("ar", arArgs, tmpDirName) {
+        log.Fatal("Failed to extract object files from ", ea.InputFile, " to ", tmpDirName, ".")
+    }
+
+    // Define object file handling closure
+    var walkHandlingFunc = func(path string, info os.FileInfo, err error) error {
+        if err == nil && !info.IsDir() {
+            ft := getFileType(path)
+            if ft == ea.ObjectTypeInArchive {
+                bcPath := resolveBitcodePath(ea.Extractor(path))
+                bcFiles = append(bcFiles, bcPath)
+            }
+        }
+        return nil
+    }
+
+    // Handle object files
+    filepath.Walk(tmpDirName, walkHandlingFunc)
+
+    // Build archive
+    if ea.IsBuildBitcodeArchive {
+        extractTimeLinkFiles(ea, bcFiles)
+    } else {
+        archiveBcFiles(ea, bcFiles)
+    }
+
+    // Write manifest
+    if ea.IsWriteManifest {
+        writeManifest(ea, bcFiles)
+    }
 }
 
-func extractSectionDarwin(ea ExtractingArgs) (contents []string) {
-    cmd := exec.Command("otool", "-X", "-s", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, ea.InputFile)
+func archiveBcFiles(ea ExtractingArgs, bcFiles []string) {
+    // We do not want full paths in the archive, so we need to chdir into each
+    // bitcode's folder. Handle this by calling llvm-ar once for all bitcode
+    // files in the same directory
+    dirToBcMap := make(map[string][]string)
+    for _, bcFile := range bcFiles {
+        dirName, baseName := path.Split(bcFile)
+        dirToBcMap[dirName] = append(dirToBcMap[dirName], baseName)
+    }
+
+    // Call llvm-ar from each directory
+    absOutputFile, _ := filepath.Abs(ea.OutputFile)
+    for dir, bcFilesInDir := range dirToBcMap {
+        var args []string
+        args = append(args, "rs", absOutputFile)
+        args = append(args, bcFilesInDir...)
+        if execCmd(ea.ArchiverName, args, dir) {
+            log.Fatal("There was an error creating the bitcode archive.")
+        }
+    }
+    fmt.Println("Built bitcode archive", ea.OutputFile)
+}
+
+func extractTimeLinkFiles(ea ExtractingArgs, filesToLink []string) {
+    var linkArgs []string
+    if ea.IsVerbose {
+        linkArgs = append(linkArgs, "-v")
+    }
+    linkArgs = append(linkArgs, "-o", ea.OutputFile)
+    linkArgs = append(linkArgs, filesToLink...)
+    if execCmd(ea.LinkerName, linkArgs, "") {
+        log.Fatal("There was an error linking input files into ", ea.OutputFile, ".")
+    }
+    fmt.Println("Bitcode file extracted to", ea.OutputFile)
+}
+
+func extractSectionDarwin(inputFile string) (contents string) {
+    cmd := exec.Command("otool", "-X", "-s", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, inputFile)
     out, err := cmd.Output()
     if err != nil {
-        log.Fatal("There was an error extracting the Gowllvm section from ", ea.InputFile, ". Make sure that the 'otool' command is installed.")
+        log.Fatal("There was an error extracting the Gowllvm section from ", inputFile, ". Make sure that the 'otool' command is installed.")
     }
     sectionLines := strings.Split(string(out), "\n")
     regExp := regexp.MustCompile(`^(?:[0-9a-f]{8,16}\t)?([0-9a-f\s]+)$`)
@@ -166,18 +253,40 @@ func extractSectionDarwin(ea ExtractingArgs) (contents []string) {
             octets = append(octets, dst...)
         }
     }
-    contents = strings.Split(strings.TrimSuffix(string(octets), "\n"), "\n")
+    contents = strings.TrimSuffix(string(octets), "\n")
     return
 }
 
-func extractSectionUnix(ea ExtractingArgs) (contents []string) {
-    cmd := exec.Command("objcopy", "--dump-section", ELF_SECTION_NAME + "=/dev/stdout", ea.InputFile)
+func extractSectionUnix(inputFile string) (contents string) {
+    cmd := exec.Command("objcopy", "--dump-section", ELF_SECTION_NAME + "=/dev/stdout", inputFile)
     out, err := cmd.Output()
     if err != nil {
-        log.Fatal("There was an error reading the contents of ", ea.InputFile, ". Make sure that the 'objcopy' command is installed.")
+        log.Fatal("There was an error reading the contents of ", inputFile, ". Make sure that the 'objcopy' command is installed.")
     }
-    contents = strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")
+    contents = strings.TrimSuffix(string(out), "\n")
     return
+}
+
+// Return the actual path to the bitcode file, or an empty string if it does not exist
+func resolveBitcodePath(bcPath string) string {
+    if _, err := os.Stat(bcPath); os.IsNotExist(err) {
+        // If the bitcode file does not exist, try to find it in the store
+        if bcStorePath := os.Getenv(BC_STORE_PATH); bcStorePath != "" {
+            // Compute absolute path hash
+            absBcPath, _ := filepath.Abs(bcPath)
+            storeBcPath := path.Join(bcStorePath, getHashedPath(absBcPath))
+            if _, err := os.Stat(storeBcPath); os.IsNotExist(err) {
+                return ""
+            } else {
+                return storeBcPath
+            }
+        } else {
+            return ""
+        }
+    } else {
+        return bcPath
+    }
+    return ""
 }
 
 func getFileType(realPath string) (fileType int) {
@@ -204,8 +313,17 @@ func getFileType(realPath string) (fileType int) {
     } else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "object") {
         fileType = FT_MACH_OBJECT
     } else {
-        log.Fatal("The type of the input file is not handled.")
+        fileType = FT_UNDEFINED
     }
 
     return
+}
+
+func writeManifest(ea ExtractingArgs, bcFiles []string) {
+    contents := []byte(strings.Join(bcFiles, "\n"))
+    manifestFilename := ea.OutputFile + ".llvm.manifest"
+    if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
+        log.Fatal("There was an error while writing the manifest file: ", err)
+    }
+    fmt.Println("Manifest file written to", manifestFilename)
 }

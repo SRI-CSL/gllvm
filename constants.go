@@ -16,6 +16,7 @@ const(
     DARWIN_SECTION_NAME = "__llvm_bc"
 
     // File types
+    FT_UNDEFINED = 0
     FT_ELF_EXECUTABLE = 1
     FT_ELF_OBJECT = 2
     FT_ELF_SHARED = 3

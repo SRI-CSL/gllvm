@@ -2,7 +2,6 @@ package main
 
 import(
   "os"
-  "os/exec"
   "log"
   )
 
@@ -24,17 +23,5 @@ func main() {
         extract(args)
     default:
         log.Fatal("You should call gowllvm with a valid mode.")
-    }
-}
-
-// Executes a command then returns true if there was an error
-func execCmd(cmdExecName string, args []string) bool {
-    cmd := exec.Command(cmdExecName, args...)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-    if cmd.Run() == nil {
-        return false
-    } else {
-        return true
     }
 }

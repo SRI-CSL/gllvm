@@ -66,7 +66,7 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult) {
     }
 
     if !pr.IsCompileOnly {
-        linkFiles(compilerExecName, pr, newObjectFiles)
+        compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
     }
 }
 
@@ -80,7 +80,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
         ".So",
         ".po":
         // Store bitcode path to temp file
-        var absBcPath, _= filepath.Abs(bcFile)
+        var absBcPath, _ = filepath.Abs(bcFile)
         tmpContent := []byte(absBcPath+"\n")
         tmpFile, err := ioutil.TempFile("", "gowllvm")
         if err != nil {
@@ -106,7 +106,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
         }
 
         // Run the attach command and ignore errors
-        execCmd(attachCmd, attachCmdArgs)
+        execCmd(attachCmd, attachCmdArgs, "")
 
         // Copy bitcode file to store, if necessary
         if bcStorePath := os.Getenv(BC_STORE_PATH); bcStorePath != "" {
@@ -121,7 +121,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
     }
 }
 
-func linkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
+func compileTimeLinkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
     var outputFile = pr.OutputFilename
     if outputFile == "" {
         outputFile = "a.out"
@@ -129,7 +129,7 @@ func linkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
     args := append(pr.ObjectFiles, pr.LinkArgs...)
     args = append(args, objFiles...)
     args = append(args, "-o", outputFile)
-    if execCmd(compilerExecName, args) {
+    if execCmd(compilerExecName, args, "") {
         log.Fatal("Failed to link.")
     }
 }
@@ -138,7 +138,7 @@ func linkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
 func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, objFile string) {
     args := pr.CompileArgs[:]
     args = append(args, srcFile, "-c", "-o", objFile)
-    if execCmd(compilerExecName, args) {
+    if execCmd(compilerExecName, args, "") {
         log.Fatal("Failed to build object file for ", srcFile)
     }
 }
@@ -147,14 +147,14 @@ func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, o
 func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, bcFile string) {
     args := pr.CompileArgs[:]
     args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
-    if execCmd(compilerExecName, args) {
+    if execCmd(compilerExecName, args, "") {
         log.Fatal("Failed to build bitcode file for ", srcFile)
     }
 }
 
 // Tries to build object file
 func execCompile(compilerExecName string, pr ParserResult) {
-    if execCmd(compilerExecName, pr.InputList) {
+    if execCmd(compilerExecName, pr.InputList, "") {
         log.Fatal("Failed to execute compile command.")
     }
 }
