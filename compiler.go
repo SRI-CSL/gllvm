@@ -11,17 +11,12 @@ import (
     "io"
 )
 
-func compile(args []string) {
-    if len(args) < 1 {
-        log.Fatal("You must precise which compiler to use.")
-    }
-    var compilerName = args[0]
+func compile(args []string, compilerName string) {
     var compilerExecName = getCompilerExecName(compilerName)
     var configureOnly bool
     if os.Getenv(CONFIGURE_ONLY) != "" {
         configureOnly = true
     }
-    args = args[1:]
     var pr = parse(args)
 
     // If configure only is set, try to execute normal compiling command then exit silently
