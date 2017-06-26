@@ -19,13 +19,12 @@ func compile(args []string, compilerName string) {
     }
     var pr = parse(args)
 
-    // If configure only is set, try to execute normal compiling command then exit silently
-    if configureOnly {
-        execCompile(compilerExecName, pr)
-        os.Exit(0)
+    execCompile(compilerExecName, pr)
+    // If configure only is not set, build bitcode as well
+    if !configureOnly {
+        // Else try to build bitcode
+        buildAndAttachBitcode(compilerExecName, pr)
     }
-    // Else try to build objects and bitcode
-    buildAndAttachBitcode(compilerExecName, pr)
 }
 
 // Compiles bitcode files and attach path to the object files
