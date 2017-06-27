@@ -143,18 +143,20 @@ func parseExtractingArgs(args []string) ExtractingArgs {
 }
 
 func handleExecutable(ea ExtractingArgs) {
-    filesToLink := []string{resolveBitcodePath(ea.Extractor(ea.InputFile))}
+    artifactPath := ea.Extractor(ea.InputFile)
+    filesToLink := []string{resolveBitcodePath(artifactPath)}
     extractTimeLinkFiles(ea, filesToLink)
 
     // Write manifest
     if ea.IsWriteManifest {
-        writeManifest(ea, filesToLink)
+        writeManifest(ea, filesToLink, []string{artifactPath})
     }
 }
 
 func handleArchive(ea ExtractingArgs) {
     // List bitcode files to link
     var bcFiles []string
+    var artifactFiles []string
 
     // Create tmp dir
     tmpDirName, err := ioutil.TempDir("", "gowllvm")
@@ -176,8 +178,10 @@ func handleArchive(ea ExtractingArgs) {
         if err == nil && !info.IsDir() {
             ft := getFileType(path)
             if ft == ea.ObjectTypeInArchive {
-                bcPath := resolveBitcodePath(ea.Extractor(path))
+                artifactPath := ea.Extractor(path)
+                bcPath := resolveBitcodePath(artifactPath)
                 bcFiles = append(bcFiles, bcPath)
+                artifactFiles = append(artifactFiles, artifactPath)
             }
         }
         return nil
@@ -195,7 +199,7 @@ func handleArchive(ea ExtractingArgs) {
 
     // Write manifest
     if ea.IsWriteManifest {
-        writeManifest(ea, bcFiles)
+        writeManifest(ea, bcFiles, artifactFiles)
     }
 }
 
@@ -319,8 +323,10 @@ func getFileType(realPath string) (fileType int) {
     return
 }
 
-func writeManifest(ea ExtractingArgs, bcFiles []string) {
-    contents := []byte(strings.Join(bcFiles, "\n"))
+func writeManifest(ea ExtractingArgs, bcFiles []string, artifactFiles []string) {
+    section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
+    section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
+    contents := []byte(section1 + section2)
     manifestFilename := ea.OutputFile + ".llvm.manifest"
     if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
         log.Fatal("There was an error while writing the manifest file: ", err)

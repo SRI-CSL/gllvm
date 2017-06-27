@@ -175,7 +175,7 @@ func execCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup) {
 }
 
 func getCompilerExecName(compilerName string) string {
-    var compilerPath = os.Getenv(COMPILER_PATH)
+    var compilerPath = os.Getenv(TOOLS_PATH)
     switch compilerName {
     case "clang":
         var clangName = os.Getenv(C_COMPILER_NAME)
