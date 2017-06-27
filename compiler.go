@@ -57,7 +57,7 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
     defer (*wg).Done()
     // If nothing to do, exit silently
     if !pr.IsEmitLLVM && !pr.IsAssembly && !pr.IsAssembleOnly &&
-        !(pr.IsDependencyOnly && !pr.IsCompileOnly) && pr.IsPreprocessOnly {
+        !(pr.IsDependencyOnly && !pr.IsCompileOnly) && !pr.IsPreprocessOnly {
         var hidden = !pr.IsCompileOnly
 
         if len(pr.InputFiles) == 1 && pr.IsCompileOnly {
