@@ -58,10 +58,18 @@ func parseExtractingArgs(args []string) ExtractingArgs {
 
     // Checking environment variables
     if ln := os.Getenv(LINKER_NAME); ln != "" {
-        ea.LinkerName = ln
+        if toolsPath := os.Getenv(TOOLS_PATH); toolsPath != "" {
+            ea.LinkerName = toolsPath + ln
+        } else {
+            ea.LinkerName = ln
+        }
     }
     if an := os.Getenv(AR_NAME); an != "" {
-        ea.ArchiverName = an
+        if toolsPath := os.Getenv(TOOLS_PATH); toolsPath != "" {
+            ea.ArchiverName = toolsPath + an
+        } else {
+            ea.ArchiverName = an
+        }
     }
 
     // Parsing cli input
