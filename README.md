@@ -64,8 +64,8 @@ make install
 Usage
 -----
 
-gowllvm includes three symlinks to the program's binary: `gowclang` and
-`gowclang++`to compile C and C++, and an auxiliary tool `gowextract` for
+gowllvm includes three symlinks to the program's binary: `gclang` and
+`gclang++`to compile C and C++, and an auxiliary tool `get-bc` for
 extracting the bitcode from a build product (object file, executable, library
 or archive).
 
@@ -86,8 +86,8 @@ Some useful environment variables are listed here:
    variable.
    Example `GOWLLVM_TOOLS_PATH=/home/user/llvm_and_clang/Debug+Asserts/bin`.
 
-* `GOWLLVM_CONFIGURE_ONLY` can be set to anything. If it is set, `gowclang`
-   and `gowclang++` behave like a normal C or C++ compiler. They do not
+* `GOWLLVM_CONFIGURE_ONLY` can be set to anything. If it is set, `gclang`
+   and `gclang++` behave like a normal C or C++ compiler. They do not
    produce bitcode. Setting `GOWLLVM_CONFIGURE_ONLY` may prevent configuration
    errors caused by the unexpected production of hidden bitcode files. It is
    sometimes required when configuring a build.
@@ -101,7 +101,7 @@ environment variable `GOWLLVM_BC_STORE` is set to the absolute path of
 an existing directory, then gowllvm will copy the produced bitcode files
 into that directory. The name of a copied bitcode file is the hash of the path
 to the original bitcode file. For convenience, when using both the manifest
-feature of `gowextract` and the store, the manifest will contain both the
+feature of `get-bc` and the store, the manifest will contain both the
 original path, and the store path.
 
 Building a bitcode module with clang
@@ -110,13 +110,13 @@ Building a bitcode module with clang
 ```
 tar xf pkg-config-0.26.tar.gz
 cd pkg-config-0.26
-CC=gowclang ./configure
+CC=gclang ./configure
 make
 ```
 
 This should produce the executable `pkg-config`. To extract the bitcode:
 ```
-gowextract pkg-config
+get-bc pkg-config
 ```
 
 which will produce the bitcode module `pkg-config.bc`.
@@ -129,17 +129,17 @@ Building bitcode archive
 tar -xvf bullet-2.81-rev2613.tgz
 mkdir bullet-bin
 cd bullet-bin
-CC=gowclang CXX=gowclang++ cmake ../bullet-2.81-rev2613/
+CC=gclang CXX=gclang++ cmake ../bullet-2.81-rev2613/
 make
 
 # Produces src/LinearMath/libLinearMath.bca
-gowextract src/LinearMath/libLinearMath.a
+get-bc src/LinearMath/libLinearMath.a
 ```
 
 Note that by default extracting bitcode from an archive produces an archive of
 bitcode. You can also extract the bitcode directly into a module:
 ```
-gowextract -b src/LinearMath/libLinearMath.a
+get-bc -b src/LinearMath/libLinearMath.a
 ```
 produces `src/LinearMath/libLinearMath.a.bc`.
 
@@ -152,8 +152,8 @@ is during configuration, where the production of unexpected files can confuse
 the configure script. For this we have a flag `GOWLLVM_CONFIGURE_ONLY` which
 can be used as follows:
 ```
-GOWLLVM_CONFIGURE_ONLY=1 CC=gowclang ./configure
-CC=gowclang make
+GOWLLVM_CONFIGURE_ONLY=1 CC=gclang ./configure
+CC=gclang make
 ```
 
 
@@ -163,12 +163,12 @@ Building a bitcode archive then extracting the bitcode
 ```
 tar xvfz jansson-2.7.tar.gz
 cd jansson-2.7
-CC=gowclang ./configure
+CC=gclang ./configure
 make
 mkdir bitcode
 cp src/.libs/libjansson.a bitcode
 cd bitcode
-gowextract libjansson.a
+get-bc libjansson.a
 llvm-ar x libjansson.bca
 ls -la
 ```

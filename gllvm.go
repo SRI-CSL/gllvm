@@ -12,11 +12,11 @@ func main() {
     args = args[1:]
 
     switch callerName {
-    case "gowclang":
+    case "gclang":
         compile(args, "clang")
-    case "gowclang++":
+    case "gclang++":
         compile(args, "clang++")
-    case "gowextract":
+    case "get-bc":
         extract(args)
     default:
         log.Fatal("You should call gowllvm with a valid mode.")

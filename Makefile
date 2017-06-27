@@ -5,6 +5,12 @@ build:
 
 install: build
 	go install
-	ln -f -s $(GOROOT)/bin/gowllvm $(GOROOT)/bin/gowclang
-	ln -f -s $(GOROOT)/bin/gowllvm $(GOROOT)/bin/gowclang++
-	ln -f -s $(GOROOT)/bin/gowllvm $(GOROOT)/bin/gowextract
+	ln -f -s $(GOROOT)/bin/gllvm $(GOROOT)/bin/gclang
+	ln -f -s $(GOROOT)/bin/gllvm $(GOROOT)/bin/gclang++
+	ln -f -s $(GOROOT)/bin/gllvm $(GOROOT)/bin/get-bc
+
+clean:
+	go clean
+	rm $(GOROOT)/bin/gclang
+	rm $(GOROOT)/bin/gclang++
+	rm $(GOROOT)/bin/get-bc
