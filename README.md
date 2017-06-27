@@ -71,24 +71,24 @@ or archive).
 
 Some useful environment variables are listed here:
 
- * `GOWLLVM_CC_NAME` can be set if your clang compiler is not called `clang` but
-    something like `clang-3.7`. Similarly `GOWLLVM_CXX_NAME` can be used to
+ * `GLLVM_CC_NAME` can be set if your clang compiler is not called `clang` but
+    something like `clang-3.7`. Similarly `GLLVM_CXX_NAME` can be used to
     describe what the C++ compiler is called. We also pay attention to the
-    environment  variables `GOWLLVM_LINK_NAME` and `GOWLLVM_AR_NAME` in an
+    environment  variables `GLLVM_LINK_NAME` and `GLLVM_AR_NAME` in an
     analagous way, since they too get adorned with suffixes in various Linux
     distributions.
 
- * `GOWLLVM_TOOLS_PATH` can be set to the absolute path to the folder that
+ * `GLLVM_TOOLS_PATH` can be set to the absolute path to the folder that
    contains the compiler and other LLVM tools such as `llvm-link` to be used.
    This prevents searching for the compiler in your PATH environment variable.
    This can be useful if you have different versions of clang on your system
    and you want to easily switch compilers without tinkering with your PATH
    variable.
-   Example `GOWLLVM_TOOLS_PATH=/home/user/llvm_and_clang/Debug+Asserts/bin`.
+   Example `GLLVM_TOOLS_PATH=/home/user/llvm_and_clang/Debug+Asserts/bin`.
 
-* `GOWLLVM_CONFIGURE_ONLY` can be set to anything. If it is set, `gclang`
+* `GLLVM_CONFIGURE_ONLY` can be set to anything. If it is set, `gclang`
    and `gclang++` behave like a normal C or C++ compiler. They do not
-   produce bitcode. Setting `GOWLLVM_CONFIGURE_ONLY` may prevent configuration
+   produce bitcode. Setting `GLLVM_CONFIGURE_ONLY` may prevent configuration
    errors caused by the unexpected production of hidden bitcode files. It is
    sometimes required when configuring a build.
 
@@ -97,7 +97,7 @@ Preserving bitcode files in a store
 
 Sometimes it can be useful to preserve the bitcode files produced in a
 build, either to prevent deletion or to retrieve them later. If the
-environment variable `GOWLLVM_BC_STORE` is set to the absolute path of
+environment variable `GLLVM_BC_STORE` is set to the absolute path of
 an existing directory, then gowllvm will copy the produced bitcode files
 into that directory. The name of a copied bitcode file is the hash of the path
 to the original bitcode file. For convenience, when using both the manifest
@@ -149,10 +149,10 @@ Configuring without building bitcode
 
 Sometimes it is necessary to disable the production of bitcode. Typically this
 is during configuration, where the production of unexpected files can confuse
-the configure script. For this we have a flag `GOWLLVM_CONFIGURE_ONLY` which
+the configure script. For this we have a flag `GLLVM_CONFIGURE_ONLY` which
 can be used as follows:
 ```
-GOWLLVM_CONFIGURE_ONLY=1 CC=gclang ./configure
+GLLVM_CONFIGURE_ONLY=1 CC=gclang ./configure
 CC=gclang make
 ```
 
