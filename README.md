@@ -4,20 +4,19 @@ Go Whole Program LLVM
 Introduction
 ------------
 
-This project, gowllvm, provides tools for building whole-program (or
+This project, gllvm, provides tools for building whole-program (or
 whole-library) LLVM bitcode files from an unmodified C or C++
 source package. It currently runs on `*nix` platforms such as Linux,
-FreeBSD, and Mac OS X. It is a Go port of the WLLVM project, available
-at https://github.com/SRI-CSL/whole-program-llvm.
+FreeBSD, and Mac OS X. It is a Go port of the [wllvm](https://github.com/SRI-CSL/whole-program-llvm).
 
-gowllvm provides compiler wrappers that work in two
+gllvm provides compiler wrappers that work in two
 steps. The wrappers first invoke the compiler as normal. Then, for
 each object file, they call a bitcode compiler to produce LLVM
 bitcode. The wrappers also store the location of the generated bitcode
 file in a dedicated section of the object file.  When object files are
 linked together, the contents of the dedicated sections are
 concatenated (so we don't lose the locations of any of the constituent
-bitcode files). After the build completes, one can use a gowllvm
+bitcode files). After the build completes, one can use a gllvm
 utility to read the contents of the dedicated section and link all of
 the bitcode into a single whole-program bitcode file. This utility
 works for both executable and native libraries.
@@ -25,11 +24,11 @@ works for both executable and native libraries.
 This two-phase build process is necessary to be a drop-in replacement
 for gcc or g++ in any build system.  Using the LTO framework in gcc
 and the gold linker plugin works in many cases, but fails in the
-presence of static libraries in builds.  gowllvm's approach has the
+presence of static libraries in builds.  gllvm's approach has the
 distinct advantage of generating working binaries, in case some part
 of a build process requires that.
 
-gowllvm currently works with clang.
+gllvm currently works with clang.
 
 Installation
 ------------
@@ -37,8 +36,8 @@ Installation
 Requirements
 =======
 
-You need the Go compiler to compile gowllvm, and the clang/clang++ executables
-to use gowllvm. Follow the instructions here to get started:
+You need the Go compiler to compile gllvm, and the clang/clang++ executables
+to use gllvm. Follow the instructions here to get started:
 https://golang.org/doc/install.
 
 As for now, let us name `$GOROOT` your root Go path that you can obtain by
@@ -53,10 +52,10 @@ Build
 First, you must checkout the project under the directory `$GOROOT/src`:
 ```
 cd $GOROOT/src
-git clone https://github.com/loicgelle/gowllvm
+git clone https://github.com/SRI-CSL/gllvm
 ```
 
-To build and install gowllvm on your system, type:
+To build and install gllvm on your system, type:
 ```
 make install
 ```
@@ -64,7 +63,7 @@ make install
 Usage
 -----
 
-gowllvm includes three symlinks to the program's binary: `gclang` and
+gllvm includes three symlinks to the program's binary: `gclang` and
 `gclang++`to compile C and C++, and an auxiliary tool `get-bc` for
 extracting the bitcode from a build product (object file, executable, library
 or archive).
@@ -98,7 +97,7 @@ Preserving bitcode files in a store
 Sometimes it can be useful to preserve the bitcode files produced in a
 build, either to prevent deletion or to retrieve them later. If the
 environment variable `GLLVM_BC_STORE` is set to the absolute path of
-an existing directory, then gowllvm will copy the produced bitcode files
+an existing directory, then gllvm will copy the produced bitcode files
 into that directory. The name of a copied bitcode file is the hash of the path
 to the original bitcode file. For convenience, when using both the manifest
 feature of `get-bc` and the store, the manifest will contain both the
