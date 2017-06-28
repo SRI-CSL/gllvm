@@ -11,6 +11,8 @@ install: build
 
 clean:
 	go clean
+
+uninstall:
 	rm -f $(GOROOT)/bin/gclang
 	rm -f $(GOROOT)/bin/gclang++
 	rm -f $(GOROOT)/bin/get-bc

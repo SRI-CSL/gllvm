@@ -61,3 +61,8 @@ var logDebug   = makeLogger(debug_v)
 var logInfo    = makeLogger(info_v)
 var logWarning = makeLogger(warning_v)
 var logError   = makeLogger(error_v)
+
+func logFatal(format string, a ...interface{}){
+	logError(format, a...)
+	os.Exit(1)
+}
