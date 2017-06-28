@@ -2,7 +2,6 @@ package main
 
 import(
   "os"
-  "log"
   )
 
 func main() {
@@ -10,6 +9,9 @@ func main() {
     var args = os.Args
     var callerName = args[0]
     args = args[1:]
+
+	logDebug("DEBUG: this is two: %v\n", 2)
+	logInfo("INFO: this is two: %v\n", 2)
 
     switch callerName {
     case "gclang":
@@ -19,6 +21,6 @@ func main() {
     case "get-bc":
         extract(args)
     default:
-        log.Fatal("You should call gowllvm with a valid mode.")
+        logError("You should call gowllvm with a valid mode.")
     }
 }
