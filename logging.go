@@ -14,7 +14,6 @@ const (
 	debug_v
 )
 
-//move these to constants.go
 const (
 	loggingLevelEnvVar = "GLLVM_OUTPUT_LEVEL"
 	loggingFileEnvVar = "GLLVM_OUTPUT_FILE"

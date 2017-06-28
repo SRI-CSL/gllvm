@@ -10,7 +10,7 @@ const(
     AR_NAME           = "GLLVM_AR_NAME"
     BC_STORE_PATH     = "GLLVM_BC_STORE"
 
-    // Gllvm functioning
+    // Gllvm functioning  (once we have it working we can change the W to G; but for the time being leave it so that extract-bc works)
     ELF_SECTION_NAME    = ".llvm_bc"
     DARWIN_SEGMENT_NAME = "__WLLVM"
     DARWIN_SECTION_NAME = "__llvm_bc"

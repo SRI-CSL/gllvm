@@ -12,6 +12,7 @@ import (
     "encoding/hex"
     "io/ioutil"
     "fmt"
+    "reflect"
 )
 
 type ExtractingArgs struct {
@@ -253,7 +254,11 @@ func extractSectionDarwin(inputFile string) (contents string) {
     if err != nil {
         log.Fatal("There was an error extracting the gllvm section from ", inputFile, ". Make sure that the 'otool' command is installed.")
     }
+	//FIXME: ok this looks all wrong. need to deal with out properly and the go way, whatever that may be.
+	logDebug("extractSectionDarwin: T(out) = %v \n", reflect.TypeOf(out))
+	logDebug("extractSectionDarwin: out = %v \n", out)
     sectionLines := strings.Split(string(out), "\n")
+	logDebug("extractSectionDarwin: sectionLines = %v\n", out)
     regExp := regexp.MustCompile(`^(?:[0-9a-f]{8,16}\t)?([0-9a-f\s]+)$`)
     var octets []byte
 
