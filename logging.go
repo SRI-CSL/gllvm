@@ -24,7 +24,7 @@ var loggingLevels = map[string]int{
 	"WARNING":  warning_v,
 	"INFO":     info_v,
 	"DEBUG":    debug_v,
-	}
+}
 
 
 var level = 0
