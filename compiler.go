@@ -96,7 +96,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
         // Store bitcode path to temp file
         var absBcPath, _ = filepath.Abs(bcFile)
         tmpContent := []byte(absBcPath+"\n")
-        tmpFile, err := ioutil.TempFile("", "gowllvm")
+        tmpFile, err := ioutil.TempFile("", "gllvm")
         if err != nil {
             log.Fatal(err)
         }

@@ -167,7 +167,7 @@ func handleArchive(ea ExtractingArgs) {
     var artifactFiles []string
 
     // Create tmp dir
-    tmpDirName, err := ioutil.TempDir("", "gowllvm")
+    tmpDirName, err := ioutil.TempDir("", "gllvm")
     if err != nil {
         log.Fatal("The temporary directory in which to extract object files could not be created.")
     }
@@ -251,7 +251,7 @@ func extractSectionDarwin(inputFile string) (contents string) {
     cmd := exec.Command("otool", "-X", "-s", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, inputFile)
     out, err := cmd.Output()
     if err != nil {
-        log.Fatal("There was an error extracting the Gowllvm section from ", inputFile, ". Make sure that the 'otool' command is installed.")
+        log.Fatal("There was an error extracting the gllvm section from ", inputFile, ". Make sure that the 'otool' command is installed.")
     }
     sectionLines := strings.Split(string(out), "\n")
     regExp := regexp.MustCompile(`^(?:[0-9a-f]{8,16}\t)?([0-9a-f\s]+)$`)
