@@ -1,8 +1,8 @@
-Go Whole Program LLVM
-==================
+# Go Whole Program LLVM
 
-Introduction
-------------
+
+## Overview
+
 
 This project, gllvm, provides tools for building whole-program (or
 whole-library) LLVM bitcode files from an unmodified C or C++
@@ -30,11 +30,10 @@ of a build process requires that.
 
 gllvm currently works with clang.
 
-Installation
-------------
+## Installation
 
-Requirements
-=======
+
+#### Requirements
 
 You need the Go compiler to compile gllvm, and the clang/clang++ executables
 to use gllvm. Follow the instructions here to get started:
@@ -46,8 +45,7 @@ by default. It is worth noticing that a standard Go installation will install
 the binaries generated for the project under `$GOROOT/bin`. Make sure that you
 added the `$GOROOT/bin` directory to your `$PATH` variable.
 
-Build
-=======
+#### Build
 
 First, you must checkout the project under the directory `$GOROOT/src`:
 ```
@@ -60,8 +58,7 @@ To build and install gllvm on your system, type:
 make install
 ```
 
-Usage
------
+## Usage
 
 gllvm includes three symlinks to the program's binary: `gclang` and
 `gclang++`to compile C and C++, and an auxiliary tool `get-bc` for
@@ -91,20 +88,10 @@ Some useful environment variables are listed here:
    errors caused by the unexpected production of hidden bitcode files. It is
    sometimes required when configuring a build.
 
-Preserving bitcode files in a store
---------------------------------
+## Examples
 
-Sometimes it can be useful to preserve the bitcode files produced in a
-build, either to prevent deletion or to retrieve them later. If the
-environment variable `GLLVM_BC_STORE` is set to the absolute path of
-an existing directory, then gllvm will copy the produced bitcode files
-into that directory. The name of a copied bitcode file is the hash of the path
-to the original bitcode file. For convenience, when using both the manifest
-feature of `get-bc` and the store, the manifest will contain both the
-original path, and the store path.
+### Building a bitcode module with clang
 
-Building a bitcode module with clang
-------------------------------------
 
 ```
 tar xf pkg-config-0.26.tar.gz
@@ -121,8 +108,7 @@ get-bc pkg-config
 which will produce the bitcode module `pkg-config.bc`.
 
 
-Building bitcode archive
-------------------------
+### Building bitcode archive
 
 ```
 tar -xvf bullet-2.81-rev2613.tgz
@@ -143,8 +129,7 @@ get-bc -b src/LinearMath/libLinearMath.a
 produces `src/LinearMath/libLinearMath.a.bc`.
 
 
-Configuring without building bitcode
-------------------------------------
+### Configuring without building bitcode
 
 Sometimes it is necessary to disable the production of bitcode. Typically this
 is during configuration, where the production of unexpected files can confuse
@@ -156,8 +141,7 @@ CC=gclang make
 ```
 
 
-Building a bitcode archive then extracting the bitcode
-------------------------------------------------------
+### Building a bitcode archive then extracting the bitcode
 
 ```
 tar xvfz jansson-2.7.tar.gz
@@ -171,3 +155,42 @@ get-bc libjansson.a
 llvm-ar x libjansson.bca
 ls -la
 ```
+
+## Miscellaneous Features
+
+### Preserving bitcode files in a store
+
+Sometimes it can be useful to preserve the bitcode files produced in a
+build, either to prevent deletion or to retrieve them later. If the
+environment variable `GLLVM_BC_STORE` is set to the absolute path of
+an existing directory, then gllvm will copy the produced bitcode files
+into that directory. The name of a copied bitcode file is the hash of the path
+to the original bitcode file. For convenience, when using both the manifest
+feature of `get-bc` and the store, the manifest will contain both the
+original path, and the store path.
+
+
+### Debugging
+
+
+The GLLVM tools can show various levels of output to aid with debugging.
+To show this output set the `GLLVM_OUTPUT_LEVEL` environment 
+variable to one of the following levels:
+
+ * `ERROR`
+ * `WARNING`
+ * `INFO`
+ * `DEBUG`
+
+For example:
+```
+    export GLLVM_OUTPUT_LEVEL=DEBUG
+```
+Output will be directed to the standard error stream, unless you specify the
+path of a logfile via the `GLLVM_OUTPUT_FILE` environment variable. 
+
+For example:
+```
+    export GLLVM_OUTPUT_FILE=/tmp/gllvm.log
+```
+
