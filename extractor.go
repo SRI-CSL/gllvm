@@ -128,6 +128,9 @@ func parseExtractingArgs(args []string) ExtractingArgs {
             ea.ArArgs = append(ea.ArArgs, "-v")
         }
         ea.ObjectTypeInArchive = FT_MACH_OBJECT
+    default:
+        log.Fatal("Unsupported platform: ", platform)
+    }
 
     // Create output filename if not given
     if ea.OutputFile == "" {
@@ -142,10 +145,6 @@ func parseExtractingArgs(args []string) ExtractingArgs {
         } else {
             ea.OutputFile = ea.InputFile + ".bc"
         }
-    }
-
-    default:
-        log.Fatal("Unsupported platform: ", platform)
     }
 
     return ea
@@ -303,7 +302,6 @@ func resolveBitcodePath(bcPath string) string {
     } else {
         return bcPath
     }
-    return ""
 }
 
 func getFileType(realPath string) (fileType int) {

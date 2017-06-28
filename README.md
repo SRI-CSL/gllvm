@@ -35,9 +35,9 @@ gllvm currently works with clang.
 
 #### Requirements
 
-You need the Go compiler to compile gllvm, and the clang/clang++ executables
-to use gllvm. Follow the instructions here to get started:
-https://golang.org/doc/install.
+You need the Go compiler to compile gllvm, and both the clang/clang++
+executables and the llvm tools -- llvm-link, llvm-ar -- to use gllvm. Follow
+the instructions here to get started: https://golang.org/doc/install.
 
 As for now, let us name `$GOROOT` your root Go path that you can obtain by
 typing `go env GOPATH` in a terminal session -- it is usually `$HOME/go`
@@ -174,7 +174,7 @@ original path, and the store path.
 
 
 The GLLVM tools can show various levels of output to aid with debugging.
-To show this output set the `GLLVM_OUTPUT_LEVEL` environment 
+To show this output set the `GLLVM_OUTPUT_LEVEL` environment
 variable to one of the following levels:
 
  * `ERROR`
@@ -187,10 +187,9 @@ For example:
     export GLLVM_OUTPUT_LEVEL=DEBUG
 ```
 Output will be directed to the standard error stream, unless you specify the
-path of a logfile via the `GLLVM_OUTPUT_FILE` environment variable. 
+path of a logfile via the `GLLVM_OUTPUT_FILE` environment variable.
 
 For example:
 ```
     export GLLVM_OUTPUT_FILE=/tmp/gllvm.log
 ```
-
