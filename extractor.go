@@ -23,7 +23,7 @@ type ExtractingArgs struct {
     ArchiverName string
     ArArgs []string
     ObjectTypeInArchive int // Type of file that can be put into an archive
-    Extractor func(string) string
+    Extractor func(string) []string
     IsVerbose bool
     IsWriteManifest bool
     IsBuildBitcodeArchive bool
@@ -151,13 +151,16 @@ func parseExtractingArgs(args []string) ExtractingArgs {
 }
 
 func handleExecutable(ea ExtractingArgs) {
-    artifactPath := ea.Extractor(ea.InputFile)
-    filesToLink := []string{resolveBitcodePath(artifactPath)}
+    artifactPaths := ea.Extractor(ea.InputFile)
+    filesToLink := make([]string, len(artifactPaths))
+    for i, artPath := range artifactPaths {
+        filesToLink[i] = resolveBitcodePath(artPath)
+    }
     extractTimeLinkFiles(ea, filesToLink)
 
     // Write manifest
     if ea.IsWriteManifest {
-        writeManifest(ea, filesToLink, []string{artifactPath})
+        writeManifest(ea, filesToLink, artifactPaths)
     }
 }
 
@@ -186,10 +189,12 @@ func handleArchive(ea ExtractingArgs) {
         if err == nil && !info.IsDir() {
             ft := getFileType(path)
             if ft == ea.ObjectTypeInArchive {
-                artifactPath := ea.Extractor(path)
-                bcPath := resolveBitcodePath(artifactPath)
-                bcFiles = append(bcFiles, bcPath)
-                artifactFiles = append(artifactFiles, artifactPath)
+                artifactPaths := ea.Extractor(path)
+                for _, artPath := range artifactPaths {
+                    bcPath := resolveBitcodePath(artPath)
+                    bcFiles = append(bcFiles, bcPath)
+                }
+                artifactFiles = append(artifactFiles, artifactPaths...)
             }
         }
         return nil
@@ -247,7 +252,7 @@ func extractTimeLinkFiles(ea ExtractingArgs, filesToLink []string) {
     fmt.Println("Bitcode file extracted to", ea.OutputFile)
 }
 
-func extractSectionDarwin(inputFile string) (contents string) {
+func extractSectionDarwin(inputFile string) (contents []string) {
     cmd := exec.Command("otool", "-X", "-s", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, inputFile)
     out, err := cmd.Output()
     if err != nil {
@@ -269,17 +274,17 @@ func extractSectionDarwin(inputFile string) (contents string) {
             octets = append(octets, dst...)
         }
     }
-    contents = strings.TrimSuffix(string(octets), "\n")
+    contents = strings.Split(strings.TrimSuffix(string(octets), "\n"), "\n")
     return
 }
 
-func extractSectionUnix(inputFile string) (contents string) {
+func extractSectionUnix(inputFile string) (contents []string) {
     cmd := exec.Command("objcopy", "--dump-section", ELF_SECTION_NAME + "=/dev/stdout", inputFile)
     out, err := cmd.Output()
     if err != nil {
         log.Fatal("There was an error reading the contents of ", inputFile, ". Make sure that the 'objcopy' command is installed.")
     }
-    contents = strings.TrimSuffix(string(out), "\n")
+    contents = strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")
     return
 }
 
