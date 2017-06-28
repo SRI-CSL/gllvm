@@ -8,11 +8,10 @@ import (
     "path"
     "path/filepath"
     "strings"
-    "regexp"
-    "encoding/hex"
     "io/ioutil"
     "fmt"
-    "reflect"
+    "debug/macho"
+    "debug/elf"
 )
 
 type ExtractingArgs struct {
@@ -253,38 +252,30 @@ func extractTimeLinkFiles(ea ExtractingArgs, filesToLink []string) {
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
-    cmd := exec.Command("otool", "-X", "-s", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, inputFile)
-    out, err := cmd.Output()
+    machoFile, err := macho.Open(inputFile)
     if err != nil {
-        log.Fatal("There was an error extracting the gllvm section from ", inputFile, ". Make sure that the 'otool' command is installed.")
+        log.Fatal("Mach-O file ", inputFile, " could not be read.")
     }
-	//FIXME: ok this looks all wrong. need to deal with out properly and the go way, whatever that may be.
-	logDebug("extractSectionDarwin: T(out) = %v \n", reflect.TypeOf(out))
-	logDebug("extractSectionDarwin: out = %v \n", out)
-    sectionLines := strings.Split(string(out), "\n")
-	logDebug("extractSectionDarwin: sectionLines = %v\n", out)
-    regExp := regexp.MustCompile(`^(?:[0-9a-f]{8,16}\t)?([0-9a-f\s]+)$`)
-    var octets []byte
-
-    for _, line := range sectionLines {
-        if matches := regExp.FindStringSubmatch(line); matches != nil {
-            hexline := []byte(strings.Join(strings.Split(matches[1], " "), ""))
-            dst := make([]byte, hex.DecodedLen(len(hexline)))
-            hex.Decode(dst, hexline)
-            octets = append(octets, dst...)
-        }
+    section := machoFile.Section(DARWIN_SECTION_NAME)
+    sectionContents, errContents := section.Data()
+    if errContents != nil {
+        log.Fatal("Error reading the ", DARWIN_SECTION_NAME, " section of Mach-O file ", inputFile, ".")
     }
-    contents = strings.Split(strings.TrimSuffix(string(octets), "\n"), "\n")
+    contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
     return
 }
 
 func extractSectionUnix(inputFile string) (contents []string) {
-    cmd := exec.Command("objcopy", "--dump-section", ELF_SECTION_NAME + "=/dev/stdout", inputFile)
-    out, err := cmd.Output()
+    elfFile, err := elf.Open(inputFile)
     if err != nil {
-        log.Fatal("There was an error reading the contents of ", inputFile, ". Make sure that the 'objcopy' command is installed.")
+        log.Fatal("ELF file ", inputFile, " could not be read.")
     }
-    contents = strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")
+    section := elfFile.Section(ELF_SECTION_NAME)
+    sectionContents, errContents := section.Data()
+    if errContents != nil {
+        log.Fatal("Error reading the ", ELF_SECTION_NAME, " section of ELF file ", inputFile, ".")
+    }
+    contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
     return
 }
 
