@@ -14,16 +14,18 @@ const (
 	debug_v
 )
 
-var loggingLevelEnvVar = "GLLVM_OUTPUT_LEVEL"
-var loggingFileEnvVar = "GLLVM_OUTPUT_FILE"
-
+//move these to constants.go
+const (
+	loggingLevelEnvVar = "GLLVM_OUTPUT_LEVEL"
+	loggingFileEnvVar = "GLLVM_OUTPUT_FILE"
+)
 
 var loggingLevels = map[string]int{
 	"ERROR":    error_v,
 	"WARNING":  warning_v,
 	"INFO":     info_v,
 	"DEBUG":    debug_v,
-}
+	}
 
 
 var level = 0

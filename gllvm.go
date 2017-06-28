@@ -10,9 +10,6 @@ func main() {
     var callerName = args[0]
     args = args[1:]
 
-	logDebug("DEBUG: this is two: %v\n", 2)
-	logInfo("INFO: this is two: %v\n", 2)
-
     switch callerName {
     case "gclang":
         compile(args, "clang")
@@ -21,6 +18,6 @@ func main() {
     case "get-bc":
         extract(args)
     default:
-        logError("You should call gowllvm with a valid mode.")
+        logError("You should call %s with a valid name.", callerName)
     }
 }
