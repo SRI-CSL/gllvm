@@ -291,7 +291,7 @@ func resolveBitcodePath(bcPath string) string {
 			return storeBcPath
 		}
 		return ""
-	} 
+	}
 	return bcPath
 }
 
