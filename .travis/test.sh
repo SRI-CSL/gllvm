@@ -3,7 +3,7 @@
 set -e
 
 
-export PATH=${HOME}/gopath/bin:/usr/lib/llvm-3.8/bin:${PATH}
+export PATH=/usr/lib/llvm-3.8/bin:${PATH}
 export GLLVM_OUTPUT_LEVEL=WARNING
 
 #currently the musllvm build fails with

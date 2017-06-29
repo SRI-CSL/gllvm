@@ -1,19 +1,19 @@
 package main
 
 import (
-	"os"
+	"io"
 	"io/ioutil"
 	"log"
-	"strings"
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
-	"io"
+	"strings"
 	"sync"
 )
 
 type BitcodeToObjectLink struct {
-	bcPath string
+	bcPath  string
 	objPath string
 }
 
@@ -87,7 +87,7 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 func attachBitcodePathToObject(bcFile, objFile string) {
 	// We can only attach a bitcode path to certain file types
 	switch filepath.Ext(objFile) {
-		case
+	case
 		".o",
 		".lo",
 		".os",
@@ -95,7 +95,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		".po":
 		// Store bitcode path to temp file
 		var absBcPath, _ = filepath.Abs(bcFile)
-		tmpContent := []byte(absBcPath+"\n")
+		tmpContent := []byte(absBcPath + "\n")
 		tmpFile, err := ioutil.TempFile("", "gllvm")
 		if err != nil {
 			log.Fatal(err)
@@ -116,7 +116,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DARWIN_SEGMENT_NAME, DARWIN_SECTION_NAME, tmpFile.Name(), "-o", objFile}
 		} else {
 			attachCmd = "objcopy"
-			attachCmdArgs = []string{"--add-section", ELF_SECTION_NAME+"="+tmpFile.Name(), objFile}
+			attachCmdArgs = []string{"--add-section", ELF_SECTION_NAME + "=" + tmpFile.Name(), objFile}
 		}
 
 		// Run the attach command and ignore errors
@@ -128,7 +128,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 			in, _ := os.Open(absBcPath)
 			defer in.Close()
 			out, _ := os.Create(destFilePath)
-			defer  out.Close()
+			defer out.Close()
 			io.Copy(out, in)
 			out.Sync()
 		}

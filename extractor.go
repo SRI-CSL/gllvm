@@ -1,30 +1,30 @@
 package main
 
 import (
+	"debug/elf"
+	"debug/macho"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
-	"log"
-	"runtime"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
-	"io/ioutil"
-	"fmt"
-	"debug/macho"
-	"debug/elf"
 )
 
 type ExtractingArgs struct {
-	InputFile string
-	InputType int
-	OutputFile string
-	LinkerName string
-	ArchiverName string
-	ArArgs []string
-	ObjectTypeInArchive int // Type of file that can be put into an archive
-	Extractor func(string) []string
-	IsVerbose bool
-	IsWriteManifest bool
+	InputFile             string
+	InputType             int
+	OutputFile            string
+	LinkerName            string
+	ArchiverName          string
+	ArArgs                []string
+	ObjectTypeInArchive   int // Type of file that can be put into an archive
+	Extractor             func(string) []string
+	IsVerbose             bool
+	IsWriteManifest       bool
 	IsBuildBitcodeArchive bool
 }
 
@@ -32,27 +32,25 @@ func extract(args []string) {
 	ea := parseExtractingArgs(args)
 
 	switch ea.InputType {
-		case FT_ELF_EXECUTABLE,
+	case FT_ELF_EXECUTABLE,
 		FT_ELF_SHARED,
 		FT_ELF_OBJECT,
 		FT_MACH_EXECUTABLE,
 		FT_MACH_SHARED,
-	FT_MACH_OBJECT:
+		FT_MACH_OBJECT:
 		handleExecutable(ea)
-        case FT_ARCHIVE:
+	case FT_ARCHIVE:
 		handleArchive(ea)
-        default:
+	default:
 		log.Fatal("Incorrect input file type.")
 	}
 
 }
 
-
-
 func parseExtractingArgs(args []string) ExtractingArgs {
 	// Initializing args to defaults
 	ea := ExtractingArgs{
-		LinkerName: "llvm-link",
+		LinkerName:   "llvm-link",
 		ArchiverName: "llvm-ar",
 	}
 
