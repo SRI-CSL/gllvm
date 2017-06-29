@@ -181,16 +181,14 @@ func getCompilerExecName(compilerName string) string {
 		var clangName = os.Getenv(C_COMPILER_NAME)
 		if clangName != "" {
 			return compilerPath + clangName
-		} else {
-			return compilerPath + compilerName
 		}
+		return compilerPath + compilerName
 	case "clang++":
 		var clangppName = os.Getenv(C_COMPILER_NAME)
 		if clangppName != "" {
 			return compilerPath + clangppName
-		} else {
-			return compilerPath + compilerName
 		}
+		return compilerPath + compilerName
 	default:
 		log.Fatal("The compiler ", compilerName, " is not supported by this tool.")
 		return ""

@@ -11,9 +11,5 @@ func execCmd(cmdExecName string, args []string, workingDir string) bool {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = workingDir
-	if cmd.Run() == nil {
-		return false
-	} else {
-		return true
-	}
+	return cmd.Run() != nil
 }

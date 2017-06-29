@@ -287,9 +287,8 @@ func resolveBitcodePath(bcPath string) string {
 			storeBcPath := path.Join(bcStorePath, getHashedPath(absBcPath))
 			if _, err := os.Stat(storeBcPath); os.IsNotExist(err) {
 				return ""
-			} else {
-				return storeBcPath
 			}
+			return storeBcPath
 		} else {
 			return ""
 		}
