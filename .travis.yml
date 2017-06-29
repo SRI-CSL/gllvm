@@ -1,0 +1,17 @@
+language: go
+
+sudo: required
+dist: trusty
+
+go:
+  - master
+
+
+install:
+  - sudo apt-get update
+  - sudo apt-get install -y llvm-3.8 clang-3.8
+  - make install
+
+script:
+  - ./.travis/test.sh
+  

@@ -1,5 +1,7 @@
 # Go Whole Program LLVM
 
+[![Build Status](https://travis-ci.org/SRI-CSL/gllvm.svg?branch=master)](https://travis-ci.org/SRI-CSL/gllvm)
+
 
 ## Overview
 
