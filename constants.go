@@ -1,6 +1,6 @@
 package main
 
-const(
+const (
 	// Environment variables
 	CONFIGURE_ONLY    = "GLLVM_CONFIGURE_ONLY"
 	TOOLS_PATH        = "GLLVM_TOOLS_PATH"
@@ -14,7 +14,6 @@ const(
 	ELF_SECTION_NAME    = ".llvm_bc"
 	DARWIN_SEGMENT_NAME = "__WLLVM"
 	DARWIN_SECTION_NAME = "__llvm_bc"
-
 )
 
 const (

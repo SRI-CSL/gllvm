@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"os"
 	"path"
 )

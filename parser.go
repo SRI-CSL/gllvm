@@ -1,34 +1,34 @@
 package main
 
-import(
-	"fmt"
-	"regexp"
-	"runtime"
-	"path"
-	"path/filepath"
-	"strings"
+import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"path"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"strings"
 )
 
 type ParserResult struct {
-	InputList []string
-	InputFiles []string
-	ObjectFiles []string
-	OutputFilename string
-	CompileArgs []string
-	LinkArgs []string
-	IsVerbose bool
+	InputList        []string
+	InputFiles       []string
+	ObjectFiles      []string
+	OutputFilename   string
+	CompileArgs      []string
+	LinkArgs         []string
+	IsVerbose        bool
 	IsDependencyOnly bool
 	IsPreprocessOnly bool
-	IsAssembleOnly bool
-	IsAssembly bool
-	IsCompileOnly bool
-	IsEmitLLVM bool
+	IsAssembleOnly   bool
+	IsAssembly       bool
+	IsCompileOnly    bool
+	IsEmitLLVM       bool
 }
 
 type FlagInfo struct {
-	arity int
+	arity   int
 	handler func(string, []string)
 }
 
@@ -37,161 +37,161 @@ func parse(argList []string) ParserResult {
 	pr.InputList = argList
 
 	var argsExactMatches = map[string]FlagInfo{
-		"-o": FlagInfo{1, pr.outputFileCallback},
-		"-c": FlagInfo{0, pr.compileOnlyCallback},
-		"-E": FlagInfo{0, pr.preprocessOnlyCallback},
-		"-S": FlagInfo{0, pr.assembleOnlyCallback},
+		"-o": {1, pr.outputFileCallback},
+		"-c": {0, pr.compileOnlyCallback},
+		"-E": {0, pr.preprocessOnlyCallback},
+		"-S": {0, pr.assembleOnlyCallback},
 
-		"--verbose": FlagInfo{0, pr.verboseFlagCallback},
-		"--param": FlagInfo{1, pr.defaultBinaryCallback},
-		"-aux-info": FlagInfo{1, pr.defaultBinaryCallback},
+		"--verbose": {0, pr.verboseFlagCallback},
+		"--param":   {1, pr.defaultBinaryCallback},
+		"-aux-info": {1, pr.defaultBinaryCallback},
 
-		"--version": FlagInfo{0, pr.compileOnlyCallback},
-		"-v": FlagInfo{0, pr.compileOnlyCallback},
+		"--version": {0, pr.compileOnlyCallback},
+		"-v":        {0, pr.compileOnlyCallback},
 
-		"-w": FlagInfo{0, pr.compileOnlyCallback},
-		"-W": FlagInfo{0, pr.compileOnlyCallback},
+		"-w": {0, pr.compileOnlyCallback},
+		"-W": {0, pr.compileOnlyCallback},
 
-		"-emit-llvm": FlagInfo{0, pr.emitLLVMCallback},
+		"-emit-llvm": {0, pr.emitLLVMCallback},
 
-		"-pipe": FlagInfo{0, pr.compileUnaryCallback},
-		"-undef": FlagInfo{0, pr.compileUnaryCallback},
-		"-nostdinc": FlagInfo{0, pr.compileUnaryCallback},
-		"-nostdinc++": FlagInfo{0, pr.compileUnaryCallback},
-		"-Qunused-arguments": FlagInfo{0, pr.compileUnaryCallback},
-		"-no-integrated-as": FlagInfo{0, pr.compileUnaryCallback},
-		"-integrated-as": FlagInfo{0, pr.compileUnaryCallback},
+		"-pipe":              {0, pr.compileUnaryCallback},
+		"-undef":             {0, pr.compileUnaryCallback},
+		"-nostdinc":          {0, pr.compileUnaryCallback},
+		"-nostdinc++":        {0, pr.compileUnaryCallback},
+		"-Qunused-arguments": {0, pr.compileUnaryCallback},
+		"-no-integrated-as":  {0, pr.compileUnaryCallback},
+		"-integrated-as":     {0, pr.compileUnaryCallback},
 
-		"-pthread": FlagInfo{0, pr.compileUnaryCallback},
-		"-nostdlibinc": FlagInfo{0, pr.compileUnaryCallback},
+		"-pthread":     {0, pr.compileUnaryCallback},
+		"-nostdlibinc": {0, pr.compileUnaryCallback},
 
-		"-mno-omit-leaf-frame-pointer": FlagInfo{0, pr.compileUnaryCallback},
-		"-maes": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-aes": FlagInfo{0, pr.compileUnaryCallback},
-		"-mavx": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-avx": FlagInfo{0, pr.compileUnaryCallback},
-		"-mcmodel=kernel": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-red-zone": FlagInfo{0, pr.compileUnaryCallback},
-		"-mmmx": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-mmx": FlagInfo{0, pr.compileUnaryCallback},
-		"-msse": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-sse2": FlagInfo{0, pr.compileUnaryCallback},
-		"-msse2": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-sse3": FlagInfo{0, pr.compileUnaryCallback},
-		"-msse3": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-sse": FlagInfo{0, pr.compileUnaryCallback},
-		"-msoft-float": FlagInfo{0, pr.compileUnaryCallback},
-		"-m3dnow": FlagInfo{0, pr.compileUnaryCallback},
-		"-mno-3dnow": FlagInfo{0, pr.compileUnaryCallback},
-		"-m32": FlagInfo{0, pr.compileUnaryCallback},
-		"-m64": FlagInfo{0, pr.compileUnaryCallback},
-		"-mstackrealign": FlagInfo{0, pr.compileUnaryCallback},
+		"-mno-omit-leaf-frame-pointer": {0, pr.compileUnaryCallback},
+		"-maes":           {0, pr.compileUnaryCallback},
+		"-mno-aes":        {0, pr.compileUnaryCallback},
+		"-mavx":           {0, pr.compileUnaryCallback},
+		"-mno-avx":        {0, pr.compileUnaryCallback},
+		"-mcmodel=kernel": {0, pr.compileUnaryCallback},
+		"-mno-red-zone":   {0, pr.compileUnaryCallback},
+		"-mmmx":           {0, pr.compileUnaryCallback},
+		"-mno-mmx":        {0, pr.compileUnaryCallback},
+		"-msse":           {0, pr.compileUnaryCallback},
+		"-mno-sse2":       {0, pr.compileUnaryCallback},
+		"-msse2":          {0, pr.compileUnaryCallback},
+		"-mno-sse3":       {0, pr.compileUnaryCallback},
+		"-msse3":          {0, pr.compileUnaryCallback},
+		"-mno-sse":        {0, pr.compileUnaryCallback},
+		"-msoft-float":    {0, pr.compileUnaryCallback},
+		"-m3dnow":         {0, pr.compileUnaryCallback},
+		"-mno-3dnow":      {0, pr.compileUnaryCallback},
+		"-m32":            {0, pr.compileUnaryCallback},
+		"-m64":            {0, pr.compileUnaryCallback},
+		"-mstackrealign":  {0, pr.compileUnaryCallback},
 
-		"-A": FlagInfo{1, pr.compileBinaryCallback},
-		"-D": FlagInfo{1, pr.compileBinaryCallback},
-		"-U": FlagInfo{1, pr.compileBinaryCallback},
+		"-A": {1, pr.compileBinaryCallback},
+		"-D": {1, pr.compileBinaryCallback},
+		"-U": {1, pr.compileBinaryCallback},
 
-		"-M"  : FlagInfo{0, pr.dependencyOnlyCallback},
-		"-MM": FlagInfo{0, pr.dependencyOnlyCallback},
-		"-MF": FlagInfo{1, pr.dependencyBinaryCallback},
-		"-MG": FlagInfo{0, pr.dependencyOnlyCallback},
-		"-MP": FlagInfo{0, pr.dependencyOnlyCallback},
-		"-MT": FlagInfo{1, pr.dependencyBinaryCallback},
-		"-MQ": FlagInfo{1, pr.dependencyBinaryCallback},
-		"-MD": FlagInfo{0, pr.dependencyOnlyCallback},
-		"-MMD": FlagInfo{0, pr.dependencyOnlyCallback},
+		"-M":   {0, pr.dependencyOnlyCallback},
+		"-MM":  {0, pr.dependencyOnlyCallback},
+		"-MF":  {1, pr.dependencyBinaryCallback},
+		"-MG":  {0, pr.dependencyOnlyCallback},
+		"-MP":  {0, pr.dependencyOnlyCallback},
+		"-MT":  {1, pr.dependencyBinaryCallback},
+		"-MQ":  {1, pr.dependencyBinaryCallback},
+		"-MD":  {0, pr.dependencyOnlyCallback},
+		"-MMD": {0, pr.dependencyOnlyCallback},
 
-		"-I": FlagInfo{1, pr.compileBinaryCallback},
-		"-idirafter": FlagInfo{1, pr.compileBinaryCallback},
-		"-include": FlagInfo{1, pr.compileBinaryCallback},
-		"-imacros": FlagInfo{1, pr.compileBinaryCallback},
-		"-iprefix": FlagInfo{1, pr.compileBinaryCallback},
-		"-iwithprefix": FlagInfo{1, pr.compileBinaryCallback},
-		"-iwithprefixbefore": FlagInfo{1, pr.compileBinaryCallback},
-		"-isystem": FlagInfo{1, pr.compileBinaryCallback},
-		"-isysroot": FlagInfo{1, pr.compileBinaryCallback},
-		"-iquote": FlagInfo{1, pr.compileBinaryCallback},
-		"-imultilib": FlagInfo{1, pr.compileBinaryCallback},
+		"-I":                 {1, pr.compileBinaryCallback},
+		"-idirafter":         {1, pr.compileBinaryCallback},
+		"-include":           {1, pr.compileBinaryCallback},
+		"-imacros":           {1, pr.compileBinaryCallback},
+		"-iprefix":           {1, pr.compileBinaryCallback},
+		"-iwithprefix":       {1, pr.compileBinaryCallback},
+		"-iwithprefixbefore": {1, pr.compileBinaryCallback},
+		"-isystem":           {1, pr.compileBinaryCallback},
+		"-isysroot":          {1, pr.compileBinaryCallback},
+		"-iquote":            {1, pr.compileBinaryCallback},
+		"-imultilib":         {1, pr.compileBinaryCallback},
 
-		"-ansi": FlagInfo{0, pr.compileUnaryCallback},
-		"-pedantic": FlagInfo{0, pr.compileUnaryCallback},
-		"-x": FlagInfo{1, pr.compileBinaryCallback},
+		"-ansi":     {0, pr.compileUnaryCallback},
+		"-pedantic": {0, pr.compileUnaryCallback},
+		"-x":        {1, pr.compileBinaryCallback},
 
-		"-g": FlagInfo{0, pr.compileUnaryCallback},
-		"-g0": FlagInfo{0, pr.compileUnaryCallback},
-		"-ggdb": FlagInfo{0, pr.compileUnaryCallback},
-		"-ggdb3": FlagInfo{0, pr.compileUnaryCallback},
-		"-gdwarf-2": FlagInfo{0, pr.compileUnaryCallback},
-		"-gdwarf-3": FlagInfo{0, pr.compileUnaryCallback},
-		"-gline-tables-only": FlagInfo{0, pr.compileUnaryCallback},
+		"-g":                 {0, pr.compileUnaryCallback},
+		"-g0":                {0, pr.compileUnaryCallback},
+		"-ggdb":              {0, pr.compileUnaryCallback},
+		"-ggdb3":             {0, pr.compileUnaryCallback},
+		"-gdwarf-2":          {0, pr.compileUnaryCallback},
+		"-gdwarf-3":          {0, pr.compileUnaryCallback},
+		"-gline-tables-only": {0, pr.compileUnaryCallback},
 
-		"-p": FlagInfo{0, pr.compileUnaryCallback},
-		"-pg": FlagInfo{0, pr.compileUnaryCallback},
+		"-p":  {0, pr.compileUnaryCallback},
+		"-pg": {0, pr.compileUnaryCallback},
 
-		"-O": FlagInfo{0, pr.compileUnaryCallback},
-		"-O0": FlagInfo{0, pr.compileUnaryCallback},
-		"-O1": FlagInfo{0, pr.compileUnaryCallback},
-		"-O2": FlagInfo{0, pr.compileUnaryCallback},
-		"-O3": FlagInfo{0, pr.compileUnaryCallback},
-		"-Os": FlagInfo{0, pr.compileUnaryCallback},
-		"-Ofast": FlagInfo{0, pr.compileUnaryCallback},
-		"-Og": FlagInfo{0, pr.compileUnaryCallback},
+		"-O":     {0, pr.compileUnaryCallback},
+		"-O0":    {0, pr.compileUnaryCallback},
+		"-O1":    {0, pr.compileUnaryCallback},
+		"-O2":    {0, pr.compileUnaryCallback},
+		"-O3":    {0, pr.compileUnaryCallback},
+		"-Os":    {0, pr.compileUnaryCallback},
+		"-Ofast": {0, pr.compileUnaryCallback},
+		"-Og":    {0, pr.compileUnaryCallback},
 
-		"-Xclang": FlagInfo{1, pr.compileBinaryCallback},
-		"-Xpreprocessor": FlagInfo{1, pr.defaultBinaryCallback},
-		"-Xassembler": FlagInfo{1, pr.defaultBinaryCallback},
-		"-Xlinker": FlagInfo{1, pr.defaultBinaryCallback},
+		"-Xclang":        {1, pr.compileBinaryCallback},
+		"-Xpreprocessor": {1, pr.defaultBinaryCallback},
+		"-Xassembler":    {1, pr.defaultBinaryCallback},
+		"-Xlinker":       {1, pr.defaultBinaryCallback},
 
-		"-l": FlagInfo{1, pr.linkBinaryCallback},
-		"-L": FlagInfo{1, pr.linkBinaryCallback},
-		"-T": FlagInfo{1, pr.linkBinaryCallback},
-		"-u": FlagInfo{1, pr.linkBinaryCallback},
+		"-l": {1, pr.linkBinaryCallback},
+		"-L": {1, pr.linkBinaryCallback},
+		"-T": {1, pr.linkBinaryCallback},
+		"-u": {1, pr.linkBinaryCallback},
 
-		"-e": FlagInfo{1, pr.linkBinaryCallback},
-		"-rpath": FlagInfo{1, pr.linkBinaryCallback},
+		"-e":     {1, pr.linkBinaryCallback},
+		"-rpath": {1, pr.linkBinaryCallback},
 
-		"-shared": FlagInfo{0, pr.linkUnaryCallback},
-		"-static": FlagInfo{0, pr.linkUnaryCallback},
-		"-pie": FlagInfo{0, pr.linkUnaryCallback},
-		"-nostdlib": FlagInfo{0, pr.linkUnaryCallback},
-		"-nodefaultlibs": FlagInfo{0, pr.linkUnaryCallback},
-		"-rdynamic": FlagInfo{0, pr.linkUnaryCallback},
+		"-shared":        {0, pr.linkUnaryCallback},
+		"-static":        {0, pr.linkUnaryCallback},
+		"-pie":           {0, pr.linkUnaryCallback},
+		"-nostdlib":      {0, pr.linkUnaryCallback},
+		"-nodefaultlibs": {0, pr.linkUnaryCallback},
+		"-rdynamic":      {0, pr.linkUnaryCallback},
 
-		"-dynamiclib": FlagInfo{0, pr.linkUnaryCallback},
-		"-current_version": FlagInfo{1, pr.linkBinaryCallback},
-		"-compatibility_version": FlagInfo{1, pr.linkBinaryCallback},
+		"-dynamiclib":            {0, pr.linkUnaryCallback},
+		"-current_version":       {1, pr.linkBinaryCallback},
+		"-compatibility_version": {1, pr.linkBinaryCallback},
 
-		"-print-multi-directory": FlagInfo{0, pr.compileUnaryCallback},
-		"-print-multi-lib": FlagInfo{0, pr.compileUnaryCallback},
-		"-print-libgcc-file-name": FlagInfo{0, pr.compileUnaryCallback},
+		"-print-multi-directory":  {0, pr.compileUnaryCallback},
+		"-print-multi-lib":        {0, pr.compileUnaryCallback},
+		"-print-libgcc-file-name": {0, pr.compileUnaryCallback},
 
-		"-fprofile-arcs": FlagInfo{0, pr.compileLinkUnaryCallback},
-		"-coverage": FlagInfo{0, pr.compileLinkUnaryCallback},
-		"--coverage": FlagInfo{0, pr.compileLinkUnaryCallback},
+		"-fprofile-arcs": {0, pr.compileLinkUnaryCallback},
+		"-coverage":      {0, pr.compileLinkUnaryCallback},
+		"--coverage":     {0, pr.compileLinkUnaryCallback},
 
-		"-Wl,-dead_strip": FlagInfo{0, pr.darwinWarningLinkUnaryCallback},
+		"-Wl,-dead_strip": {0, pr.darwinWarningLinkUnaryCallback},
 	}
 
 	var argPatterns = map[string]FlagInfo{
-		`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`: FlagInfo{0, pr.inputFileCallback},
-		`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`: FlagInfo{0, pr.inputFileCallback},
-		`^.+\.(o|lo|So|so|po|a|dylib)$`: FlagInfo{0, pr.objectFileCallback},
-		`^.+\.dylib(\.\d)+$`: FlagInfo{0, pr.objectFileCallback},
-		`^.+\.(So|so)(\.\d)+$`: FlagInfo{0, pr.objectFileCallback},
-		`^-(l|L).+$`: FlagInfo{0, pr.linkUnaryCallback},
-		`^-I.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-D.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-U.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-Wl,.+$`: FlagInfo{0, pr.linkUnaryCallback},
-		`^-W.*$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-f.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-rtlib=.+$`: FlagInfo{0, pr.linkUnaryCallback},
-		`^-std=.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-stdlib=.+$`: FlagInfo{0, pr.compileLinkUnaryCallback},
-		`^-mtune=.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^--sysroot=.+$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-print-prog-name=.*$`: FlagInfo{0, pr.compileUnaryCallback},
-		`^-print-file-name=.*$`: FlagInfo{0, pr.compileUnaryCallback},
+		`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`:       {0, pr.inputFileCallback},
+		`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`: {0, pr.inputFileCallback},
+		`^.+\.(o|lo|So|so|po|a|dylib)$`:         {0, pr.objectFileCallback},
+		`^.+\.dylib(\.\d)+$`:                    {0, pr.objectFileCallback},
+		`^.+\.(So|so)(\.\d)+$`:                  {0, pr.objectFileCallback},
+		`^-(l|L).+$`:                            {0, pr.linkUnaryCallback},
+		`^-I.+$`:                                {0, pr.compileUnaryCallback},
+		`^-D.+$`:                                {0, pr.compileUnaryCallback},
+		`^-U.+$`:                                {0, pr.compileUnaryCallback},
+		`^-Wl,.+$`:                              {0, pr.linkUnaryCallback},
+		`^-W.*$`:                                {0, pr.compileUnaryCallback},
+		`^-f.+$`:                                {0, pr.compileUnaryCallback},
+		`^-rtlib=.+$`:                           {0, pr.linkUnaryCallback},
+		`^-std=.+$`:                             {0, pr.compileUnaryCallback},
+		`^-stdlib=.+$`:                          {0, pr.compileLinkUnaryCallback},
+		`^-mtune=.+$`:                           {0, pr.compileUnaryCallback},
+		`^--sysroot=.+$`:                        {0, pr.compileUnaryCallback},
+		`^-print-prog-name=.*$`:                 {0, pr.compileUnaryCallback},
+		`^-print-file-name=.*$`:                 {0, pr.compileUnaryCallback},
 	}
 
 	for len(argList) > 0 && !(pr.IsAssembly || pr.IsAssembleOnly || pr.IsPreprocessOnly) {
