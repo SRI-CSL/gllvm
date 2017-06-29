@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	error_v = iota
-	warning_v
-	info_v
-	debug_v
+	errorV = iota
+	warningV
+	infoV
+	debugV
 )
 
 const (
@@ -19,10 +19,10 @@ const (
 )
 
 var loggingLevels = map[string]int{
-	"ERROR":   error_v,
-	"WARNING": warning_v,
-	"INFO":    info_v,
-	"DEBUG":   debug_v,
+	"ERROR":   errorV,
+	"WARNING": warningV,
+	"INFO":    infoV,
+	"DEBUG":   debugV,
 }
 
 var level = 0
@@ -54,10 +54,10 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 	}
 }
 
-var logDebug = makeLogger(debug_v)
-var logInfo = makeLogger(info_v)
-var logWarning = makeLogger(warning_v)
-var logError = makeLogger(error_v)
+var logDebug = makeLogger(debugV)
+var logInfo = makeLogger(infoV)
+var logWarning = makeLogger(warningV)
+var logError = makeLogger(errorV)
 
 func logFatal(format string, a ...interface{}) {
 	logError(format, a...)
