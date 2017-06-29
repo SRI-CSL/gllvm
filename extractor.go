@@ -289,12 +289,10 @@ func resolveBitcodePath(bcPath string) string {
 				return ""
 			}
 			return storeBcPath
-		} else {
-			return ""
 		}
-	} else {
-		return bcPath
-	}
+		return ""
+	} 
+	return bcPath
 }
 
 func getFileType(realPath string) (fileType int) {
