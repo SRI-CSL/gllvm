@@ -2,12 +2,13 @@ package main
 
 import(
 	"os"
+	"path"
 )
 
 func main() {
 	// Parse command line
 	var args = os.Args
-	var callerName = args[0]
+	_, callerName := path.Split(args[0])
 	args = args[1:]
 
 	switch callerName {
