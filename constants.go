@@ -5,15 +5,23 @@ import (
 )
 
 const (
+	//The name of our ELF section of "bitcode paths".
 	ELFSectionName    = ".llvm_bc"
+	//The name of our MACH-O segment of "bitcode paths".
 	DarwinSegmentName = "__WLLVM"
+	//The name of our MACH-O section of "bitcode paths".
 	DarwinSectionName = "__llvm_bc"
 )
 
+//The user configured directory holding the LLVM binary tools.
 var LLVMToolChainBinDir string
+//The user configured name of the clang compiler.
 var LLVMCCName string
+//The user configured name of the clang++ compiler.
 var LLVMCXXName string
+//The user configured name of the llvm-ar.
 var LLVMARName string
+//The user configured name of the llvm-link.
 var LLVMLINKName string
 
 var ConfigureOnly string
@@ -30,4 +38,3 @@ func init() {
 	ConfigureOnly = os.Getenv("GLLVM_CONFIGURE_ONLY")
 	BitcodeStorePath = os.Getenv("GLLVM_BC_STORE")
 }
-

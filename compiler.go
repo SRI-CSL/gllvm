@@ -119,7 +119,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		}
 
 		// Run the attach command and ignore errors
-		_, err = execCmd(attachCmd, attachCmdArgs, "")
+		execCmd(attachCmd, attachCmdArgs, "")
 
 		// Copy bitcode file to store, if necessary
 		if bcStorePath := os.Getenv(BitcodeStorePath); bcStorePath != "" {
@@ -172,7 +172,7 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup) {
 	defer (*wg).Done()
 	success, err := execCmd(compilerExecName, pr.InputList, "")
-	if  !success {
+	if !success {
 		logFatal("Failed to compile using given arguments: %v\n", err)
 	}
 }

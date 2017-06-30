@@ -45,7 +45,7 @@ func extract(args []string) {
 }
 
 func parseExtractionArgs(args []string) extractionArgs {
-	args_orig := args
+	origArgs := args
 	// Initializing args to defaults
 	ea := extractionArgs{
 		LinkerName:   "llvm-link",
@@ -84,7 +84,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 			args = args[1:]
 		case "-o":
 			if len(args) < 2 {
-				logFatal("There was an error parsing the arguments: %v.", args_orig)
+				logFatal("There was an error parsing the arguments: %v.", origArgs)
 			}
 			ea.OutputFile = args[1]
 			args = args[2:]
@@ -230,7 +230,7 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 		var args []string
 		args = append(args, "rs", absOutputFile)
 		args = append(args, bcFilesInDir...)
-		success, err := execCmd(ea.ArchiverName, args, dir) 
+		success, err := execCmd(ea.ArchiverName, args, dir)
 		if !success {
 			logFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
@@ -297,7 +297,6 @@ func resolveBitcodePath(bcPath string) string {
 	}
 	return bcPath
 }
-
 
 func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) {
 	section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
