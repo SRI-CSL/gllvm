@@ -20,7 +20,7 @@ type bitcodeToObjectLink struct {
 func compile(args []string, compilerName string) {
 	var compilerExecName = getCompilerExecName(compilerName)
 	var configureOnly bool
-	if os.Getenv(envCONFIGUREONLY) != "" {
+	if ConfigureOnly != "" {
 		configureOnly = true
 	}
 	var pr = parse(args)
@@ -123,7 +123,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		_, err = execCmd(attachCmd, attachCmdArgs, "")
 
 		// Copy bitcode file to store, if necessary
-		if bcStorePath := os.Getenv(envBCSTOREPATH); bcStorePath != "" {
+		if bcStorePath := os.Getenv(BitcodeStorePath); bcStorePath != "" {
 			destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
 			in, _ := os.Open(absBcPath)
 			defer in.Close()

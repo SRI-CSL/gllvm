@@ -13,11 +13,6 @@ const (
 	debugV
 )
 
-const (
-	loggingLevelEnvVar = "GLLVM_OUTPUT_LEVEL"
-	loggingFileEnvVar  = "GLLVM_OUTPUT_FILE"
-)
-
 var loggingLevels = map[string]int{
 	"ERROR":   errorV,
 	"WARNING": warningV,
@@ -30,12 +25,12 @@ var level = 0
 var filePointer = os.Stderr
 
 func init() {
-	if envLevelStr := os.Getenv(loggingLevelEnvVar); envLevelStr != "" {
+	if envLevelStr := os.Getenv("GLLVM_OUTPUT_LEVEL"); envLevelStr != "" {
 		if envLevelVal, ok := loggingLevels[envLevelStr]; ok {
 			level = envLevelVal
 		}
 	}
-	if envFileStr := os.Getenv(loggingFileEnvVar); envFileStr != "" {
+	if envFileStr := os.Getenv("GLLVM_OUTPUT_FILE"); envFileStr != "" {
 		if loggingFP, err := os.OpenFile(envFileStr, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err == nil {
 			filePointer = loggingFP
 		}
