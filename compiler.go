@@ -16,7 +16,13 @@ type bitcodeToObjectLink struct {
 	objPath string
 }
 
-func compile(args []string, compilerName string) {
+func compile(args []string, compilerName string) (exitCode int) {
+	exitCode = 0
+	//in the configureOnly case we have to know the exit code of the compile
+	//because that is how configure figures out what it can and cannot do.
+	
+	var ok bool = true
+
 	var compilerExecName = getCompilerExecName(compilerName)
 	var configureOnly bool
 	if ConfigureOnly != "" {
@@ -26,20 +32,33 @@ func compile(args []string, compilerName string) {
 
 	var wg sync.WaitGroup
 	// If configure only is set, just execute the compiler
+
 	if configureOnly {
 		wg.Add(1)
-		go execCompile(compilerExecName, pr, &wg)
+		go execCompile(compilerExecName, pr, &wg, &ok)
 		wg.Wait()
 		// Else try to build bitcode as well
+
+		if !ok {
+			exitCode = 1
+		}
+
 	} else {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
+
 		wg.Add(2)
-		go execCompile(compilerExecName, pr, &wg)
+		go execCompile(compilerExecName, pr, &wg, &ok)
 		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
 		wg.Wait()
 
-		// When objects and bitcode are builtm we can attach bitcode paths
+		//grok the exit code  
+		if !ok {
+			exitCode = 1
+		}
+
+		//FIXME: (if the compile went bad, why are we even trying to do more here)
+		// When objects and bitcode are built we can attach bitcode paths
 		// to object files and link
 		for _, link := range bcObjLinks {
 			attachBitcodePathToObject(link.bcPath, link.objPath)
@@ -48,6 +67,7 @@ func compile(args []string, compilerName string) {
 			compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
 		}
 	}
+	return
 }
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
@@ -169,12 +189,13 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 }
 
 // Tries to build object file
-func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup) {
+func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, ok *bool) {
 	defer (*wg).Done()
 	success, err := execCmd(compilerExecName, pr.InputList, "")
 	if !success {
-		logFatal("Failed to compile using given arguments: %v\n", err)
-	}
+		logError("Failed to compile using given arguments: %v\n", err)
+		*ok = false
+	} 
 }
 
 func getCompilerExecName(compilerName string) string {
