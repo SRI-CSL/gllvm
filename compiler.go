@@ -179,22 +179,19 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup) {
 }
 
 func getCompilerExecName(compilerName string) string {
-	var compilerPath = os.Getenv(envTOOLSPATH)
 	switch compilerName {
 	case "clang":
-		var clangName = os.Getenv(envCCOMPILERNAME)
-		if clangName != "" {
-			return compilerPath + clangName
+		if LLVMCCName != "" {
+			return filepath.Join(LLVMToolChainBinDir, LLVMCCName)
 		}
-		return compilerPath + compilerName
+		return filepath.Join(LLVMToolChainBinDir, compilerName)
 	case "clang++":
-		var clangppName = os.Getenv(envCCOMPILERNAME)
-		if clangppName != "" {
-			return compilerPath + clangppName
+		if LLVMCXXName != "" {
+			return filepath.Join(LLVMToolChainBinDir, LLVMCXXName)
 		}
-		return compilerPath + compilerName
+		return filepath.Join(LLVMToolChainBinDir, compilerName)
 	default:
-		log.Fatal("The compiler ", compilerName, " is not supported by this tool.")
+		logFatal("The compiler %s is not supported by this tool.", compilerName)
 		return ""
 	}
 }
