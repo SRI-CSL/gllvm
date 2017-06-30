@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type ParserResult struct {
+type parserResult struct {
 	InputList        []string
 	InputFiles       []string
 	ObjectFiles      []string
@@ -27,16 +27,16 @@ type ParserResult struct {
 	IsEmitLLVM       bool
 }
 
-type FlagInfo struct {
+type flagInfo struct {
 	arity   int
 	handler func(string, []string)
 }
 
-func parse(argList []string) ParserResult {
-	var pr = ParserResult{}
+func parse(argList []string) parserResult {
+	var pr = parserResult{}
 	pr.InputList = argList
 
-	var argsExactMatches = map[string]FlagInfo{
+	var argsExactMatches = map[string]flagInfo{
 		"-o": {1, pr.outputFileCallback},
 		"-c": {0, pr.compileOnlyCallback},
 		"-E": {0, pr.preprocessOnlyCallback},
@@ -172,7 +172,7 @@ func parse(argList []string) ParserResult {
 		"-Wl,-dead_strip": {0, pr.darwinWarningLinkUnaryCallback},
 	}
 
-	var argPatterns = map[string]FlagInfo{
+	var argPatterns = map[string]flagInfo{
 		`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`:       {0, pr.inputFileCallback},
 		`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`: {0, pr.inputFileCallback},
 		`^.+\.(o|lo|So|so|po|a|dylib)$`:         {0, pr.objectFileCallback},
@@ -220,7 +220,7 @@ func parse(argList []string) ParserResult {
 }
 
 // Return the object and bc filenames that correspond to the i-th source file
-func getArtifactNames(pr ParserResult, srcFileIndex int, hidden bool) (objBase string, bcBase string) {
+func getArtifactNames(pr parserResult, srcFileIndex int, hidden bool) (objBase string, bcBase string) {
 	if len(pr.InputFiles) == 1 && pr.IsCompileOnly && len(pr.OutputFilename) > 0 {
 		objBase = pr.OutputFilename
 		dir, baseName := path.Split(objBase)
@@ -249,7 +249,7 @@ func getHashedPath(path string) string {
 	return hash
 }
 
-func (pr *ParserResult) inputFileCallback(flag string, _ []string) {
+func (pr *parserResult) inputFileCallback(flag string, _ []string) {
 	var regExp = regexp.MustCompile(`\\.(s|S)$`)
 	pr.InputFiles = append(pr.InputFiles, flag)
 	if regExp.MatchString(flag) {
@@ -257,49 +257,49 @@ func (pr *ParserResult) inputFileCallback(flag string, _ []string) {
 	}
 }
 
-func (pr *ParserResult) outputFileCallback(_ string, args []string) {
+func (pr *parserResult) outputFileCallback(_ string, args []string) {
 	pr.OutputFilename = args[0]
 }
 
-func (pr *ParserResult) objectFileCallback(flag string, _ []string) {
+func (pr *parserResult) objectFileCallback(flag string, _ []string) {
 	pr.ObjectFiles = append(pr.ObjectFiles, flag)
 }
 
-func (pr *ParserResult) preprocessOnlyCallback(_ string, _ []string) {
+func (pr *parserResult) preprocessOnlyCallback(_ string, _ []string) {
 	pr.IsPreprocessOnly = true
 }
 
-func (pr *ParserResult) dependencyOnlyCallback(flag string, _ []string) {
+func (pr *parserResult) dependencyOnlyCallback(flag string, _ []string) {
 	pr.IsDependencyOnly = true
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }
 
-func (pr *ParserResult) assembleOnlyCallback(_ string, _ []string) {
+func (pr *parserResult) assembleOnlyCallback(_ string, _ []string) {
 	pr.IsAssembleOnly = true
 }
 
-func (pr *ParserResult) verboseFlagCallback(_ string, _ []string) {
+func (pr *parserResult) verboseFlagCallback(_ string, _ []string) {
 	pr.IsVerbose = true
 }
 
-func (pr *ParserResult) compileOnlyCallback(_ string, _ []string) {
+func (pr *parserResult) compileOnlyCallback(_ string, _ []string) {
 	pr.IsCompileOnly = true
 }
 
-func (pr *ParserResult) emitLLVMCallback(_ string, _ []string) {
+func (pr *parserResult) emitLLVMCallback(_ string, _ []string) {
 	pr.IsCompileOnly = true
 	pr.IsEmitLLVM = true
 }
 
-func (pr *ParserResult) linkUnaryCallback(flag string, _ []string) {
+func (pr *parserResult) linkUnaryCallback(flag string, _ []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag)
 }
 
-func (pr *ParserResult) compileUnaryCallback(flag string, _ []string) {
+func (pr *parserResult) compileUnaryCallback(flag string, _ []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }
 
-func (pr *ParserResult) darwinWarningLinkUnaryCallback(flag string, _ []string) {
+func (pr *parserResult) darwinWarningLinkUnaryCallback(flag string, _ []string) {
 	if runtime.GOOS == "darwin" {
 		fmt.Println("The flag", flag, "cannot be used with this tool.")
 	} else {
@@ -307,24 +307,24 @@ func (pr *ParserResult) darwinWarningLinkUnaryCallback(flag string, _ []string) 
 	}
 }
 
-func (_ *ParserResult) defaultBinaryCallback(_ string, _ []string) {
+func (pr *parserResult) defaultBinaryCallback(_ string, _ []string) {
 	// Do nothing
 }
 
-func (pr *ParserResult) dependencyBinaryCallback(flag string, args []string) {
+func (pr *parserResult) dependencyBinaryCallback(flag string, args []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag, args[0])
 	pr.IsDependencyOnly = true
 }
 
-func (pr *ParserResult) compileBinaryCallback(flag string, args []string) {
+func (pr *parserResult) compileBinaryCallback(flag string, args []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag, args[0])
 }
 
-func (pr *ParserResult) linkBinaryCallback(flag string, args []string) {
+func (pr *parserResult) linkBinaryCallback(flag string, args []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag, args[0])
 }
 
-func (pr *ParserResult) compileLinkUnaryCallback(flag string, _ []string) {
+func (pr *parserResult) compileLinkUnaryCallback(flag string, _ []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag)
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }

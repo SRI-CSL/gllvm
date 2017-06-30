@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-type ExtractingArgs struct {
+type extractionArgs struct {
 	InputFile             string
 	InputType             int
 	OutputFile            string
@@ -29,7 +29,7 @@ type ExtractingArgs struct {
 }
 
 func extract(args []string) {
-	ea := parseExtractingArgs(args)
+	ea := parseExtractionArgs(args)
 
 	switch ea.InputType {
 	case FT_ELF_EXECUTABLE,
@@ -47,9 +47,9 @@ func extract(args []string) {
 
 }
 
-func parseExtractingArgs(args []string) ExtractingArgs {
+func parseExtractionArgs(args []string) extractionArgs {
 	// Initializing args to defaults
-	ea := ExtractingArgs{
+	ea := extractionArgs{
 		LinkerName:   "llvm-link",
 		ArchiverName: "llvm-ar",
 	}
@@ -147,7 +147,7 @@ func parseExtractingArgs(args []string) ExtractingArgs {
 	return ea
 }
 
-func handleExecutable(ea ExtractingArgs) {
+func handleExecutable(ea extractionArgs) {
 	artifactPaths := ea.Extractor(ea.InputFile)
 	filesToLink := make([]string, len(artifactPaths))
 	for i, artPath := range artifactPaths {
@@ -161,7 +161,7 @@ func handleExecutable(ea ExtractingArgs) {
 	}
 }
 
-func handleArchive(ea ExtractingArgs) {
+func handleArchive(ea extractionArgs) {
 	// List bitcode files to link
 	var bcFiles []string
 	var artifactFiles []string
@@ -213,7 +213,7 @@ func handleArchive(ea ExtractingArgs) {
 	}
 }
 
-func archiveBcFiles(ea ExtractingArgs, bcFiles []string) {
+func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 	// We do not want full paths in the archive, so we need to chdir into each
 	// bitcode's folder. Handle this by calling llvm-ar once for all bitcode
 	// files in the same directory
@@ -236,7 +236,7 @@ func archiveBcFiles(ea ExtractingArgs, bcFiles []string) {
 	fmt.Println("Built bitcode archive", ea.OutputFile)
 }
 
-func extractTimeLinkFiles(ea ExtractingArgs, filesToLink []string) {
+func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	var linkArgs []string
 	if ea.IsVerbose {
 		linkArgs = append(linkArgs, "-v")
@@ -325,7 +325,7 @@ func getFileType(realPath string) (fileType int) {
 	return
 }
 
-func writeManifest(ea ExtractingArgs, bcFiles []string, artifactFiles []string) {
+func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) {
 	section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
 	section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
 	contents := []byte(section1 + section2)
