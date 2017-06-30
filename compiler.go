@@ -20,7 +20,7 @@ func compile(args []string, compilerName string) (exitCode int) {
 	exitCode = 0
 	//in the configureOnly case we have to know the exit code of the compile
 	//because that is how configure figures out what it can and cannot do.
-	
+
 	var ok bool = true
 
 	var compilerExecName = getCompilerExecName(compilerName)
@@ -52,7 +52,7 @@ func compile(args []string, compilerName string) (exitCode int) {
 		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
 		wg.Wait()
 
-		//grok the exit code  
+		//grok the exit code
 		if !ok {
 			exitCode = 1
 		}
@@ -195,7 +195,7 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, o
 	if !success {
 		logError("Failed to compile using given arguments: %v\n", err)
 		*ok = false
-	} 
+	}
 }
 
 func getCompilerExecName(compilerName string) string {
