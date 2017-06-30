@@ -25,7 +25,8 @@ func main() {
 	}
 
 	logInfo("Calling %v returned %v\n",  os.Args, exitCode)
-	
+
+	//important to pretend to look like the actual wrapped command
 	os.Exit(exitCode)
 
 }
