@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-type BitcodeToObjectLink struct {
+type bitcodeToObjectLink struct {
 	bcPath  string
 	objPath string
 }
@@ -33,7 +33,7 @@ func compile(args []string, compilerName string) {
 		wg.Wait()
 		// Else try to build bitcode as well
 	} else {
-		var bcObjLinks []BitcodeToObjectLink
+		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
 		wg.Add(2)
 		go execCompile(compilerExecName, pr, &wg)
@@ -53,7 +53,7 @@ func compile(args []string, compilerName string) {
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
 // new object files to link
-func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks *[]BitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
+func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
 	defer (*wg).Done()
 	// If nothing to do, exit silently
 	if !pr.IsEmitLLVM && !pr.IsAssembly && !pr.IsAssembleOnly &&
@@ -64,7 +64,7 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 			var srcFile = pr.InputFiles[0]
 			objFile, bcFile := getArtifactNames(pr, 0, hidden)
 			buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
-			*bcObjLinks = append(*bcObjLinks, BitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
+			*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
 		} else {
 			for i, srcFile := range pr.InputFiles {
 				objFile, bcFile := getArtifactNames(pr, i, hidden)
@@ -73,10 +73,10 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 					*newObjectFiles = append(*newObjectFiles, objFile)
 				}
 				if strings.HasSuffix(srcFile, ".bc") {
-					*bcObjLinks = append(*bcObjLinks, BitcodeToObjectLink{bcPath: srcFile, objPath: objFile})
+					*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: srcFile, objPath: objFile})
 				} else {
 					buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
-					*bcObjLinks = append(*bcObjLinks, BitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
+					*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
 				}
 			}
 		}
