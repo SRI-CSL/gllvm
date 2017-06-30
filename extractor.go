@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -32,14 +31,14 @@ func extract(args []string) {
 	ea := parseExtractionArgs(args)
 
 	switch ea.InputType {
-	case ftELFEXECUTABLE,
-		ftELFSHARED,
-		ftELFOBJECT,
-		ftMACHEXECUTABLE,
-		ftMACHSHARED,
-		ftMACHOBJECT:
+	case fileTypeELFEXECUTABLE,
+		fileTypeELFSHARED,
+		fileTypeELFOBJECT,
+		fileTypeMACHEXECUTABLE,
+		fileTypeMACHSHARED,
+		fileTypeMACHOBJECT:
 		handleExecutable(ea)
-	case ftARCHIVE:
+	case fileTypeARCHIVE:
 		handleArchive(ea)
 	default:
 		log.Fatal("Incorrect input file type.")
@@ -119,21 +118,21 @@ func parseExtractionArgs(args []string) extractionArgs {
 		} else {
 			ea.ArArgs = append(ea.ArArgs, "x")
 		}
-		ea.ObjectTypeInArchive = ftELFOBJECT
+		ea.ObjectTypeInArchive = fileTypeELFOBJECT
 	case "darwin":
 		ea.Extractor = extractSectionDarwin
 		ea.ArArgs = append(ea.ArArgs, "-x")
 		if ea.IsVerbose {
 			ea.ArArgs = append(ea.ArArgs, "-v")
 		}
-		ea.ObjectTypeInArchive = ftMACHOBJECT
+		ea.ObjectTypeInArchive = fileTypeMACHOBJECT
 	default:
 		log.Fatal("Unsupported platform: ", platform)
 	}
 
 	// Create output filename if not given
 	if ea.OutputFile == "" {
-		if ea.InputType == ftARCHIVE {
+		if ea.InputType == fileTypeARCHIVE {
 			var ext string
 			if ea.IsBuildBitcodeArchive {
 				ext = ".a.bc"
@@ -187,8 +186,8 @@ func handleArchive(ea extractionArgs) {
 	// Define object file handling closure
 	var walkHandlingFunc = func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() {
-			ft := getFileType(path)
-			if ft == ea.ObjectTypeInArchive {
+			fileType := getFileType(path)
+			if fileType == ea.ObjectTypeInArchive {
 				artifactPaths := ea.Extractor(path)
 				for _, artPath := range artifactPaths {
 					bcPath := resolveBitcodePath(artPath)
@@ -259,10 +258,10 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 	if err != nil {
 		log.Fatal("Mach-O file ", inputFile, " could not be read.")
 	}
-	section := machoFile.Section(darwinSECTIONNAME)
+	section := machoFile.Section(DarwinSectionName)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", darwinSECTIONNAME, " section of Mach-O file ", inputFile, ".")
+		log.Fatal("Error reading the ", DarwinSectionName, " section of Mach-O file ", inputFile, ".")
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -273,10 +272,10 @@ func extractSectionUnix(inputFile string) (contents []string) {
 	if err != nil {
 		log.Fatal("ELF file ", inputFile, " could not be read.")
 	}
-	section := elfFile.Section(elfSECTIONNAME)
+	section := elfFile.Section(ELFSectionName)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", elfSECTIONNAME, " section of ELF file ", inputFile, ".")
+		log.Fatal("Error reading the ", ELFSectionName, " section of ELF file ", inputFile, ".")
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -300,35 +299,6 @@ func resolveBitcodePath(bcPath string) string {
 	return bcPath
 }
 
-func getFileType(realPath string) (fileType int) {
-	// We need the file command to guess the file type
-	cmd := exec.Command("file", realPath)
-	out, err := cmd.Output()
-	if err != nil {
-		log.Fatal("There was an error getting the type of ", realPath, ". Make sure that the 'file' command is installed.")
-	}
-
-	// Test the output
-	if fo := string(out); strings.Contains(fo, "ELF") && strings.Contains(fo, "executable") {
-		fileType = ftELFEXECUTABLE
-	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "executable") {
-		fileType = ftMACHEXECUTABLE
-	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "shared") {
-		fileType = ftELFSHARED
-	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "dynamically linked shared") {
-		fileType = ftMACHSHARED
-	} else if strings.Contains(fo, "current ar archive") {
-		fileType = ftARCHIVE
-	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "relocatable") {
-		fileType = ftELFOBJECT
-	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "object") {
-		fileType = ftMACHOBJECT
-	} else {
-		fileType = ftUNDEFINED
-	}
-
-	return
-}
 
 func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) {
 	section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"

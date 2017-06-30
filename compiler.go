@@ -113,10 +113,10 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		var attachCmdArgs []string
 		if runtime.GOOS == "darwin" {
 			attachCmd = "ld"
-			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", darwinSEGMENTNAME, darwinSECTIONNAME, tmpFile.Name(), "-o", objFile}
+			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
 		} else {
 			attachCmd = "objcopy"
-			attachCmdArgs = []string{"--add-section", elfSECTIONNAME + "=" + tmpFile.Name(), objFile}
+			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name(), objFile}
 		}
 
 		// Run the attach command and ignore errors
