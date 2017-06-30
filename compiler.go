@@ -120,7 +120,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		}
 
 		// Run the attach command and ignore errors
-		execCmd(attachCmd, attachCmdArgs, "")
+		_, err = execCmd(attachCmd, attachCmdArgs, "")
 
 		// Copy bitcode file to store, if necessary
 		if bcStorePath := os.Getenv(envBCSTOREPATH); bcStorePath != "" {
@@ -143,8 +143,9 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	args := append(pr.ObjectFiles, pr.LinkArgs...)
 	args = append(args, objFiles...)
 	args = append(args, "-o", outputFile)
-	if execCmd(compilerExecName, args, "") {
-		log.Fatal("Failed to link.")
+	success, err := execCmd(compilerExecName, args, "")
+	if !success {
+		logFatal("Failed to link: %v.", err)
 	}
 }
 
@@ -152,8 +153,9 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, objFile string) {
 	args := pr.CompileArgs[:]
 	args = append(args, srcFile, "-c", "-o", objFile)
-	if execCmd(compilerExecName, args, "") {
-		log.Fatal("Failed to build object file for ", srcFile)
+	success, err := execCmd(compilerExecName, args, "")
+	if !success {
+		logFatal("Failed to build object file for %s because: %v\n", srcFile, err)
 	}
 }
 
@@ -161,16 +163,18 @@ func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, o
 func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, bcFile string) {
 	args := pr.CompileArgs[:]
 	args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
-	if execCmd(compilerExecName, args, "") {
-		log.Fatal("Failed to build bitcode file for ", srcFile)
+	success, err := execCmd(compilerExecName, args, "")
+	if !success {
+		logFatal("Failed to build bitcode file for %s because: %v\n", srcFile, err)
 	}
 }
 
 // Tries to build object file
 func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup) {
 	defer (*wg).Done()
-	if execCmd(compilerExecName, pr.InputList, "") {
-		log.Fatal("Failed to compile using given arguments.")
+	success, err := execCmd(compilerExecName, pr.InputList, "")
+	if  !success {
+		logFatal("Failed to compile using given arguments: %v\n", err)
 	}
 }
 

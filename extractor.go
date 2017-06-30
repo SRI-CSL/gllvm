@@ -177,8 +177,9 @@ func handleArchive(ea extractionArgs) {
 	arArgs := ea.ArArgs
 	inputAbsPath, _ := filepath.Abs(ea.InputFile)
 	arArgs = append(arArgs, inputAbsPath)
-	if execCmd("ar", arArgs, tmpDirName) {
-		log.Fatal("Failed to extract object files from ", ea.InputFile, " to ", tmpDirName, ".")
+	success, err := execCmd("ar", arArgs, tmpDirName)
+	if !success {
+		logFatal("Failed to extract object files from %s to %s because: %v.\n", ea.InputFile, tmpDirName, err)
 	}
 
 	// Define object file handling closure
@@ -229,8 +230,9 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 		var args []string
 		args = append(args, "rs", absOutputFile)
 		args = append(args, bcFilesInDir...)
-		if execCmd(ea.ArchiverName, args, dir) {
-			log.Fatal("There was an error creating the bitcode archive.")
+		success, err := execCmd(ea.ArchiverName, args, dir) 
+		if !success {
+			logFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
 	}
 	fmt.Println("Built bitcode archive", ea.OutputFile)
@@ -243,8 +245,9 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	}
 	linkArgs = append(linkArgs, "-o", ea.OutputFile)
 	linkArgs = append(linkArgs, filesToLink...)
-	if execCmd(ea.LinkerName, linkArgs, "") {
-		log.Fatal("There was an error linking input files into ", ea.OutputFile, ".")
+	success, err := execCmd(ea.LinkerName, linkArgs, "")
+	if !success {
+		log.Fatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
 	fmt.Println("Bitcode file extracted to", ea.OutputFile)
 }
