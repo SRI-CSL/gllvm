@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	//The name of our ELF section of "bitcode paths".
+	//ELFSectionName is the name of our ELF section of "bitcode paths".
 	ELFSectionName = ".llvm_bc"
-	//The name of our MACH-O segment of "bitcode paths".
+	//DarwinSegmentName is the name of our MACH-O segment of "bitcode paths".
 	DarwinSegmentName = "__WLLVM"
-	//The name of our MACH-O section of "bitcode paths".
+	//DarwinSectionName is the name of our MACH-O section of "bitcode paths".
 	DarwinSectionName = "__llvm_bc"
 )
 
