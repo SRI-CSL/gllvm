@@ -20,7 +20,7 @@ type bitcodeToObjectLink struct {
 func compile(args []string, compilerName string) {
 	var compilerExecName = getCompilerExecName(compilerName)
 	var configureOnly bool
-	if os.Getenv(env_CONFIGURE_ONLY) != "" {
+	if os.Getenv(envCONFIGURE_ONLY) != "" {
 		configureOnly = true
 	}
 	var pr = parse(args)
@@ -113,17 +113,17 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		var attachCmdArgs []string
 		if runtime.GOOS == "darwin" {
 			attachCmd = "ld"
-			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", darwin_SEGMENT_NAME, darwin_SECTION_NAME, tmpFile.Name(), "-o", objFile}
+			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", darwinSEGMENT_NAME, darwinSECTION_NAME, tmpFile.Name(), "-o", objFile}
 		} else {
 			attachCmd = "objcopy"
-			attachCmdArgs = []string{"--add-section", elf_SECTION_NAME + "=" + tmpFile.Name(), objFile}
+			attachCmdArgs = []string{"--add-section", elfSECTION_NAME + "=" + tmpFile.Name(), objFile}
 		}
 
 		// Run the attach command and ignore errors
 		execCmd(attachCmd, attachCmdArgs, "")
 
 		// Copy bitcode file to store, if necessary
-		if bcStorePath := os.Getenv(env_BC_STORE_PATH); bcStorePath != "" {
+		if bcStorePath := os.Getenv(envBC_STORE_PATH); bcStorePath != "" {
 			destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
 			in, _ := os.Open(absBcPath)
 			defer in.Close()
@@ -175,16 +175,16 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup) {
 }
 
 func getCompilerExecName(compilerName string) string {
-	var compilerPath = os.Getenv(env_TOOLS_PATH)
+	var compilerPath = os.Getenv(envTOOLS_PATH)
 	switch compilerName {
 	case "clang":
-		var clangName = os.Getenv(env_C_COMPILER_NAME)
+		var clangName = os.Getenv(envC_COMPILER_NAME)
 		if clangName != "" {
 			return compilerPath + clangName
 		}
 		return compilerPath + compilerName
 	case "clang++":
-		var clangppName = os.Getenv(env_C_COMPILER_NAME)
+		var clangppName = os.Getenv(envC_COMPILER_NAME)
 		if clangppName != "" {
 			return compilerPath + clangppName
 		}
