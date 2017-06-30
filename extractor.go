@@ -32,12 +32,12 @@ func extract(args []string) {
 	ea := parseExtractionArgs(args)
 
 	switch ea.InputType {
-	case ftELF_EXECUTABLE,
-		ftELF_SHARED,
-		ftELF_OBJECT,
-		ftMACH_EXECUTABLE,
-		ftMACH_SHARED,
-		ftMACH_OBJECT:
+	case ftELFEXECUTABLE,
+		ftELFSHARED,
+		ftELFOBJECT,
+		ftMACHEXECUTABLE,
+		ftMACHSHARED,
+		ftMACHOBJECT:
 		handleExecutable(ea)
 	case ftARCHIVE:
 		handleArchive(ea)
@@ -55,15 +55,15 @@ func parseExtractionArgs(args []string) extractionArgs {
 	}
 
 	// Checking environment variables
-	if ln := os.Getenv(envLINKER_NAME); ln != "" {
-		if toolsPath := os.Getenv(envTOOLS_PATH); toolsPath != "" {
+	if ln := os.Getenv(envLINKERNAME); ln != "" {
+		if toolsPath := os.Getenv(envTOOLSPATH); toolsPath != "" {
 			ea.LinkerName = toolsPath + ln
 		} else {
 			ea.LinkerName = ln
 		}
 	}
-	if an := os.Getenv(envAR_NAME); an != "" {
-		if toolsPath := os.Getenv(envTOOLS_PATH); toolsPath != "" {
+	if an := os.Getenv(envARNAME); an != "" {
+		if toolsPath := os.Getenv(envTOOLSPATH); toolsPath != "" {
 			ea.ArchiverName = toolsPath + an
 		} else {
 			ea.ArchiverName = an
@@ -117,14 +117,14 @@ func parseExtractionArgs(args []string) extractionArgs {
 		} else {
 			ea.ArArgs = append(ea.ArArgs, "x")
 		}
-		ea.ObjectTypeInArchive = ftELF_OBJECT
+		ea.ObjectTypeInArchive = ftELFOBJECT
 	case "darwin":
 		ea.Extractor = extractSectionDarwin
 		ea.ArArgs = append(ea.ArArgs, "-x")
 		if ea.IsVerbose {
 			ea.ArArgs = append(ea.ArArgs, "-v")
 		}
-		ea.ObjectTypeInArchive = ftMACH_OBJECT
+		ea.ObjectTypeInArchive = ftMACHOBJECT
 	default:
 		log.Fatal("Unsupported platform: ", platform)
 	}
@@ -254,10 +254,10 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 	if err != nil {
 		log.Fatal("Mach-O file ", inputFile, " could not be read.")
 	}
-	section := machoFile.Section(darwinSECTION_NAME)
+	section := machoFile.Section(darwinSECTIONNAME)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", darwinSECTION_NAME, " section of Mach-O file ", inputFile, ".")
+		log.Fatal("Error reading the ", darwinSECTIONNAME, " section of Mach-O file ", inputFile, ".")
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -268,10 +268,10 @@ func extractSectionUnix(inputFile string) (contents []string) {
 	if err != nil {
 		log.Fatal("ELF file ", inputFile, " could not be read.")
 	}
-	section := elfFile.Section(elfSECTION_NAME)
+	section := elfFile.Section(elfSECTIONNAME)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", elfSECTION_NAME, " section of ELF file ", inputFile, ".")
+		log.Fatal("Error reading the ", elfSECTIONNAME, " section of ELF file ", inputFile, ".")
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -281,7 +281,7 @@ func extractSectionUnix(inputFile string) (contents []string) {
 func resolveBitcodePath(bcPath string) string {
 	if _, err := os.Stat(bcPath); os.IsNotExist(err) {
 		// If the bitcode file does not exist, try to find it in the store
-		if bcStorePath := os.Getenv(envBC_STORE_PATH); bcStorePath != "" {
+		if bcStorePath := os.Getenv(envBCSTOREPATH); bcStorePath != "" {
 			// Compute absolute path hash
 			absBcPath, _ := filepath.Abs(bcPath)
 			storeBcPath := path.Join(bcStorePath, getHashedPath(absBcPath))
@@ -305,19 +305,19 @@ func getFileType(realPath string) (fileType int) {
 
 	// Test the output
 	if fo := string(out); strings.Contains(fo, "ELF") && strings.Contains(fo, "executable") {
-		fileType = ftELF_EXECUTABLE
+		fileType = ftELFEXECUTABLE
 	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "executable") {
-		fileType = ftMACH_EXECUTABLE
+		fileType = ftMACHEXECUTABLE
 	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "shared") {
-		fileType = ftELF_SHARED
+		fileType = ftELFSHARED
 	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "dynamically linked shared") {
-		fileType = ftMACH_SHARED
+		fileType = ftMACHSHARED
 	} else if strings.Contains(fo, "current ar archive") {
 		fileType = ftARCHIVE
 	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "relocatable") {
-		fileType = ftELF_OBJECT
+		fileType = ftELFOBJECT
 	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "object") {
-		fileType = ftMACH_OBJECT
+		fileType = ftMACHOBJECT
 	} else {
 		fileType = ftUNDEFINED
 	}
