@@ -3,9 +3,7 @@ package main
 import (
 	"debug/elf"
 	"debug/macho"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -41,12 +39,13 @@ func extract(args []string) {
 	case fileTypeARCHIVE:
 		handleArchive(ea)
 	default:
-		log.Fatal("Incorrect input file type.")
+		logFatal("Incorrect input file type %v.", ea.InputType)
 	}
 
 }
 
 func parseExtractionArgs(args []string) extractionArgs {
+	args_orig := args
 	// Initializing args to defaults
 	ea := extractionArgs{
 		LinkerName:   "llvm-link",
@@ -85,7 +84,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 			args = args[1:]
 		case "-o":
 			if len(args) < 2 {
-				log.Fatal("There was an error parsing the arguments.")
+				logFatal("There was an error parsing the arguments: %v.", args_orig)
 			}
 			ea.OutputFile = args[1]
 			args = args[2:]
@@ -97,14 +96,14 @@ func parseExtractionArgs(args []string) extractionArgs {
 
 	// Sanity-check the parsed arguments
 	if len(ea.InputFile) == 0 {
-		log.Fatal("No input file was given.")
+		logFatal("No input file was given.")
 	}
 	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
-		log.Fatal("The input file ", ea.InputFile, " does not exist.")
+		logFatal("The input file %s  does not exist.", ea.InputFile)
 	}
 	realPath, err := filepath.EvalSymlinks(ea.InputFile)
 	if err != nil {
-		log.Fatal("There was an error getting the real path of ", ea.InputFile, ".")
+		logFatal("There was an error getting the real path of %s.", ea.InputFile)
 	}
 	ea.InputFile = realPath
 	ea.InputType = getFileType(realPath)
@@ -127,7 +126,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 		}
 		ea.ObjectTypeInArchive = fileTypeMACHOBJECT
 	default:
-		log.Fatal("Unsupported platform: ", platform)
+		logFatal("Unsupported platform: %s.", platform)
 	}
 
 	// Create output filename if not given
@@ -170,7 +169,7 @@ func handleArchive(ea extractionArgs) {
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
 	if err != nil {
-		log.Fatal("The temporary directory in which to extract object files could not be created.")
+		logFatal("The temporary directory in which to extract object files could not be created.")
 	}
 	defer os.RemoveAll(tmpDirName)
 
@@ -236,7 +235,7 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 			logFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
 	}
-	fmt.Println("Built bitcode archive", ea.OutputFile)
+	logInfo("Built bitcode archive: %s.", ea.OutputFile)
 }
 
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
@@ -248,20 +247,20 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	linkArgs = append(linkArgs, filesToLink...)
 	success, err := execCmd(ea.LinkerName, linkArgs, "")
 	if !success {
-		log.Fatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		logFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
-	fmt.Println("Bitcode file extracted to", ea.OutputFile)
+	logInfo("Bitcode file extracted to: %s.", ea.OutputFile)
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
 	machoFile, err := macho.Open(inputFile)
 	if err != nil {
-		log.Fatal("Mach-O file ", inputFile, " could not be read.")
+		logFatal("Mach-O file %s could not be read.", inputFile)
 	}
 	section := machoFile.Section(DarwinSectionName)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", DarwinSectionName, " section of Mach-O file ", inputFile, ".")
+		logFatal("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -270,12 +269,12 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 func extractSectionUnix(inputFile string) (contents []string) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
-		log.Fatal("ELF file ", inputFile, " could not be read.")
+		logFatal("ELF file %s could not be read.", inputFile)
 	}
 	section := elfFile.Section(ELFSectionName)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", ELFSectionName, " section of ELF file ", inputFile, ".")
+		logFatal("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -306,7 +305,7 @@ func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) 
 	contents := []byte(section1 + section2)
 	manifestFilename := ea.OutputFile + ".llvm.manifest"
 	if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
-		log.Fatal("There was an error while writing the manifest file: ", err)
+		logFatal("There was an error while writing the manifest file: ", err)
 	}
-	fmt.Println("Manifest file written to", manifestFilename)
+	logInfo("Manifest file written to %s.", manifestFilename)
 }

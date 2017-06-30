@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -98,14 +97,14 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		tmpContent := []byte(absBcPath + "\n")
 		tmpFile, err := ioutil.TempFile("", "gllvm")
 		if err != nil {
-			log.Fatal(err)
+			logFatal("attachBitcodePathToObject: %v\n", err)
 		}
 		defer os.Remove(tmpFile.Name())
 		if _, err := tmpFile.Write(tmpContent); err != nil {
-			log.Fatal(err)
+			logFatal("attachBitcodePathToObject: %v\n", err)
 		}
 		if err := tmpFile.Close(); err != nil {
-			log.Fatal(err)
+			logFatal("attachBitcodePathToObject: %v\n", err)
 		}
 
 		// Let's write the bitcode section

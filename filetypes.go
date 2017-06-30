@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"os/exec"
-	"log"
 	"strings"
 )
 
@@ -36,7 +35,7 @@ func getFileType(realPath string) (fileType int) {
 	cmd := exec.Command("file", realPath)
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal("There was an error getting the type of ", realPath, ". Make sure that the 'file' command is installed.")
+		logFatal("There was an error getting the type of %s. Make sure that the 'file' command is installed.", realPath)
 	}
 
 	// Test the output
