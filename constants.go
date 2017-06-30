@@ -13,22 +13,25 @@ const (
 	DarwinSectionName = "__llvm_bc"
 )
 
-//The user configured directory holding the LLVM binary tools.
+//LLVMToolChainBinDir is the user configured directory holding the LLVM binary tools.
 var LLVMToolChainBinDir string
 
-//The user configured name of the clang compiler.
+//LLVMCCName is the user configured name of the clang compiler.
 var LLVMCCName string
 
-//The user configured name of the clang++ compiler.
+//LLVMCXXName is the user configured name of the clang++ compiler.
 var LLVMCXXName string
 
-//The user configured name of the llvm-ar.
+//LLVMARName is the user configured name of the llvm-ar.
 var LLVMARName string
 
-//The user configured name of the llvm-link.
+//LLVMLINKName is the user configured name of the llvm-link.
 var LLVMLINKName string
 
+//ConfigureOnly is the user configured flag indicating a single pass mode is required.
 var ConfigureOnly string
+
+//BitcodeStorePath is the user configured location of the bitcode archive.
 var BitcodeStorePath string
 
 func init() {
