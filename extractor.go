@@ -55,18 +55,18 @@ func parseExtractionArgs(args []string) extractionArgs {
 	}
 
 	// Checking environment variables
-	if ln := os.Getenv(envLINKERNAME); ln != "" {
+	if LLVMLINKName != "" {
 		if toolsPath := os.Getenv(LLVMToolChainBinDir); toolsPath != "" {
-			ea.LinkerName = filepath.Join(toolsPath, ln)
+			ea.LinkerName = filepath.Join(toolsPath, LLVMLINKName)
 		} else {
-			ea.LinkerName = ln
+			ea.LinkerName = LLVMLINKName
 		}
 	}
-	if an := os.Getenv(envARNAME); an != "" {
+	if LLVMARName != "" {
 		if toolsPath := os.Getenv(LLVMToolChainBinDir); toolsPath != "" {
-			ea.ArchiverName = filepath.Join(toolsPath, an)
+			ea.ArchiverName = filepath.Join(toolsPath, LLVMARName)
 		} else {
-			ea.ArchiverName = an
+			ea.ArchiverName = LLVMARName
 		}
 	}
 
