@@ -70,7 +70,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 		}
 	}
 
-	// Parsing cli input
+	// Parsing cli input. FIXME:  "get-bc -mb libfoo.a" should work just like "get-bc -m -b libfoo.a"
 	for len(args) > 0 {
 		switch arg := args[0]; arg {
 		case "-b":
