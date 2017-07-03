@@ -286,10 +286,10 @@ func extractSectionUnix(inputFile string) (contents []string) {
 func resolveBitcodePath(bcPath string) string {
 	if _, err := os.Stat(bcPath); os.IsNotExist(err) {
 		// If the bitcode file does not exist, try to find it in the store
-		if bcStorePath := os.Getenv(BitcodeStorePath); bcStorePath != "" {
+		if BitcodeStorePath != "" {
 			// Compute absolute path hash
 			absBcPath, _ := filepath.Abs(bcPath)
-			storeBcPath := path.Join(bcStorePath, getHashedPath(absBcPath))
+			storeBcPath := path.Join(BitcodeStorePath, getHashedPath(absBcPath))
 			if _, err := os.Stat(storeBcPath); os.IsNotExist(err) {
 				return ""
 			}
