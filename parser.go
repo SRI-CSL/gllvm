@@ -169,7 +169,7 @@ func parse(argList []string) parserResult {
 		"-coverage":      {0, pr.compileLinkUnaryCallback},
 		"--coverage":     {0, pr.compileLinkUnaryCallback},
 
-		"-Wl,-dead_strip":	{0, pr.darwinWarningLinkUnaryCallback},
+		"-Wl,-dead_strip": {0, pr.darwinWarningLinkUnaryCallback},
 	}
 
 	var argPatterns = map[string]flagInfo{
