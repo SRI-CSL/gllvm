@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -17,7 +16,13 @@ type bitcodeToObjectLink struct {
 	objPath string
 }
 
-func compile(args []string, compilerName string) {
+func compile(args []string, compilerName string) (exitCode int) {
+	exitCode = 0
+	//in the configureOnly case we have to know the exit code of the compile
+	//because that is how configure figures out what it can and cannot do.
+
+	var ok bool = true
+
 	var compilerExecName = getCompilerExecName(compilerName)
 	var configureOnly bool
 	if ConfigureOnly != "" {
@@ -27,20 +32,33 @@ func compile(args []string, compilerName string) {
 
 	var wg sync.WaitGroup
 	// If configure only is set, just execute the compiler
+
 	if configureOnly {
 		wg.Add(1)
-		go execCompile(compilerExecName, pr, &wg)
+		go execCompile(compilerExecName, pr, &wg, &ok)
 		wg.Wait()
 		// Else try to build bitcode as well
+
+		if !ok {
+			exitCode = 1
+		}
+
 	} else {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
+
 		wg.Add(2)
-		go execCompile(compilerExecName, pr, &wg)
+		go execCompile(compilerExecName, pr, &wg, &ok)
 		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
 		wg.Wait()
 
-		// When objects and bitcode are builtm we can attach bitcode paths
+		//grok the exit code
+		if !ok {
+			exitCode = 1
+		}
+
+		//FIXME: (if the compile went bad, why are we even trying to do more here)
+		// When objects and bitcode are built we can attach bitcode paths
 		// to object files and link
 		for _, link := range bcObjLinks {
 			attachBitcodePathToObject(link.bcPath, link.objPath)
@@ -49,6 +67,7 @@ func compile(args []string, compilerName string) {
 			compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
 		}
 	}
+	return
 }
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
@@ -98,14 +117,14 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		tmpContent := []byte(absBcPath + "\n")
 		tmpFile, err := ioutil.TempFile("", "gllvm")
 		if err != nil {
-			log.Fatal(err)
+			logFatal("attachBitcodePathToObject: %v\n", err)
 		}
 		defer os.Remove(tmpFile.Name())
 		if _, err := tmpFile.Write(tmpContent); err != nil {
-			log.Fatal(err)
+			logFatal("attachBitcodePathToObject: %v\n", err)
 		}
 		if err := tmpFile.Close(); err != nil {
-			log.Fatal(err)
+			logFatal("attachBitcodePathToObject: %v\n", err)
 		}
 
 		// Let's write the bitcode section
@@ -113,14 +132,14 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		var attachCmdArgs []string
 		if runtime.GOOS == "darwin" {
 			attachCmd = "ld"
-			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", darwinSEGMENTNAME, darwinSECTIONNAME, tmpFile.Name(), "-o", objFile}
+			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
 		} else {
 			attachCmd = "objcopy"
-			attachCmdArgs = []string{"--add-section", elfSECTIONNAME + "=" + tmpFile.Name(), objFile}
+			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name(), objFile}
 		}
 
 		// Run the attach command and ignore errors
-		_, err = execCmd(attachCmd, attachCmdArgs, "")
+		execCmd(attachCmd, attachCmdArgs, "")
 
 		// Copy bitcode file to store, if necessary
 		if bcStorePath := os.Getenv(BitcodeStorePath); bcStorePath != "" {
@@ -140,7 +159,7 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	if outputFile == "" {
 		outputFile = "a.out"
 	}
-	args := append(pr.ObjectFiles, pr.LinkArgs...)
+	args := pr.LinkArgs
 	args = append(args, objFiles...)
 	args = append(args, "-o", outputFile)
 	success, err := execCmd(compilerExecName, args, "")
@@ -170,11 +189,12 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 }
 
 // Tries to build object file
-func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup) {
+func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, ok *bool) {
 	defer (*wg).Done()
 	success, err := execCmd(compilerExecName, pr.InputList, "")
-	if  !success {
-		logFatal("Failed to compile using given arguments: %v\n", err)
+	if !success {
+		logError("Failed to compile using given arguments: %v\n", err)
+		*ok = false
 	}
 }
 

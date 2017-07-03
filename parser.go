@@ -169,7 +169,7 @@ func parse(argList []string) parserResult {
 		"-coverage":      {0, pr.compileLinkUnaryCallback},
 		"--coverage":     {0, pr.compileLinkUnaryCallback},
 
-		"-Wl,-dead_strip": {0, pr.darwinWarningLinkUnaryCallback},
+		"-Wl,-dead_strip":	{0, pr.darwinWarningLinkUnaryCallback},
 	}
 
 	var argPatterns = map[string]flagInfo{
@@ -183,7 +183,7 @@ func parse(argList []string) parserResult {
 		`^-D.+$`:                                {0, pr.compileUnaryCallback},
 		`^-U.+$`:                                {0, pr.compileUnaryCallback},
 		`^-Wl,.+$`:                              {0, pr.linkUnaryCallback},
-		`^-W.*$`:                                {0, pr.compileUnaryCallback},
+		`^-W[^l].*$`:                            {0, pr.compileUnaryCallback},
 		`^-f.+$`:                                {0, pr.compileUnaryCallback},
 		`^-rtlib=.+$`:                           {0, pr.linkUnaryCallback},
 		`^-std=.+$`:                             {0, pr.compileUnaryCallback},
@@ -262,7 +262,12 @@ func (pr *parserResult) outputFileCallback(_ string, args []string) {
 }
 
 func (pr *parserResult) objectFileCallback(flag string, _ []string) {
+	// FIXME: the object file is appended to ObjectFiles that
+	// is used nowhere else in the code
 	pr.ObjectFiles = append(pr.ObjectFiles, flag)
+	// We append the object files to link args to handle the
+	// -Wl,--start-group obj_1.o ... obj_n.o -Wl,--end-group case
+	pr.LinkArgs = append(pr.LinkArgs, flag)
 }
 
 func (pr *parserResult) preprocessOnlyCallback(_ string, _ []string) {

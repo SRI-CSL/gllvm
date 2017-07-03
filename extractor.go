@@ -3,11 +3,8 @@ package main
 import (
 	"debug/elf"
 	"debug/macho"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -32,22 +29,23 @@ func extract(args []string) {
 	ea := parseExtractionArgs(args)
 
 	switch ea.InputType {
-	case ftELFEXECUTABLE,
-		ftELFSHARED,
-		ftELFOBJECT,
-		ftMACHEXECUTABLE,
-		ftMACHSHARED,
-		ftMACHOBJECT:
+	case fileTypeELFEXECUTABLE,
+		fileTypeELFSHARED,
+		fileTypeELFOBJECT,
+		fileTypeMACHEXECUTABLE,
+		fileTypeMACHSHARED,
+		fileTypeMACHOBJECT:
 		handleExecutable(ea)
-	case ftARCHIVE:
+	case fileTypeARCHIVE:
 		handleArchive(ea)
 	default:
-		log.Fatal("Incorrect input file type.")
+		logFatal("Incorrect input file type %v.", ea.InputType)
 	}
 
 }
 
 func parseExtractionArgs(args []string) extractionArgs {
+	origArgs := args
 	// Initializing args to defaults
 	ea := extractionArgs{
 		LinkerName:   "llvm-link",
@@ -86,7 +84,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 			args = args[1:]
 		case "-o":
 			if len(args) < 2 {
-				log.Fatal("There was an error parsing the arguments.")
+				logFatal("There was an error parsing the arguments: %v.", origArgs)
 			}
 			ea.OutputFile = args[1]
 			args = args[2:]
@@ -98,14 +96,14 @@ func parseExtractionArgs(args []string) extractionArgs {
 
 	// Sanity-check the parsed arguments
 	if len(ea.InputFile) == 0 {
-		log.Fatal("No input file was given.")
+		logFatal("No input file was given.")
 	}
 	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
-		log.Fatal("The input file ", ea.InputFile, " does not exist.")
+		logFatal("The input file %s  does not exist.", ea.InputFile)
 	}
 	realPath, err := filepath.EvalSymlinks(ea.InputFile)
 	if err != nil {
-		log.Fatal("There was an error getting the real path of ", ea.InputFile, ".")
+		logFatal("There was an error getting the real path of %s.", ea.InputFile)
 	}
 	ea.InputFile = realPath
 	ea.InputType = getFileType(realPath)
@@ -119,21 +117,21 @@ func parseExtractionArgs(args []string) extractionArgs {
 		} else {
 			ea.ArArgs = append(ea.ArArgs, "x")
 		}
-		ea.ObjectTypeInArchive = ftELFOBJECT
+		ea.ObjectTypeInArchive = fileTypeELFOBJECT
 	case "darwin":
 		ea.Extractor = extractSectionDarwin
 		ea.ArArgs = append(ea.ArArgs, "-x")
 		if ea.IsVerbose {
 			ea.ArArgs = append(ea.ArArgs, "-v")
 		}
-		ea.ObjectTypeInArchive = ftMACHOBJECT
+		ea.ObjectTypeInArchive = fileTypeMACHOBJECT
 	default:
-		log.Fatal("Unsupported platform: ", platform)
+		logFatal("Unsupported platform: %s.", platform)
 	}
 
 	// Create output filename if not given
 	if ea.OutputFile == "" {
-		if ea.InputType == ftARCHIVE {
+		if ea.InputType == fileTypeARCHIVE {
 			var ext string
 			if ea.IsBuildBitcodeArchive {
 				ext = ".a.bc"
@@ -171,7 +169,7 @@ func handleArchive(ea extractionArgs) {
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
 	if err != nil {
-		log.Fatal("The temporary directory in which to extract object files could not be created.")
+		logFatal("The temporary directory in which to extract object files could not be created.")
 	}
 	defer os.RemoveAll(tmpDirName)
 
@@ -187,8 +185,8 @@ func handleArchive(ea extractionArgs) {
 	// Define object file handling closure
 	var walkHandlingFunc = func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() {
-			ft := getFileType(path)
-			if ft == ea.ObjectTypeInArchive {
+			fileType := getFileType(path)
+			if fileType == ea.ObjectTypeInArchive {
 				artifactPaths := ea.Extractor(path)
 				for _, artPath := range artifactPaths {
 					bcPath := resolveBitcodePath(artPath)
@@ -232,12 +230,12 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 		var args []string
 		args = append(args, "rs", absOutputFile)
 		args = append(args, bcFilesInDir...)
-		success, err := execCmd(ea.ArchiverName, args, dir) 
+		success, err := execCmd(ea.ArchiverName, args, dir)
 		if !success {
 			logFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
 	}
-	fmt.Println("Built bitcode archive", ea.OutputFile)
+	logInfo("Built bitcode archive: %s.", ea.OutputFile)
 }
 
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
@@ -249,20 +247,20 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	linkArgs = append(linkArgs, filesToLink...)
 	success, err := execCmd(ea.LinkerName, linkArgs, "")
 	if !success {
-		log.Fatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		logFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
-	fmt.Println("Bitcode file extracted to", ea.OutputFile)
+	logInfo("Bitcode file extracted to: %s.", ea.OutputFile)
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
 	machoFile, err := macho.Open(inputFile)
 	if err != nil {
-		log.Fatal("Mach-O file ", inputFile, " could not be read.")
+		logFatal("Mach-O file %s could not be read.", inputFile)
 	}
-	section := machoFile.Section(darwinSECTIONNAME)
+	section := machoFile.Section(DarwinSectionName)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", darwinSECTIONNAME, " section of Mach-O file ", inputFile, ".")
+		logFatal("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -271,12 +269,12 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 func extractSectionUnix(inputFile string) (contents []string) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
-		log.Fatal("ELF file ", inputFile, " could not be read.")
+		logFatal("ELF file %s could not be read.", inputFile)
 	}
-	section := elfFile.Section(elfSECTIONNAME)
+	section := elfFile.Section(ELFSectionName)
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		log.Fatal("Error reading the ", elfSECTIONNAME, " section of ELF file ", inputFile, ".")
+		logFatal("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
@@ -300,43 +298,13 @@ func resolveBitcodePath(bcPath string) string {
 	return bcPath
 }
 
-func getFileType(realPath string) (fileType int) {
-	// We need the file command to guess the file type
-	cmd := exec.Command("file", realPath)
-	out, err := cmd.Output()
-	if err != nil {
-		log.Fatal("There was an error getting the type of ", realPath, ". Make sure that the 'file' command is installed.")
-	}
-
-	// Test the output
-	if fo := string(out); strings.Contains(fo, "ELF") && strings.Contains(fo, "executable") {
-		fileType = ftELFEXECUTABLE
-	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "executable") {
-		fileType = ftMACHEXECUTABLE
-	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "shared") {
-		fileType = ftELFSHARED
-	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "dynamically linked shared") {
-		fileType = ftMACHSHARED
-	} else if strings.Contains(fo, "current ar archive") {
-		fileType = ftARCHIVE
-	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "relocatable") {
-		fileType = ftELFOBJECT
-	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "object") {
-		fileType = ftMACHOBJECT
-	} else {
-		fileType = ftUNDEFINED
-	}
-
-	return
-}
-
 func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) {
 	section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
 	section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
 	contents := []byte(section1 + section2)
 	manifestFilename := ea.OutputFile + ".llvm.manifest"
 	if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
-		log.Fatal("There was an error while writing the manifest file: ", err)
+		logFatal("There was an error while writing the manifest file: ", err)
 	}
-	fmt.Println("Manifest file written to", manifestFilename)
+	logInfo("Manifest file written to %s.", manifestFilename)
 }
