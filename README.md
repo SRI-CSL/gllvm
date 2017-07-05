@@ -44,6 +44,8 @@ You need the Go compiler to compile gllvm, and both the clang/clang++
 executables and the llvm tools -- llvm-link, llvm-ar -- to use gllvm. Follow
 the instructions here to get started: https://golang.org/doc/install.
 
+FIXME: GOROOT needs to be tossed. This can be explained in a simpler fashion.
+
 As for now, let us name `$GOROOT` your root Go path that you can obtain by
 typing `go env GOPATH` in a terminal session -- it is usually `$HOME/go`
 by default. It is worth noticing that a standard Go installation will install
@@ -52,7 +54,7 @@ added the `$GOROOT/bin` directory to your `$PATH` variable.
 
 #### Build
 
-FIXME: this needs to be rewritten to use (and this is pure guesswork here) spells like this:
+FIXME: this needs to be rewritten to use spells like this:
 ```
 go get github.com/SRI-CSL/gllvm/cmd/gclang
 go get github.com/SRI-CSL/gllvm/cmd/gclang++
