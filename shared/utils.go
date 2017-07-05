@@ -10,6 +10,7 @@ func execCmd(cmdExecName string, args []string, workingDir string) (success bool
 	cmd := exec.Command(cmdExecName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin  = os.Stdin
 	cmd.Dir = workingDir
 	err = cmd.Run()
 	success = (err == nil)

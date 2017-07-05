@@ -31,18 +31,18 @@ func Compile(args []string, compilerName string) (exitCode int) {
 	var pr = parse(args)
 
 	var wg sync.WaitGroup
-	// If configure only is set, just execute the compiler
 
-	if configureOnly {
+	// If configure only or print only are set, just execute the compiler
+	if configureOnly || pr.IsPrintOnly {
 		wg.Add(1)
 		go execCompile(compilerExecName, pr, &wg, &ok)
 		wg.Wait()
-		// Else try to build bitcode as well
 
 		if !ok {
 			exitCode = 1
 		}
 
+	// Else try to build bitcode as well
 	} else {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string

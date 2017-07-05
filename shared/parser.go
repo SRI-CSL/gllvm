@@ -25,6 +25,7 @@ type parserResult struct {
 	IsAssembly       bool
 	IsCompileOnly    bool
 	IsEmitLLVM       bool
+	IsPrintOnly      bool
 }
 
 type flagInfo struct {
@@ -37,6 +38,7 @@ func parse(argList []string) parserResult {
 	pr.InputList = argList
 
 	var argsExactMatches = map[string]flagInfo{
+		"-":  {0, pr.printOnlyCallback},
 		"-o": {1, pr.outputFileCallback},
 		"-c": {0, pr.compileOnlyCallback},
 		"-E": {0, pr.preprocessOnlyCallback},
@@ -194,7 +196,7 @@ func parse(argList []string) parserResult {
 		`^-print-file-name=.*$`:                 {0, pr.compileUnaryCallback},
 	}
 
-	for len(argList) > 0 && !(pr.IsAssembly || pr.IsAssembleOnly || pr.IsPreprocessOnly) {
+	for len(argList) > 0 {
 		var elem = argList[0]
 
 		// Try to match the flag exactly
@@ -277,6 +279,10 @@ func (pr *parserResult) preprocessOnlyCallback(_ string, _ []string) {
 func (pr *parserResult) dependencyOnlyCallback(flag string, _ []string) {
 	pr.IsDependencyOnly = true
 	pr.CompileArgs = append(pr.CompileArgs, flag)
+}
+
+func (pr *parserResult) printOnlyCallback(flag string, _ []string) {
+	pr.IsPrintOnly = true
 }
 
 func (pr *parserResult) assembleOnlyCallback(_ string, _ []string) {
