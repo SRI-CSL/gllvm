@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"github.com/SRI-CSL/gllvm/shared"
+	"os"
 )
 
 func main() {
@@ -10,7 +10,6 @@ func main() {
 	var args = os.Args
 	args = args[1:]
 
-	
 	exitCode := shared.Compile(args, "clang")
 
 	shared.LogInfo("Calling %v returned %v\n", os.Args, exitCode)

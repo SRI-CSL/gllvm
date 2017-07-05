@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"github.com/SRI-CSL/gllvm/shared"
+	"os"
 )
 
 func main() {

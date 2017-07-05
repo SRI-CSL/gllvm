@@ -3,6 +3,7 @@ package shared
 import (
 	"debug/elf"
 	"debug/macho"
+	"flag"
 	"io/ioutil"
 	"os"
 	"path"
@@ -12,45 +13,21 @@ import (
 )
 
 type extractionArgs struct {
-	InputFile             string
-	InputType             int
-	OutputFile            string
-	LinkerName            string
-	ArchiverName          string
-	ArArgs                []string
-	ObjectTypeInArchive   int // Type of file that can be put into an archive
-	Extractor             func(string) []string
-	IsVerbose             bool
-	IsWriteManifest       bool
-	IsBuildBitcodeArchive bool
+	InputFile           string
+	InputType           int
+	OutputFile          string
+	LinkerName          string
+	ArchiverName        string
+	ArArgs              []string
+	ObjectTypeInArchive int // Type of file that can be put into an archive
+	Extractor           func(string) []string
+	Verbose             bool
+	WriteManifest       bool
+	BuildBitcodeArchive bool
 }
 
 func Extract(args []string) {
-	ea := parseExtractionArgs(args)
-
-	switch ea.InputType {
-	case fileTypeELFEXECUTABLE,
-		fileTypeELFSHARED,
-		fileTypeELFOBJECT,
-		fileTypeMACHEXECUTABLE,
-		fileTypeMACHSHARED,
-		fileTypeMACHOBJECT:
-		handleExecutable(ea)
-	case fileTypeARCHIVE:
-		handleArchive(ea)
-	default:
-		LogFatal("Incorrect input file type %v.", ea.InputType)
-	}
-
-}
-
-func parseExtractionArgs(args []string) extractionArgs {
-	origArgs := args
-	// Initializing args to defaults
-	ea := extractionArgs{
-		LinkerName:   "llvm-link",
-		ArchiverName: "llvm-ar",
-	}
+	ea := parseSwitches()
 
 	// Checking environment variables
 	if LLVMLINKName != "" {
@@ -70,49 +47,11 @@ func parseExtractionArgs(args []string) extractionArgs {
 		}
 	}
 
-	// Parsing cli input. FIXME:  "get-bc -mb libfoo.a" should work just like "get-bc -m -b libfoo.a"
-	for len(args) > 0 {
-		switch arg := args[0]; arg {
-		case "-b":
-			ea.IsBuildBitcodeArchive = true
-			args = args[1:]
-		case "-v":
-			ea.IsVerbose = true
-			args = args[1:]
-		case "-m":
-			ea.IsWriteManifest = true
-			args = args[1:]
-		case "-o":
-			if len(args) < 2 {
-				LogFatal("There was an error parsing the arguments: %v.", origArgs)
-			}
-			ea.OutputFile = args[1]
-			args = args[2:]
-		default:
-			ea.InputFile = arg
-			args = args[1:]
-		}
-	}
-
-	// Sanity-check the parsed arguments
-	if len(ea.InputFile) == 0 {
-		LogFatal("No input file was given.")
-	}
-	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
-		LogFatal("The input file %s  does not exist.", ea.InputFile)
-	}
-	realPath, err := filepath.EvalSymlinks(ea.InputFile)
-	if err != nil {
-		LogFatal("There was an error getting the real path of %s.", ea.InputFile)
-	}
-	ea.InputFile = realPath
-	ea.InputType = getFileType(realPath)
-
 	// Set arguments according to runtime OS
 	switch platform := runtime.GOOS; platform {
 	case "freebsd", "linux":
 		ea.Extractor = extractSectionUnix
-		if ea.IsVerbose {
+		if ea.Verbose {
 			ea.ArArgs = append(ea.ArArgs, "xv")
 		} else {
 			ea.ArArgs = append(ea.ArArgs, "x")
@@ -121,7 +60,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 	case "darwin":
 		ea.Extractor = extractSectionDarwin
 		ea.ArArgs = append(ea.ArArgs, "-x")
-		if ea.IsVerbose {
+		if ea.Verbose {
 			ea.ArArgs = append(ea.ArArgs, "-v")
 		}
 		ea.ObjectTypeInArchive = fileTypeMACHOBJECT
@@ -133,7 +72,7 @@ func parseExtractionArgs(args []string) extractionArgs {
 	if ea.OutputFile == "" {
 		if ea.InputType == fileTypeARCHIVE {
 			var ext string
-			if ea.IsBuildBitcodeArchive {
+			if ea.BuildBitcodeArchive {
 				ext = ".a.bc"
 			} else {
 				ext = ".bca"
@@ -144,7 +83,86 @@ func parseExtractionArgs(args []string) extractionArgs {
 		}
 	}
 
-	return ea
+	switch ea.InputType {
+	case fileTypeELFEXECUTABLE,
+		fileTypeELFSHARED,
+		fileTypeELFOBJECT,
+		fileTypeMACHEXECUTABLE,
+		fileTypeMACHSHARED,
+		fileTypeMACHOBJECT:
+		handleExecutable(ea)
+	case fileTypeARCHIVE:
+		handleArchive(ea)
+	default:
+		LogFatal("Incorrect input file type %v.", ea.InputType)
+	}
+
+}
+
+func parseSwitches() (ea extractionArgs) {
+	ea = extractionArgs{
+		LinkerName:   "llvm-link",
+		ArchiverName: "llvm-ar",
+	}
+
+	verbosePtr := flag.Bool("v", false, "verbose mode")
+
+	writeManifestPtr := flag.Bool("m", false, "write the manifest")
+
+	buildBitcodeArchive := flag.Bool("b", false, "build a bitcode module(FIXME? should this be archive)")
+
+	outputFilePtr := flag.String("o", "", "the output file")
+
+	archiverNamePtr := flag.String("a", "", "the llvm archiver")
+
+	linkerNamePtr := flag.String("l", "", "the llvm linker")
+
+	flag.Parse()
+
+	ea.Verbose = *verbosePtr
+	ea.WriteManifest = *writeManifestPtr
+	ea.BuildBitcodeArchive = *buildBitcodeArchive
+
+	if *archiverNamePtr != "" {
+		ea.ArchiverName = *archiverNamePtr
+	}
+
+	if *linkerNamePtr != "" {
+		ea.LinkerName = *linkerNamePtr
+	}
+
+	ea.OutputFile = *outputFilePtr
+
+	inputFiles := flag.Args()
+
+	LogInfo("ea.Verbose: %v\n", ea.Verbose)
+	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
+	LogInfo("ea.BuildBitcodeArchive: %v\n", ea.BuildBitcodeArchive)
+	LogInfo("ea.ArchiverName: %v\n", ea.ArchiverName)
+	LogInfo("ea.LinkerName: %v\n", ea.LinkerName)
+	LogInfo("ea.OutputFile: %v\n", ea.OutputFile)
+
+	if len(inputFiles) != 1 {
+		LogFatal("Can currently only deal with exactly one input file, sorry. You gave me %v\n.", len(inputFiles))
+	}
+
+	ea.InputFile = inputFiles[0]
+
+	LogInfo("ea.InputFile: %v\n", ea.InputFile)
+
+	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
+		LogFatal("The input file %s  does not exist.", ea.InputFile)
+	}
+	realPath, err := filepath.EvalSymlinks(ea.InputFile)
+	if err != nil {
+		LogFatal("There was an error getting the real path of %s.", ea.InputFile)
+	}
+	ea.InputFile = realPath
+	ea.InputType = getFileType(realPath)
+
+	LogInfo("ea.InputFile real path: %v\n", ea.InputFile)
+
+	return
 }
 
 func handleExecutable(ea extractionArgs) {
@@ -156,7 +174,7 @@ func handleExecutable(ea extractionArgs) {
 	extractTimeLinkFiles(ea, filesToLink)
 
 	// Write manifest
-	if ea.IsWriteManifest {
+	if ea.WriteManifest {
 		writeManifest(ea, filesToLink, artifactPaths)
 	}
 }
@@ -202,14 +220,14 @@ func handleArchive(ea extractionArgs) {
 	filepath.Walk(tmpDirName, walkHandlingFunc)
 
 	// Build archive
-	if ea.IsBuildBitcodeArchive {
+	if ea.BuildBitcodeArchive {
 		extractTimeLinkFiles(ea, bcFiles)
 	} else {
 		archiveBcFiles(ea, bcFiles)
 	}
 
 	// Write manifest
-	if ea.IsWriteManifest {
+	if ea.WriteManifest {
 		writeManifest(ea, bcFiles, artifactFiles)
 	}
 }
@@ -231,6 +249,7 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 		args = append(args, "rs", absOutputFile)
 		args = append(args, bcFilesInDir...)
 		success, err := execCmd(ea.ArchiverName, args, dir)
+		LogInfo("ea.ArchiverName = %s, args = %v, dir = %s\n", ea.ArchiverName, args, dir)
 		if !success {
 			LogFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
@@ -240,7 +259,7 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	var linkArgs []string
-	if ea.IsVerbose {
+	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
 	linkArgs = append(linkArgs, "-o", ea.OutputFile)
