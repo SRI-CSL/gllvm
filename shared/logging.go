@@ -1,4 +1,4 @@
-package main
+package shared
 
 import (
 	"fmt"
@@ -49,12 +49,12 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 	}
 }
 
-var logDebug = makeLogger(debugV)
-var logInfo = makeLogger(infoV)
-var logWarning = makeLogger(warningV)
-var logError = makeLogger(errorV)
+var LogDebug = makeLogger(debugV)
+var LogInfo = makeLogger(infoV)
+var LogWarning = makeLogger(warningV)
+var LogError = makeLogger(errorV)
 
-func logFatal(format string, a ...interface{}) {
-	logError(format, a...)
+func LogFatal(format string, a ...interface{}) {
+	LogError(format, a...)
 	os.Exit(1)
 }

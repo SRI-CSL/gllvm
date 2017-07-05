@@ -1,4 +1,5 @@
-package main
+package shared
+
 
 import (
 	"io"
@@ -16,7 +17,7 @@ type bitcodeToObjectLink struct {
 	objPath string
 }
 
-func compile(args []string, compilerName string) (exitCode int) {
+func Compile(args []string, compilerName string) (exitCode int) {
 	exitCode = 0
 	//in the configureOnly case we have to know the exit code of the compile
 	//because that is how configure figures out what it can and cannot do.
@@ -117,14 +118,14 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		tmpContent := []byte(absBcPath + "\n")
 		tmpFile, err := ioutil.TempFile("", "gllvm")
 		if err != nil {
-			logFatal("attachBitcodePathToObject: %v\n", err)
+			LogFatal("attachBitcodePathToObject: %v\n", err)
 		}
 		defer os.Remove(tmpFile.Name())
 		if _, err := tmpFile.Write(tmpContent); err != nil {
-			logFatal("attachBitcodePathToObject: %v\n", err)
+			LogFatal("attachBitcodePathToObject: %v\n", err)
 		}
 		if err := tmpFile.Close(); err != nil {
-			logFatal("attachBitcodePathToObject: %v\n", err)
+			LogFatal("attachBitcodePathToObject: %v\n", err)
 		}
 
 		// Let's write the bitcode section
@@ -164,7 +165,7 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	args = append(args, "-o", outputFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
-		logFatal("Failed to link: %v.", err)
+		LogFatal("Failed to link: %v.", err)
 	}
 }
 
@@ -174,7 +175,7 @@ func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, o
 	args = append(args, srcFile, "-c", "-o", objFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
-		logFatal("Failed to build object file for %s because: %v\n", srcFile, err)
+		LogFatal("Failed to build object file for %s because: %v\n", srcFile, err)
 	}
 }
 
@@ -184,7 +185,7 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 	args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
-		logFatal("Failed to build bitcode file for %s because: %v\n", srcFile, err)
+		LogFatal("Failed to build bitcode file for %s because: %v\n", srcFile, err)
 	}
 }
 
@@ -193,7 +194,7 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, o
 	defer (*wg).Done()
 	success, err := execCmd(compilerExecName, pr.InputList, "")
 	if !success {
-		logError("Failed to compile using given arguments: %v\n", err)
+		LogError("Failed to compile using given arguments: %v\n", err)
 		*ok = false
 	}
 }
@@ -211,7 +212,7 @@ func getCompilerExecName(compilerName string) string {
 		}
 		return filepath.Join(LLVMToolChainBinDir, compilerName)
 	default:
-		logFatal("The compiler %s is not supported by this tool.", compilerName)
+		LogFatal("The compiler %s is not supported by this tool.", compilerName)
 		return ""
 	}
 }

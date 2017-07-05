@@ -1,16 +1,16 @@
 GOROOT := $(shell go env GOPATH)
 
 build:
-	go build
+	go build ./shared ./cmd/gclang ./cmd/gclang++ ./cmd/get-bc
+
+
 
 install: build
-	go install
-	ln -f -s $(GOROOT)/bin/gllvm $(GOROOT)/bin/gclang
-	ln -f -s $(GOROOT)/bin/gllvm $(GOROOT)/bin/gclang++
-	ln -f -s $(GOROOT)/bin/gllvm $(GOROOT)/bin/get-bc
+	go install ./cmd/gclang ./cmd/gclang++ ./cmd/get-bc
 
 clean:
 	go clean
+	rm -f gclang gclang++ get-bc
 
 uninstall:
 	rm -f $(GOROOT)/bin/gclang
