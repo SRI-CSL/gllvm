@@ -38,6 +38,8 @@ gllvm currently works with clang.
 
 #### Requirements
 
+FIXME: mention the platform depends: objdump and otool as well
+
 You need the Go compiler to compile gllvm, and both the clang/clang++
 executables and the llvm tools -- llvm-link, llvm-ar -- to use gllvm. Follow
 the instructions here to get started: https://golang.org/doc/install.
@@ -49,6 +51,13 @@ the binaries generated for the project under `$GOROOT/bin`. Make sure that you
 added the `$GOROOT/bin` directory to your `$PATH` variable.
 
 #### Build
+
+FIXME: this needs to be rewritten to use (and this is pure guesswork here) spells like this:
+```
+go get github.com/SRI-CSL/gllvm/cmd/gclang
+go get github.com/SRI-CSL/gllvm/cmd/gclang++
+go get github.com/SRI-CSL/gllvm/cmd/get-bc
+```
 
 First, you must checkout the project under the directory `$GOROOT/src`:
 ```
