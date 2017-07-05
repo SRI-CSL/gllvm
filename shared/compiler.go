@@ -55,16 +55,17 @@ func Compile(args []string, compilerName string) (exitCode int) {
 		//grok the exit code
 		if !ok {
 			exitCode = 1
-		}
+		} else {
 
-		//FIXME: (if the compile went bad, why are we even trying to do more here)
-		// When objects and bitcode are built we can attach bitcode paths
-		// to object files and link
-		for _, link := range bcObjLinks {
-			attachBitcodePathToObject(link.bcPath, link.objPath)
-		}
-		if !pr.IsCompileOnly {
-			compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
+			// When objects and bitcode are built we can attach bitcode paths
+			// to object files and link
+			for _, link := range bcObjLinks {
+				attachBitcodePathToObject(link.bcPath, link.objPath)
+			}
+			if !pr.IsCompileOnly {
+				compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
+			}
+
 		}
 	}
 	return
