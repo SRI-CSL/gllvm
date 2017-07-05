@@ -29,24 +29,6 @@ type extractionArgs struct {
 func Extract(args []string) {
 	ea := parseSwitches()
 
-	// Checking environment variables
-	if LLVMLINKName != "" {
-		//FIXME: this check can be eliminated because filepath.Join("", "baz") = "baz"
-		if LLVMToolChainBinDir != "" {
-			ea.LinkerName = filepath.Join(LLVMToolChainBinDir, LLVMLINKName)
-		} else {
-			ea.LinkerName = LLVMLINKName
-		}
-	}
-	if LLVMARName != "" {
-		//FIXME: this check can be eliminated because filepath.Join("", "baz") = "baz"
-		if LLVMToolChainBinDir != "" {
-			ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, LLVMARName)
-		} else {
-			ea.ArchiverName = LLVMARName
-		}
-	}
-
 	// Set arguments according to runtime OS
 	switch platform := runtime.GOOS; platform {
 	case "freebsd", "linux":
@@ -125,10 +107,18 @@ func parseSwitches() (ea extractionArgs) {
 
 	if *archiverNamePtr != "" {
 		ea.ArchiverName = *archiverNamePtr
+	} else {
+		if LLVMARName != "" {
+			ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, LLVMARName)
+		}
 	}
 
 	if *linkerNamePtr != "" {
 		ea.LinkerName = *linkerNamePtr
+	} else {
+		if LLVMLINKName != "" {
+			ea.LinkerName = filepath.Join(LLVMToolChainBinDir, LLVMLINKName)
+		}
 	}
 
 	ea.OutputFile = *outputFilePtr

@@ -1,6 +1,5 @@
 package shared
 
-
 import (
 	"io"
 	"io/ioutil"
