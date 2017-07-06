@@ -16,14 +16,15 @@ type bitcodeToObjectLink struct {
 	objPath string
 }
 
-func Compile(args []string, compilerName string) (exitCode int) {
+//Compile wraps a call to the compiler with the given args.
+func Compile(args []string, compiler string) (exitCode int) {
 	exitCode = 0
 	//in the configureOnly case we have to know the exit code of the compile
 	//because that is how configure figures out what it can and cannot do.
 
-	var ok bool = true
+	var ok = true
 
-	var compilerExecName = getCompilerExecName(compilerName)
+	var compilerExecName = getCompilerExecName(compiler)
 	var configureOnly bool
 	if ConfigureOnly != "" {
 		configureOnly = true
@@ -199,20 +200,20 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, o
 	}
 }
 
-func getCompilerExecName(compilerName string) string {
-	switch compilerName {
+func getCompilerExecName(compiler string) string {
+	switch compiler {
 	case "clang":
 		if LLVMCCName != "" {
 			return filepath.Join(LLVMToolChainBinDir, LLVMCCName)
 		}
-		return filepath.Join(LLVMToolChainBinDir, compilerName)
+		return filepath.Join(LLVMToolChainBinDir, compiler)
 	case "clang++":
 		if LLVMCXXName != "" {
 			return filepath.Join(LLVMToolChainBinDir, LLVMCXXName)
 		}
-		return filepath.Join(LLVMToolChainBinDir, compilerName)
+		return filepath.Join(LLVMToolChainBinDir, compiler)
 	default:
-		LogFatal("The compiler %s is not supported by this tool.", compilerName)
+		LogFatal("The compiler %s is not supported by this tool.", compiler)
 		return ""
 	}
 }

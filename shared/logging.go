@@ -49,11 +49,16 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 	}
 }
 
+//LogDebug logs to the configured stream if the logging level is DEBUG.
 var LogDebug = makeLogger(debugV)
+//LogInfo logs to the configured stream if the logging level is INFO or lower.
 var LogInfo = makeLogger(infoV)
+//LogWarning logs to the configured stream if the logging level is WARNING or lower.
 var LogWarning = makeLogger(warningV)
+//LogError logs to the configured stream if the logging level is ERROR or lower.
 var LogError = makeLogger(errorV)
 
+//LogFatal logs to the configured stream and then exits.
 func LogFatal(format string, a ...interface{}) {
 	LogError(format, a...)
 	os.Exit(1)

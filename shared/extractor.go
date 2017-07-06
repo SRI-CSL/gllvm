@@ -26,6 +26,7 @@ type extractionArgs struct {
 	BuildBitcodeArchive bool
 }
 
+//Extract extracts the LLVM bitcode according to the argumets it is passed.
 func Extract(args []string) {
 	ea := parseSwitches()
 
