@@ -43,7 +43,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 			exitCode = 1
 		}
 
-	// Else try to build bitcode as well
+		// Else try to build bitcode as well
 	} else {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
