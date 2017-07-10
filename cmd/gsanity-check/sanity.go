@@ -93,7 +93,7 @@ func checkOS() {
 func checkCompilers() bool {
 
 	cc := shared.GetCompilerExecName("clang")
-	ccOK, _, ccVersion := checkExecutable(cc, "-v")
+	ccOK, ccVersion, _ := checkExecutable(cc, "-v")
 	if !ccOK {
 		shared.LogError("The C compiler %s was not found or not executable.\nBetter not try using gclang!\n", cc)
 	} else {
@@ -101,7 +101,7 @@ func checkCompilers() bool {
 	}
 
 	cxx := shared.GetCompilerExecName("clang++")
-	cxxOK, _, cxxVersion := checkExecutable(cxx, "-v")
+	cxxOK, cxxVersion, _ := checkExecutable(cxx, "-v")
 	if !ccOK {
 		shared.LogError("The CXX compiler %s was not found or not executable.\nBetter not try using gclang++!\n", cxx)
 	} else {
@@ -129,7 +129,7 @@ func extractLine(version string, n int) string {
 }
 
 // Executes a command then returns true for success, false if there was an error, err is either nil or the error.
-func checkExecutable(cmdExecName string, varg string) (success bool, err error, output string) {
+func checkExecutable(cmdExecName string, varg string) (success bool, output string, err error) {
 	cmd := exec.Command(cmdExecName, varg)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -153,7 +153,7 @@ func checkAuxiliaries() bool {
 		archiverName = "llvm-ar"
 	}
 
-	linkerOK, _, linkerVersion := checkExecutable(linkerName, "-version")
+	linkerOK, linkerVersion, _ := checkExecutable(linkerName, "-version")
 
 	if !linkerOK {
 		shared.LogError("The bitcode linker %s was not found or not executable.\nBetter not try using get-bc!\n", linkerName)
@@ -162,7 +162,7 @@ func checkAuxiliaries() bool {
 		shared.LogWrite("The bitcode linker %s is:\n\n\t%s\n\n", linkerName, extractLine(linkerVersion, 1))
 	}
 
-	archiverOK, _, archiverVersion := checkExecutable(archiverName, "-version")
+	archiverOK, archiverVersion, _ := checkExecutable(archiverName, "-version")
 
 	if !archiverOK {
 		shared.LogError("The bitcode archiver %s was not found or not executable.\nBetter not try using get-bc!\n", archiverName)
