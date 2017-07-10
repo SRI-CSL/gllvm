@@ -24,7 +24,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 
 	var ok = true
 
-	var compilerExecName = getCompilerExecName(compiler)
+	var compilerExecName = GetCompilerExecName(compiler)
 	var configureOnly bool
 	if ConfigureOnly != "" {
 		configureOnly = true
@@ -200,7 +200,8 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, o
 	}
 }
 
-func getCompilerExecName(compiler string) string {
+// GetCompilerExecName returns the full path of the executable
+func GetCompilerExecName(compiler string) string {
 	switch compiler {
 	case "clang":
 		if LLVMCCName != "" {

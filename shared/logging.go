@@ -66,3 +66,5 @@ func LogFatal(format string, a ...interface{}) {
 	LogError(format, a...)
 	os.Exit(1)
 }
+
+var LogWrite = makeLogger(-1)
