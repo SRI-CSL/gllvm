@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const explain_LLVM_CC_NAME = `
+const explainLLVMCCNAME = `
 
 If your clang compiler is not called clang, but something else, then
 you will need to set the environment variable LLVM_CC_NAME to the
@@ -18,7 +18,7 @@ LLVM_CC_NAME should be set to clang-3.5.
 
 `
 
-const explain_LLVM_CXX_NAME = `
+const explainLLVMCXXNAME = `
 
 If your clang++ compiler is not called clang++, but something else,
 then you will need to set the environment variable LLVM_CXX_NAME to
@@ -27,7 +27,7 @@ then LLVM_CC_NAME should be set to ++clang.
 
 `
 
-const explain_LLVM_COMPILER_PATH = `
+const explainLLVMCOMPILERPATH = `
 
 Your compiler should either be in your PATH, or else located where the
 environment variable LLVM_COMPILER_PATH indicates. It can also be used
@@ -36,7 +36,7 @@ llvm-link, and llvm-ar.
 
 `
 
-const explain_LLVM_LINK_NAME = `
+const explainLLVMLINKNAME = `
 
 If your llvm linker is not called llvm-link, but something else, then
 you will need to set the environment variable LLVM_LINK_NAME to the
@@ -45,7 +45,7 @@ LLVM_LINK_NAME should be set to llvm-link-3.5.
 
 `
 
-const explain_LLVM_AR_NAME = `
+const explainLLVMARNAME = `
 
 If your llvm archiver is not called llvm-ar, but something else,
 then you will need to set the environment variable LLVM_AR_NAME to
@@ -53,8 +53,6 @@ the appropriate string. For example if your llvm-ar is called llvm-ar-3.5
 then LLVM_AR_NAME should be set to llvm-ar-3.5.
 
 `
-
-
 
 // Performs the environmental sanity check.
 //
@@ -69,24 +67,21 @@ func sanityCheck() {
 
 	checkOS()
 
-	if ! checkCompilers() {
+	if !checkCompilers() {
 		os.Exit(1)
 	}
 
-	if ! checkAuxiliaries() {
+	if !checkAuxiliaries() {
 		os.Exit(1)
 	}
 
 	checkStore()
 
-
 }
 
-
-func checkOS(){
+func checkOS() {
 
 	platform := runtime.GOOS
-
 
 	if platform == "darwin" || platform == "linux" || platform == "freebsd" {
 		return
@@ -113,7 +108,6 @@ func checkCompilers() bool {
 		shared.LogWrite("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}
 
-
 	return ccOK || cxxOK
 }
 
@@ -124,10 +118,10 @@ func extractLine(version string, n int) string {
 	lines := strings.Split(version, "\n")
 	var line string
 	lenLines := len(lines)
-	if n <  lenLines {
+	if n < lenLines {
 		line = lines[n]
 	} else {
-		line = lines[lenLines - 1]
+		line = lines[lenLines-1]
 	}
 
 	return strings.TrimSpace(line)
@@ -147,7 +141,6 @@ func checkExecutable(cmdExecName string, varg string) (success bool, err error, 
 	return
 }
 
-
 func checkAuxiliaries() bool {
 	linkerName := shared.LLVMLINKName
 	archiverName := shared.LLVMARName
@@ -162,20 +155,18 @@ func checkAuxiliaries() bool {
 
 	linkerOK, _, linkerVersion := checkExecutable(linkerName, "-version")
 
-
-	if ! linkerOK {
+	if !linkerOK {
 		shared.LogError("The bitcode linker %s was not found or not executable.\nBetter not try using get-bc!\n", linkerName)
-		shared.LogError(explain_LLVM_LINK_NAME)
+		shared.LogError(explainLLVMLINKNAME)
 	} else {
 		shared.LogWrite("The bitcode linker %s is:\n\n\t%s\n\n", linkerName, extractLine(linkerVersion, 1))
 	}
 
 	archiverOK, _, archiverVersion := checkExecutable(archiverName, "-version")
 
-
-	if ! archiverOK {
+	if !archiverOK {
 		shared.LogError("The bitcode archiver %s was not found or not executable.\nBetter not try using get-bc!\n", archiverName)
-		shared.LogError(explain_LLVM_AR_NAME)
+		shared.LogError(explainLLVMARNAME)
 	} else {
 		shared.LogWrite("The bitcode archiver %s is:\n\n\t%s\n\n", archiverName, extractLine(archiverVersion, 1))
 	}
@@ -192,7 +183,7 @@ func checkStore() {
 			shared.LogError("The bitcode archive %s does not exist!\n\n", storeDir)
 			return
 		}
-		if ! finfo.Mode().IsDir() {
+		if !finfo.Mode().IsDir() {
 			shared.LogError("The bitcode archive %s is not a directory!\n\n", storeDir)
 			return
 		}

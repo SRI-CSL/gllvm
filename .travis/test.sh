@@ -15,6 +15,9 @@ GLLVM_CONFIGURE_ONLY=1  CC=gclang ./configure --target=LLVM --build=LLVM
 
 make
 
+exit $?
+
+
 get-bc -b ./lib/libc.a
 
 if [ -s "./lib/libc.a.bc" ]

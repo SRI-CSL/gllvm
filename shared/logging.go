@@ -67,4 +67,5 @@ func LogFatal(format string, a ...interface{}) {
 	os.Exit(1)
 }
 
+//LogWrite writes to the logging stream, irregardless of levels.
 var LogWrite = makeLogger(-1)
