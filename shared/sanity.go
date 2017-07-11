@@ -1,8 +1,7 @@
-package main
+package shared
 
 import (
 	"bytes"
-	"github.com/SRI-CSL/gllvm/shared"
 	"os"
 	"os/exec"
 	"runtime"
@@ -54,16 +53,18 @@ then LLVM_AR_NAME should be set to llvm-ar-3.5.
 
 `
 
-// Performs the environmental sanity check.
+// SanityCheck performs the environmental sanity check.
 //
 //        Performs the following checks in order:
-//
+//        0. Check the logging
 //        1. Check that the OS is supported.
 //        2. Checks that the compiler settings make sense.
 //        3. Checks that the needed LLVM utilities exists.
 //        4. Check that the store, if set, exists.
 //
-func sanityCheck() {
+func SanityCheck() {
+
+	checkLogging()
 
 	checkOS()
 
@@ -84,28 +85,29 @@ func checkOS() {
 	platform := runtime.GOOS
 
 	if platform == "darwin" || platform == "linux" || platform == "freebsd" {
+		LogWrite("Happily sitting atop \"%s\" operating system.\n\n", platform)
 		return
 	}
 
-	shared.LogFatal("We do not support the OS %s", platform)
+	LogFatal("We do not support the OS %s", platform)
 }
 
 func checkCompilers() bool {
 
-	cc := shared.GetCompilerExecName("clang")
+	cc := GetCompilerExecName("clang")
 	ccOK, ccVersion, _ := checkExecutable(cc, "-v")
 	if !ccOK {
-		shared.LogError("The C compiler %s was not found or not executable.\nBetter not try using gclang!\n", cc)
+		LogError("The C compiler %s was not found or not executable.\nBetter not try using gclang!\n", cc)
 	} else {
-		shared.LogWrite("The C compiler %s is:\n\n\t%s\n\n", cc, extractLine(ccVersion, 0))
+		LogWrite("The C compiler %s is:\n\n\t%s\n\n", cc, extractLine(ccVersion, 0))
 	}
 
-	cxx := shared.GetCompilerExecName("clang++")
+	cxx := GetCompilerExecName("clang++")
 	cxxOK, cxxVersion, _ := checkExecutable(cxx, "-v")
 	if !ccOK {
-		shared.LogError("The CXX compiler %s was not found or not executable.\nBetter not try using gclang++!\n", cxx)
+		LogError("The CXX compiler %s was not found or not executable.\nBetter not try using gclang++!\n", cxx)
 	} else {
-		shared.LogWrite("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
+		LogWrite("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}
 
 	return ccOK || cxxOK
@@ -132,6 +134,8 @@ func extractLine(version string, n int) string {
 func checkExecutable(cmdExecName string, varg string) (success bool, output string, err error) {
 	cmd := exec.Command(cmdExecName, varg)
 	var out bytes.Buffer
+	//strangely clang writes it's version out on stderr
+	//so we conflate the two to be tolerant.
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	cmd.Stdin = os.Stdin
@@ -142,8 +146,8 @@ func checkExecutable(cmdExecName string, varg string) (success bool, output stri
 }
 
 func checkAuxiliaries() bool {
-	linkerName := shared.LLVMLINKName
-	archiverName := shared.LLVMARName
+	linkerName := LLVMLINKName
+	archiverName := LLVMARName
 
 	if linkerName == "" {
 		linkerName = "llvm-link"
@@ -156,39 +160,60 @@ func checkAuxiliaries() bool {
 	linkerOK, linkerVersion, _ := checkExecutable(linkerName, "-version")
 
 	if !linkerOK {
-		shared.LogError("The bitcode linker %s was not found or not executable.\nBetter not try using get-bc!\n", linkerName)
-		shared.LogError(explainLLVMLINKNAME)
+		LogError("The bitcode linker %s was not found or not executable.\nBetter not try using get-bc!\n", linkerName)
+		LogError(explainLLVMLINKNAME)
 	} else {
-		shared.LogWrite("The bitcode linker %s is:\n\n\t%s\n\n", linkerName, extractLine(linkerVersion, 1))
+		LogWrite("The bitcode linker %s is:\n\n\t%s\n\n", linkerName, extractLine(linkerVersion, 1))
 	}
 
 	archiverOK, archiverVersion, _ := checkExecutable(archiverName, "-version")
 
 	if !archiverOK {
-		shared.LogError("The bitcode archiver %s was not found or not executable.\nBetter not try using get-bc!\n", archiverName)
-		shared.LogError(explainLLVMARNAME)
+		LogError("The bitcode archiver %s was not found or not executable.\nBetter not try using get-bc!\n", archiverName)
+		LogError(explainLLVMARNAME)
 	} else {
-		shared.LogWrite("The bitcode archiver %s is:\n\n\t%s\n\n", archiverName, extractLine(archiverVersion, 1))
+		LogWrite("The bitcode archiver %s is:\n\n\t%s\n\n", archiverName, extractLine(archiverVersion, 1))
 	}
 
 	return true
 }
 
 func checkStore() {
-	storeDir := shared.BitcodeStorePath
+	storeDir := LLVMBitcodeStorePath
 
 	if storeDir != "" {
 		finfo, err := os.Stat(storeDir)
 		if err != nil && os.IsNotExist(err) {
-			shared.LogError("The bitcode archive %s does not exist!\n\n", storeDir)
+			LogError("The bitcode archive %s does not exist!\n\n", storeDir)
 			return
 		}
 		if !finfo.Mode().IsDir() {
-			shared.LogError("The bitcode archive %s is not a directory!\n\n", storeDir)
+			LogError("The bitcode archive %s is not a directory!\n\n", storeDir)
 			return
 		}
-		shared.LogWrite("Using the bitcode archive %s\n\n", storeDir)
+		LogWrite("Using the bitcode archive %s\n\n", storeDir)
 		return
 	}
-	shared.LogWrite("Not using a bitcode store.\n\n")
+	LogWrite("Not using a bitcode store.\n\n")
+}
+
+func checkLogging() {
+
+	if LLVMLoggingFile != "" {
+		// override the redirection so we output to the terminal (would be unnecessary
+		// if we multiplexed in logging.go)
+		loggingFilePointer = os.Stderr
+		LogWrite("\nLogging output directed to %s.\n", LLVMLoggingFile)
+	} else {
+		LogWrite("\nLogging output to standard error.\n")
+	}
+	if LLVMLoggingLevel != "" {
+		if _, ok := loggingLevels[LLVMLoggingLevel]; ok {
+			LogWrite("Logging level is set to %s.\n\n", LLVMLoggingLevel)
+		} else {
+			LogWrite("Logging level is set to UNKNOWN level %s, using default of ERROR.\n\n", LLVMLoggingLevel)
+		}
+	} else {
+		LogWrite("Logging level not set, using default of ERROR.\n\n")
+	}
 }

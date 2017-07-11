@@ -1,7 +1,9 @@
 package main
 
+import 	"github.com/SRI-CSL/gllvm/shared"
+
 func main() {
 
-	sanityCheck()
+	shared.SanityCheck()
 
 }

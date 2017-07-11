@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -17,18 +16,6 @@ const (
 	fileTypeMACHSHARED
 	fileTypeARCHIVE
 )
-
-func init() {
-
-	LLVMToolChainBinDir = os.Getenv("GLLVM_TOOLS_PATH")
-	LLVMCCName = os.Getenv("GLLVM_CC_NAME")
-	LLVMCXXName = os.Getenv("GLLVM_CXX_NAME")
-	LLVMARName = os.Getenv("GLLVM_AR_NAME")
-	LLVMLINKName = os.Getenv("GLLVM_LINK_NAME")
-
-	ConfigureOnly = os.Getenv("GLLVM_CONFIGURE_ONLY")
-	BitcodeStorePath = os.Getenv("GLLVM_BC_STORE")
-}
 
 func getFileType(realPath string) (fileType int) {
 	// We need the file command to guess the file type

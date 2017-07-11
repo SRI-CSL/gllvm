@@ -26,7 +26,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 
 	var compilerExecName = GetCompilerExecName(compiler)
 	var configureOnly bool
-	if ConfigureOnly != "" {
+	if LLVMConfigureOnly != "" {
 		configureOnly = true
 	}
 	var pr = parse(args)
@@ -144,7 +144,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		execCmd(attachCmd, attachCmdArgs, "")
 
 		// Copy bitcode file to store, if necessary
-		if bcStorePath := os.Getenv(BitcodeStorePath); bcStorePath != "" {
+		if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
 			destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
 			in, _ := os.Open(absBcPath)
 			defer in.Close()

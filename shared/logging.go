@@ -13,6 +13,7 @@ const (
 	debugV
 )
 
+//loggingLevels is the accepted logging levels.
 var loggingLevels = map[string]int{
 	"ERROR":   errorV,
 	"WARNING": warningV,
@@ -20,31 +21,38 @@ var loggingLevels = map[string]int{
 	"DEBUG":   debugV,
 }
 
-var level = 0
+//loggingLevel is the user configured level of logging: ERROR, WARNING, INFO, DEBUG
+var loggingLevel = errorV
 
-var filePointer = os.Stderr
+//loggingFilePointer is where the logging is streamed too.
+var loggingFilePointer = os.Stderr
 
 func init() {
-	if envLevelStr := os.Getenv("GLLVM_OUTPUT_LEVEL"); envLevelStr != "" {
-		if envLevelVal, ok := loggingLevels[envLevelStr]; ok {
-			level = envLevelVal
+	if LLVMLoggingLevel != "" {
+		if envLevelVal, ok := loggingLevels[LLVMLoggingLevel]; ok {
+			loggingLevel = envLevelVal
 		}
 	}
-	if envFileStr := os.Getenv("GLLVM_OUTPUT_FILE"); envFileStr != "" {
-		if loggingFP, err := os.OpenFile(envFileStr, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err == nil {
-			filePointer = loggingFP
+	if LLVMLoggingFile != "" {
+		//FIXME: is it overboard to defer a close? the OS will close when the process gets cleaned up, do we win
+		//anything by being OCD?
+		if loggingFP, err := os.OpenFile(LLVMLoggingFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err == nil {
+			loggingFilePointer = loggingFP
 		}
 	}
 }
 
 func makeLogger(lvl int) func(format string, a ...interface{}) {
 	return func(format string, a ...interface{}) {
-		if level >= lvl {
+		if loggingLevel >= lvl {
 			msg := fmt.Sprintf(format, a...)
 			if !strings.HasSuffix(msg, "\n") {
 				msg += "\n"
 			}
-			filePointer.WriteString(msg)
+			//FIXME: (?) if loggingFilePointer != os.Stderr, we could multiplex here
+			//and send output to both os.Stderr and loggingFilePointer. We wouldn't
+			//want the user to miss any excitement.
+			loggingFilePointer.WriteString(msg)
 		}
 	}
 }
