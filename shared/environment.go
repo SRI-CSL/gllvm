@@ -43,18 +43,30 @@ var LLVMLoggingLevel string
 //LLVMLoggingFile is the path to the optional logfile (useful when configuring)
 var LLVMLoggingFile string
 
+const (
+	envpath = "GLLVM_TOOLS_PATH"     //"LLVM_COMPILER_PATH"
+	envcc   = "GLLVM_CC_NAME"        //"LLVM_CC_NAME"
+	envcxx  = "GLLVM_CXX_NAME"       //"LLVM_CXX_NAME"
+	envar   = "GLLVM_AR_NAME"        //"LLVM_AR_NAME"
+	envlnk  = "GLLVM_LINK_NAME"      //"LLVM_LINK_NAME"
+	envcfg  = "GLLVM_CONFIGURE_ONLY" //"WLLVM_CONFIGURE_ONLY"
+	envbc   = "GLLVM_BC_STORE"       //"WLLVM_BC_STORE"
+	envlvl  = "GLLVM_OUTPUT_LEVEL"   //"WLLVM_OUTPUT_LEVEL
+	envfile = "GLLVM_OUTPUT_FILE"    //"WLLVM_OUTPUT_FILE"
+)
+
 func init() {
 
-	LLVMToolChainBinDir = os.Getenv("GLLVM_TOOLS_PATH") //os.Getenv("LLVM_COMPILER_PATH")
-	LLVMCCName = os.Getenv("GLLVM_CC_NAME")             //os.Getenv("LLVM_CC_NAME")
-	LLVMCXXName = os.Getenv("GLLVM_CXX_NAME")           //os.Getenv("LLVM_CXX_NAME")
-	LLVMARName = os.Getenv("GLLVM_AR_NAME")             //os.Getenv("LLVM_AR_NAME")
-	LLVMLINKName = os.Getenv("GLLVM_LINK_NAME")         //os.Getenv("LLVM_LINK_NAME")
+	LLVMToolChainBinDir = os.Getenv(envpath)
+	LLVMCCName = os.Getenv(envcc)
+	LLVMCXXName = os.Getenv(envcxx)
+	LLVMARName = os.Getenv(envar)
+	LLVMLINKName = os.Getenv(envlnk)
 
-	LLVMConfigureOnly = os.Getenv("GLLVM_CONFIGURE_ONLY") //os.Getenv("WLLVM_CONFIGURE_ONLY")
-	LLVMBitcodeStorePath = os.Getenv("GLLVM_BC_STORE")    //os.Getenv("WLLVM_BC_STORE")
+	LLVMConfigureOnly = os.Getenv(envcfg)
+	LLVMBitcodeStorePath = os.Getenv(envbc)
 
-	LLVMLoggingLevel = os.Getenv("GLLVM_OUTPUT_LEVEL") //os.Getenv("WLLVM_OUTPUT_LEVEL")
-	LLVMLoggingFile = os.Getenv("GLLVM_OUTPUT_FILE")   //os.Getenv("WLLVM_OUTPUT_FILE")
+	LLVMLoggingLevel = os.Getenv(envlvl)
+	LLVMLoggingFile = os.Getenv(envfile)
 
 }

@@ -51,7 +51,8 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 			}
 			//FIXME: (?) if loggingFilePointer != os.Stderr, we could multiplex here
 			//and send output to both os.Stderr and loggingFilePointer. We wouldn't
-			//want the user to miss any excitement.
+			//want the user to miss any excitement. Then the sanity checker would not
+			//need to futz with it.
 			loggingFilePointer.WriteString(msg)
 		}
 	}

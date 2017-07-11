@@ -16,3 +16,4 @@ uninstall:
 	rm -f $(GOROOT)/bin/gclang
 	rm -f $(GOROOT)/bin/gclang++
 	rm -f $(GOROOT)/bin/get-bc
+	rm -f $(GOROOT)/bin/gsanity-check
