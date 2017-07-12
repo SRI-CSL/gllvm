@@ -58,6 +58,10 @@ added the `$GOROOT/bin` directory to your `$PATH` variable.
 
 FIXME: this needs to be rewritten to use spells like this:
 ```
+go get github.com/SRI-CSL/gllvm/cmd/...
+```
+or individually via
+```
 go get github.com/SRI-CSL/gllvm/cmd/gclang
 go get github.com/SRI-CSL/gllvm/cmd/gclang++
 go get github.com/SRI-CSL/gllvm/cmd/get-bc
