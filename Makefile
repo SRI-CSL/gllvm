@@ -1,12 +1,11 @@
 GOROOT := $(shell go env GOPATH)
 
 build:
-	go build ./shared ./cmd/gclang ./cmd/gclang++ ./cmd/get-bc ./cmd/gsanity-check
-
+	go build ./cmd/...
 
 
 install: build
-	go install ./cmd/gclang ./cmd/gclang++ ./cmd/get-bc ./cmd/gsanity-check
+	go install ./cmd/...
 
 clean:
 	go clean
