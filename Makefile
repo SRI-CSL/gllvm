@@ -9,7 +9,6 @@ install: build
 
 clean:
 	go clean
-	rm -f gclang gclang++ get-bc
 
 fmt:
 	gofmt -s -w shared/*.go cmd/*/*.go
