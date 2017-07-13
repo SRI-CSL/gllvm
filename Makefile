@@ -9,7 +9,6 @@ install: build
 
 clean:
 	go clean
-	rm -f gclang gclang++ get-bc
 
 uninstall:
 	rm -f $(GOROOT)/bin/gclang
