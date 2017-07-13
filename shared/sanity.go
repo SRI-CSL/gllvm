@@ -110,6 +110,7 @@ func checkCompilers() bool {
 		LogWrite("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}
 
+	//FIXME: why "or" rather than "and"?
 	return ccOK || cxxOK
 }
 
@@ -130,6 +131,7 @@ func extractLine(version string, n int) string {
 
 }
 
+// FIXME: this and execCmd in utils.go could be one routine, if that seems reasonable, or is it overboard?
 // Executes a command then returns true for success, false if there was an error, err is either nil or the error.
 func checkExecutable(cmdExecName string, varg string) (success bool, output string, err error) {
 	cmd := exec.Command(cmdExecName, varg)
@@ -175,7 +177,7 @@ func checkAuxiliaries() bool {
 		LogWrite("The bitcode archiver %s is:\n\n\t%s\n\n", archiverName, extractLine(archiverVersion, 1))
 	}
 
-	return true
+	return linkerOK && archiverOK
 }
 
 func checkStore() {

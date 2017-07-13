@@ -11,6 +11,9 @@ clean:
 	go clean
 	rm -f gclang gclang++ get-bc
 
+fmt:
+	gofmt -s -w shared/*.go cmd/*/*.go
+
 uninstall:
 	rm -f $(GOROOT)/bin/gclang
 	rm -f $(GOROOT)/bin/gclang++
