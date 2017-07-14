@@ -44,15 +44,15 @@ var LLVMLoggingLevel string
 var LLVMLoggingFile string
 
 const (
-	envpath = "GLLVM_TOOLS_PATH"     //"LLVM_COMPILER_PATH"
-	envcc   = "GLLVM_CC_NAME"        //"LLVM_CC_NAME"
-	envcxx  = "GLLVM_CXX_NAME"       //"LLVM_CXX_NAME"
-	envar   = "GLLVM_AR_NAME"        //"LLVM_AR_NAME"
-	envlnk  = "GLLVM_LINK_NAME"      //"LLVM_LINK_NAME"
-	envcfg  = "GLLVM_CONFIGURE_ONLY" //"WLLVM_CONFIGURE_ONLY"
-	envbc   = "GLLVM_BC_STORE"       //"WLLVM_BC_STORE"
-	envlvl  = "GLLVM_OUTPUT_LEVEL"   //"WLLVM_OUTPUT_LEVEL
-	envfile = "GLLVM_OUTPUT_FILE"    //"WLLVM_OUTPUT_FILE"
+	envpath = "LLVM_COMPILER_PATH"
+	envcc   = "LLVM_CC_NAME"
+	envcxx  = "LLVM_CXX_NAME"
+	envar   = "LLVM_AR_NAME"
+	envlnk  = "LLVM_LINK_NAME"
+	envcfg  = "WLLVM_CONFIGURE_ONLY"
+	envbc   = "WLLVM_BC_STORE"
+	envlvl  = "WLLVM_OUTPUT_LEVEL"
+	envfile = "WLLVM_OUTPUT_FILE"
 )
 
 func init() {
