@@ -76,21 +76,14 @@ If clang and the llvm tools are not in your `PATH`, you will need to set some
 environment variables.
 
 
- * `LLVM_COMPILER_PATH` can be set to the absolute path to the folder that
-   contains the compiler and other LLVM tools such as `llvm-link` to be used.
-   This prevents searching for the compiler in your PATH environment variable.
-   This can be useful if you have different versions of clang on your system
-   and you want to easily switch compilers without tinkering with your PATH
-   variable.
-   Example `LLVM_COMPILER_PATH=/home/user/llvm_and_clang/Debug+Asserts/bin`.
-
+ * `LLVM_COMPILER_PATH` can be set to the absolute path of the directory that
+   contains the compiler and the other LLVM tools to be used.
 
  * `LLVM_CC_NAME` can be set if your clang compiler is not called `clang` but
     something like `clang-3.7`. Similarly `LLVM_CXX_NAME` can be used to
     describe what the C++ compiler is called. We also pay attention to the
-    environment  variables `LLVM_LINK_NAME` and `LLVM_AR_NAME` in an
-    analagous way, since they too get adorned with suffixes in various Linux
-    distributions.
+    environment variables `LLVM_LINK_NAME` and `LLVM_AR_NAME` in an
+    analagous way.
 
 Another useful environment variable is `WLLVM_CONFIGURE_ONLY`. Its use is explained in the 
 README of  [wllvm](https://github.com/SRI-CSL/whole-program-llvm). 
