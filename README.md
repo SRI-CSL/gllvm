@@ -83,7 +83,7 @@ environment variables.
     something like `clang-3.7`. Similarly `LLVM_CXX_NAME` can be used to
     describe what the C++ compiler is called. We also pay attention to the
     environment variables `LLVM_LINK_NAME` and `LLVM_AR_NAME` in an
-    analagous way.
+    analogous way.
 
 Another useful environment variable is `WLLVM_CONFIGURE_ONLY`. Its use is explained in the 
 README of  [wllvm](https://github.com/SRI-CSL/whole-program-llvm). 
