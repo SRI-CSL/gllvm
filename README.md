@@ -29,7 +29,7 @@ works for both executable and native libraries.
 
 For more details see [wllvm](https://github.com/SRI-CSL/whole-program-llvm).
 
-#### Prerequisites
+## Prerequisites
 
 To install `gllvm` you need the go language [tool](https://golang.org/doc/install).
 
@@ -98,6 +98,6 @@ README of  [wllvm](https://github.com/SRI-CSL/whole-program-llvm).
 `gllvm` does not support the dragonegg plugin. All other features of `wllvm`, such as logging, and the bitcode store,
 are supported in exactly the same fashion.
 
-### License
+## License
 
 GLLVM is released under the MIT license. See the file `LICENSE` for [details.](LICENSE)
