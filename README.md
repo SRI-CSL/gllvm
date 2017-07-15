@@ -100,4 +100,4 @@ are supported in exactly the same fashion.
 
 ## License
 
-GLLVM is released under the MIT license. See the file `LICENSE` for [details.](LICENSE)
+`gllvm` is released under the MIT license. See the file `LICENSE` for [details.](LICENSE)
