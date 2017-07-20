@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -159,6 +160,8 @@ func checkAuxiliaries() bool {
 		archiverName = "llvm-ar"
 	}
 
+	linkerName = filepath.Join(LLVMToolChainBinDir, linkerName)
+
 	linkerOK, linkerVersion, _ := checkExecutable(linkerName, "-version")
 
 	if !linkerOK {
@@ -168,6 +171,7 @@ func checkAuxiliaries() bool {
 		LogWrite("The bitcode linker %s is:\n\n\t%s\n\n", linkerName, extractLine(linkerVersion, 1))
 	}
 
+	archiverName = filepath.Join(LLVMToolChainBinDir, archiverName)
 	archiverOK, archiverVersion, _ := checkExecutable(archiverName, "-version")
 
 	if !archiverOK {
