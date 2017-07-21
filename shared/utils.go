@@ -13,6 +13,14 @@ func execCmd(cmdExecName string, args []string, workingDir string) (success bool
 	cmd.Stdin = os.Stdin
 	cmd.Dir = workingDir
 	err = cmd.Run()
-	success = (err == nil)
+	ecode := 0
+	if err != nil {
+		ecode = 1
+	}
+	LogDebug("execCmd: %v %v in %v had exitCode %v\n", cmdExecName, args, workingDir, ecode)
+	if err != nil {
+		LogDebug("execCmd: error was %v\n", err)
+	}
+	success = (ecode == 0)
 	return
 }
