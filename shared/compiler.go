@@ -48,23 +48,27 @@ func Compile(args []string, compiler string) (exitCode int) {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
 
+		skip := false
+
 		wg.Add(2)
 		go execCompile(compilerExecName, pr, &wg, &ok)
-		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
+		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &skip, &wg)
 		wg.Wait()
 
 		//grok the exit code
 		if !ok {
 			exitCode = 1
 		} else {
-
-			// When objects and bitcode are built we can attach bitcode paths
-			// to object files and link
-			for _, link := range bcObjLinks {
-				attachBitcodePathToObject(link.bcPath, link.objPath)
-			}
-			if !pr.IsCompileOnly {
-				compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
+			
+			if !skip {
+				// When objects and bitcode are built we can attach bitcode paths
+				// to object files and link
+				for _, link := range bcObjLinks {
+					attachBitcodePathToObject(link.bcPath, link.objPath)
+				}
+				if !pr.IsCompileOnly {
+					compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
+				}
 			}
 
 		}
@@ -74,31 +78,41 @@ func Compile(args []string, compiler string) (exitCode int) {
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
 // new object files to link
-func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
+func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, skip *bool, wg *sync.WaitGroup) {
 	defer (*wg).Done()
+	
 	// If nothing to do, exit silently
-	if !pr.IsEmitLLVM && !pr.IsAssembly && !pr.IsAssembleOnly &&
-		!(pr.IsDependencyOnly && !pr.IsCompileOnly) && !pr.IsPreprocessOnly {
-		var hidden = !pr.IsCompileOnly
+	if len(pr.InputFiles) == 0 ||
+		pr.IsEmitLLVM || 
+		pr.IsAssembly || 
+		pr.IsAssembleOnly || 
+		(pr.IsDependencyOnly && !pr.IsCompileOnly) || 
+		pr.IsPreprocessOnly || 
+		pr.IsPrintOnly {
+		LogInfo("No additional work to do")
+		*skip = true
+		return
+	}
 
-		if len(pr.InputFiles) == 1 && pr.IsCompileOnly {
-			var srcFile = pr.InputFiles[0]
-			objFile, bcFile := getArtifactNames(pr, 0, hidden)
-			buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
-			*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
-		} else {
-			for i, srcFile := range pr.InputFiles {
-				objFile, bcFile := getArtifactNames(pr, i, hidden)
-				if hidden {
-					buildObjectFile(compilerExecName, pr, srcFile, objFile)
-					*newObjectFiles = append(*newObjectFiles, objFile)
-				}
-				if strings.HasSuffix(srcFile, ".bc") {
-					*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: srcFile, objPath: objFile})
-				} else {
-					buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
-					*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
-				}
+	var hidden = !pr.IsCompileOnly
+
+	if len(pr.InputFiles) == 1 && pr.IsCompileOnly {
+		var srcFile = pr.InputFiles[0]
+		objFile, bcFile := getArtifactNames(pr, 0, hidden)
+		buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
+		*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
+	} else {
+		for i, srcFile := range pr.InputFiles {
+			objFile, bcFile := getArtifactNames(pr, i, hidden)
+			if hidden {
+				buildObjectFile(compilerExecName, pr, srcFile, objFile)
+				*newObjectFiles = append(*newObjectFiles, objFile)
+			}
+			if strings.HasSuffix(srcFile, ".bc") {
+				*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: srcFile, objPath: objFile})
+			} else {
+				buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
+				*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
 			}
 		}
 	}
