@@ -6,8 +6,10 @@ import (
 )
 
 func main() {
+
+	shared.LogInfo("Entering %v\n", os.Args)
 	// Parse command line
-	var args = os.Args
+	args := os.Args
 	args = args[1:]
 
 	exitCode := shared.Compile(args, "clang")

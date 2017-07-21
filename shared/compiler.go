@@ -119,14 +119,20 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		tmpContent := []byte(absBcPath + "\n")
 		tmpFile, err := ioutil.TempFile("", "gllvm")
 		if err != nil {
-			LogFatal("attachBitcodePathToObject: %v\n", err)
+			LogError("attachBitcodePathToObject: %v\n", err)
+			// was LogFatal
+			return
 		}
 		defer os.Remove(tmpFile.Name())
 		if _, err := tmpFile.Write(tmpContent); err != nil {
-			LogFatal("attachBitcodePathToObject: %v\n", err)
+			LogError("attachBitcodePathToObject: %v\n", err)
+			// was LogFatal
+			return
 		}
 		if err := tmpFile.Close(); err != nil {
-			LogFatal("attachBitcodePathToObject: %v\n", err)
+			LogError("attachBitcodePathToObject: %v\n", err)
+			// was LogFatal
+			return
 		}
 
 		// Let's write the bitcode section
@@ -166,7 +172,9 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	args = append(args, "-o", outputFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
-		LogFatal("Failed to link: %v.", err)
+		LogError("%v %v failed to link: %v.", compilerExecName, args, err)
+		//was LogFatal
+		return
 	}
 }
 
@@ -176,7 +184,9 @@ func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, o
 	args = append(args, srcFile, "-c", "-o", objFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
-		LogFatal("Failed to build object file for %s because: %v\n", srcFile, err)
+		LogError("Failed to build object file for %s because: %v\n", srcFile, err)
+		//was LogFatal
+		return
 	}
 }
 
@@ -186,7 +196,9 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 	args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
-		LogFatal("Failed to build bitcode file for %s because: %v\n", srcFile, err)
+		LogError("Failed to build bitcode file for %s because: %v\n", srcFile, err)
+		//was LogFatal
+		return
 	}
 }
 
@@ -214,7 +226,8 @@ func GetCompilerExecName(compiler string) string {
 		}
 		return filepath.Join(LLVMToolChainBinDir, compiler)
 	default:
-		LogFatal("The compiler %s is not supported by this tool.", compiler)
+		LogError("The compiler %s is not supported by this tool.", compiler)
+		// was LogFatal
 		return ""
 	}
 }
