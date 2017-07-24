@@ -181,8 +181,10 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	if outputFile == "" {
 		outputFile = "a.out"
 	}
-	args := pr.LinkArgs
-	args = append(args, objFiles...)
+	args := objFiles
+	for _, larg := range pr.LinkArgs {
+		args = append(args, larg)
+	}
 	args = append(args, "-o", outputFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
