@@ -22,19 +22,16 @@ func Compile(args []string, compiler string) (exitCode int) {
 	//in the configureOnly case we have to know the exit code of the compile
 	//because that is how configure figures out what it can and cannot do.
 
-	var ok = true
+	ok := true
 
-	var compilerExecName = GetCompilerExecName(compiler)
-	var configureOnly bool
-	if LLVMConfigureOnly != "" {
-		configureOnly = true
-	}
-	var pr = parse(args)
+	compilerExecName := GetCompilerExecName(compiler)
+
+	pr := parse(args)
 
 	var wg sync.WaitGroup
 
 	// If configure only or print only are set, just execute the compiler
-	if configureOnly || pr.IsPrintOnly {
+	if skipBitcodeGeneration(pr) {
 		wg.Add(1)
 		go execCompile(compilerExecName, pr, &wg, &ok)
 		wg.Wait()
@@ -48,29 +45,23 @@ func Compile(args []string, compiler string) (exitCode int) {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
 
-		skip := false
-
 		wg.Add(2)
 		go execCompile(compilerExecName, pr, &wg, &ok)
-		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &skip, &wg)
+		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
 		wg.Wait()
 
 		//grok the exit code
 		if !ok {
 			exitCode = 1
 		} else {
-			
-			if !skip {
-				// When objects and bitcode are built we can attach bitcode paths
-				// to object files and link
-				for _, link := range bcObjLinks {
-					attachBitcodePathToObject(link.bcPath, link.objPath)
-				}
-				if !pr.IsCompileOnly {
-					compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
-				}
+			// When objects and bitcode are built we can attach bitcode paths
+			// to object files and link
+			for _, link := range bcObjLinks {
+				attachBitcodePathToObject(link.bcPath, link.objPath)
 			}
-
+			if !pr.IsCompileOnly {
+				compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
+			}
 		}
 	}
 	return
@@ -78,21 +69,8 @@ func Compile(args []string, compiler string) (exitCode int) {
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
 // new object files to link
-func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, skip *bool, wg *sync.WaitGroup) {
+func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
 	defer (*wg).Done()
-	
-	// If nothing to do, exit silently
-	if len(pr.InputFiles) == 0 ||
-		pr.IsEmitLLVM || 
-		pr.IsAssembly || 
-		pr.IsAssembleOnly || 
-		(pr.IsDependencyOnly && !pr.IsCompileOnly) || 
-		pr.IsPreprocessOnly || 
-		pr.IsPrintOnly {
-		LogInfo("No additional work to do")
-		*skip = true
-		return
-	}
 
 	var hidden = !pr.IsCompileOnly
 

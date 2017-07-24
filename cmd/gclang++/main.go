@@ -8,7 +8,7 @@ import (
 func main() {
 	// Parse command line
 	shared.LogInfo("Entering %v\n", os.Args)
-	
+
 	args := os.Args
 	args = args[1:]
 

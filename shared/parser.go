@@ -33,6 +33,23 @@ type flagInfo struct {
 	handler func(string, []string)
 }
 
+func skipBitcodeGeneration(pr parserResult) bool {
+	if LLVMConfigureOnly != "" {
+		return true
+	}
+	if len(pr.InputFiles) == 0 ||
+		pr.IsEmitLLVM ||
+		pr.IsAssembly ||
+		pr.IsAssembleOnly ||
+		(pr.IsDependencyOnly && !pr.IsCompileOnly) ||
+		pr.IsPreprocessOnly ||
+		pr.IsPrintOnly {
+		return true
+	}
+	return false
+
+}
+
 func parse(argList []string) parserResult {
 	var pr = parserResult{}
 	pr.InputList = argList
