@@ -269,7 +269,7 @@ func getHashedPath(path string) string {
 }
 
 func (pr *parserResult) inputFileCallback(flag string, _ []string) {
-	var regExp = regexp.MustCompile(`\\.(s|S)$`)
+	var regExp = regexp.MustCompile(`\.(s|S)$`)
 	pr.InputFiles = append(pr.InputFiles, flag)
 	if regExp.MatchString(flag) {
 		pr.IsAssembly = true
