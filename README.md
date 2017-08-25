@@ -93,4 +93,4 @@ are supported in exactly the same fashion.
 
 ## License
 
-`gllvm` is released under the MIT license. See the file `LICENSE` for [details.](LICENSE)
+`gllvm` is released under a BSD license. See the file `LICENSE` for [details.](LICENSE)
