@@ -94,3 +94,7 @@ are supported in exactly the same fashion.
 ## License
 
 `gllvm` is released under a BSD license. See the file `LICENSE` for [details.](LICENSE)
+
+---
+
+This material is based upon work supported by the National Science Foundation under Grant [ACI-1547467](http://www.nsf.gov/awardsearch/showAward?AWD_ID=1547467). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
