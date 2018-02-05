@@ -4,8 +4,8 @@ sudo: required
 dist: trusty
 
 go:
-  - master
-
+    - 1.8.x
+    - 1.9.x
 
 install:
   - sudo apt-get update
