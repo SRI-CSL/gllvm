@@ -59,7 +59,7 @@ type extractionArgs struct {
 	BuildBitcodeArchive bool
 }
 
-//Extract extracts the LLVM bitcode according to the argumets it is passed.
+//Extract extracts the LLVM bitcode according to the arguments it is passed.
 func Extract(args []string) {
 	ea := parseSwitches()
 
@@ -191,6 +191,9 @@ func parseSwitches() (ea extractionArgs) {
 
 func handleExecutable(ea extractionArgs) {
 	artifactPaths := ea.Extractor(ea.InputFile)
+	if len(artifactPaths) == 0 {
+	   return
+	}
 	filesToLink := make([]string, len(artifactPaths))
 	for i, artPath := range artifactPaths {
 		filesToLink[i] = resolveBitcodePath(artPath)
@@ -301,6 +304,10 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 		LogFatal("Mach-O file %s could not be read.", inputFile)
 	}
 	section := machoFile.Section(DarwinSectionName)
+	if(section == nil){
+          LogWarning("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
+	  return
+	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
 		LogFatal("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)

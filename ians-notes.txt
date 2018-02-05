@@ -1,0 +1,7 @@
+To edit the code locally use the repository here:
+
+~/go/src/github.com/SRI-CSL/gllvm
+
+Then do:
+
+go install -a github.com/SRI-CSL/gllvm/cmd/...

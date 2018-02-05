@@ -90,7 +90,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 			// When objects and bitcode are built we can attach bitcode paths
 			// to object files and link
 			for _, link := range bcObjLinks {
-				attachBitcodePathToObject(link.bcPath, link.objPath)
+			    attachBitcodePathToObject(link.bcPath, link.objPath)
 			}
 			if !pr.IsCompileOnly {
 				compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)

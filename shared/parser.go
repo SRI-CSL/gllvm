@@ -280,13 +280,18 @@ func getArtifactNames(pr parserResult, srcFileIndex int, hidden bool) (objBase s
 		bcBase = path.Join(dir, bcBaseName)
 	} else {
 		srcFile := pr.InputFiles[srcFileIndex]
-		var dir, baseNameWithExt = path.Split(srcFile)
+		var _, baseNameWithExt = path.Split(srcFile)
 		var baseName = strings.TrimSuffix(baseNameWithExt, filepath.Ext(baseNameWithExt))
 		bcBase = fmt.Sprintf(".%s.o.bc", baseName)
+//		if hidden {
+//			objBase = path.Join(dir, fmt.Sprintf(".%s.o", baseName))
+//		} else {
+//			objBase = path.Join(dir, fmt.Sprintf("%s.o", baseName))
+//		}
 		if hidden {
-			objBase = path.Join(dir, fmt.Sprintf(".%s.o", baseName))
+			objBase = fmt.Sprintf(".%s.o", baseName)
 		} else {
-			objBase = path.Join(dir, fmt.Sprintf("%s.o", baseName))
+			objBase = fmt.Sprintf("%s.o", baseName)
 		}
 	}
 	return

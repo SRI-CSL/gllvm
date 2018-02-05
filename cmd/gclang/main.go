@@ -39,7 +39,6 @@ import (
 )
 
 func main() {
-
 	shared.LogInfo("Entering %v\n", os.Args)
 	// Parse command line
 	args := os.Args
