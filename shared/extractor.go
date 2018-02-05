@@ -192,7 +192,7 @@ func parseSwitches() (ea extractionArgs) {
 func handleExecutable(ea extractionArgs) {
 	artifactPaths := ea.Extractor(ea.InputFile)
 	if len(artifactPaths) == 0 {
-	   return
+		return
 	}
 	filesToLink := make([]string, len(artifactPaths))
 	for i, artPath := range artifactPaths {
@@ -304,9 +304,9 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 		LogFatal("Mach-O file %s could not be read.", inputFile)
 	}
 	section := machoFile.Section(DarwinSectionName)
-	if(section == nil){
-          LogWarning("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
-	  return
+	if section == nil {
+		LogWarning("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
+		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
