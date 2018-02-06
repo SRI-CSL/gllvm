@@ -10,7 +10,8 @@ go:
 install:
   - sudo apt-get update
   - sudo apt-get install -y llvm-3.8 clang-3.8
-  - make install
+  - go get -t -v ./...
+
 
 script:
   - ./.travis/test.sh
