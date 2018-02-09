@@ -14,14 +14,14 @@ bitcode in parallel, and is faster.
 |  wllvm++                    | gclang++                    |
 |  extract-bc                 | get-bc                      |
 |  wllvm-sanity-checker       | gsanity-check               |
-|  LLVM_COMPILER              | *not supported* (clang only)|
-|  LLVM_GCC_PREFIX            | *not supported* (clang only)|
-|  LLVM_DRAGONEGG_PLUGIN      | *not supported* (clang only)|
 |  LLVM_COMPILER_PATH         | LLVM_COMPILER_PATH          |
 |  LLVM_CC_NAME      ...      | LLVM_CC_NAME          ...   |
 |  WLLVM_CONFIGURE_ONLY       | WLLVM_CONFIGURE_ONLY        |
 |  WLLVM_OUTPUT_LEVEL         | WLLVM_OUTPUT_LEVEL          |
 |  WLLVM_OUTPUT_FILE          | WLLVM_OUTPUT_FILE           |
+|  LLVM_COMPILER              | *not supported* (clang only)|
+|  LLVM_GCC_PREFIX            | *not supported* (clang only)|
+|  LLVM_DRAGONEGG_PLUGIN      | *not supported* (clang only)|
 
 
 This project, `gllvm`, provides tools for building whole-program (or
