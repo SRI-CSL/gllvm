@@ -122,6 +122,8 @@ func parse(argList []string) parserResult {
 		"-mno-aes":        {0, pr.compileUnaryCallback},
 		"-mavx":           {0, pr.compileUnaryCallback},
 		"-mno-avx":        {0, pr.compileUnaryCallback},
+		"-mavx2":          {0, pr.compileUnaryCallback},
+		"-mno-avx2":       {0, pr.compileUnaryCallback},
 		"-mcmodel=kernel": {0, pr.compileUnaryCallback},
 		"-mno-red-zone":   {0, pr.compileUnaryCallback},
 		"-mmmx":           {0, pr.compileUnaryCallback},
