@@ -319,15 +319,18 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 func extractSectionUnix(inputFile string) (contents []string) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
-		LogFatal("ELF file %s could not be read.", inputFile)
-	}
+		LogWarning("ELF file %s could not be read.", inputFile)
+		return
+        }
 	section := elfFile.Section(ELFSectionName)
 	if section == nil {
-		LogFatal("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		LogFatal("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
