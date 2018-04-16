@@ -322,6 +322,9 @@ func extractSectionUnix(inputFile string) (contents []string) {
 		LogFatal("ELF file %s could not be read.", inputFile)
 	}
 	section := elfFile.Section(ELFSectionName)
+	if section == nil {
+		LogFatal("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
 		LogFatal("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
