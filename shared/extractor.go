@@ -319,9 +319,9 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 func extractSectionUnix(inputFile string) (contents []string) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
-		LogWarning("ELF file %s could not be read.", inputFile)
+		LogFatal("ELF file %s could not be read.", inputFile)
 		return
-        }
+	}
 	section := elfFile.Section(ELFSectionName)
 	if section == nil {
 		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
