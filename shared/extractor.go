@@ -191,6 +191,9 @@ func parseSwitches() (ea extractionArgs) {
 
 func handleExecutable(ea extractionArgs) {
 	artifactPaths := ea.Extractor(ea.InputFile)
+
+	LogInfo("handleExecutable: artifactPaths = %v\n", artifactPaths)
+
 	if len(artifactPaths) == 0 {
 		return
 	}
@@ -211,6 +214,8 @@ func handleArchive(ea extractionArgs) {
 	var bcFiles []string
 	var artifactFiles []string
 
+	LogInfo("handleArchive: extractionArgs = %v\n", ea)
+
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
 	if err != nil {
@@ -222,6 +227,9 @@ func handleArchive(ea extractionArgs) {
 	arArgs := ea.ArArgs
 	inputAbsPath, _ := filepath.Abs(ea.InputFile)
 	arArgs = append(arArgs, inputAbsPath)
+
+	LogInfo("handleArchive: executing  ar %v %v\n", arArgs, tmpDirName)
+
 	success, err := execCmd("ar", arArgs, tmpDirName)
 	if !success {
 		LogFatal("Failed to extract object files from %s to %s because: %v.\n", ea.InputFile, tmpDirName, err)
@@ -235,7 +243,9 @@ func handleArchive(ea extractionArgs) {
 				artifactPaths := ea.Extractor(path)
 				for _, artPath := range artifactPaths {
 					bcPath := resolveBitcodePath(artPath)
-					bcFiles = append(bcFiles, bcPath)
+					if bcPath != "" {
+						bcFiles = append(bcFiles, bcPath)
+					}
 				}
 				artifactFiles = append(artifactFiles, artifactPaths...)
 			}
@@ -246,16 +256,22 @@ func handleArchive(ea extractionArgs) {
 	// Handle object files
 	filepath.Walk(tmpDirName, walkHandlingFunc)
 
-	// Build archive
-	if ea.BuildBitcodeArchive {
-		extractTimeLinkFiles(ea, bcFiles)
-	} else {
-		archiveBcFiles(ea, bcFiles)
-	}
+	LogDebug("handleArchive: walked %v\nartifactFiles:\n%v\nbcFiles:\n%v\n", tmpDirName, artifactFiles, bcFiles)
 
-	// Write manifest
-	if ea.WriteManifest {
-		writeManifest(ea, bcFiles, artifactFiles)
+	if len(bcFiles) > 0 {
+		// Build archive
+		if ea.BuildBitcodeArchive {
+			extractTimeLinkFiles(ea, bcFiles)
+		} else {
+			archiveBcFiles(ea, bcFiles)
+		}
+
+		// Write manifest
+		if ea.WriteManifest {
+			writeManifest(ea, bcFiles, artifactFiles)
+		}
+	} else {
+		LogError("No bitcode files found\n")
 	}
 }
 
@@ -349,6 +365,7 @@ func resolveBitcodePath(bcPath string) string {
 			}
 			return storeBcPath
 		}
+		LogWarning("Failed to find the file %v\n", bcPath)
 		return ""
 	}
 	return bcPath

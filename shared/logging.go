@@ -54,6 +54,15 @@ var loggingLevels = map[string]int{
 	"DEBUG":   debugV,
 }
 
+var loggingPrefixes = map[int]string{
+	errorV:    "Error: ",
+	warningV:  "Warning: ",
+	infoV:     "Info: ",
+	debugV:    "Debug: ",
+}
+
+
+
 //loggingLevel is the user configured level of logging: ERROR, WARNING, INFO, DEBUG
 var loggingLevel = errorV
 
@@ -86,6 +95,10 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 			//and send output to both os.Stderr and loggingFilePointer. We wouldn't
 			//want the user to miss any excitement. Then the sanity checker would not
 			//need to futz with it.
+			prefix := loggingPrefixes[lvl]
+			if len(prefix) > 0 {
+			   loggingFilePointer.WriteString(prefix)
+			}
 			loggingFilePointer.WriteString(msg)
 		}
 	}

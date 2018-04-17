@@ -4,7 +4,7 @@ To edit the code locally use the repository here:
 
 Then do:
 
-go install -a github.com/SRI-CSL/gllvm/cmd/...
+go install github.com/SRI-CSL/gllvm/cmd/...
 
 
 To format for the badge:
