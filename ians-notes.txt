@@ -11,3 +11,8 @@ To format for the badge:
 
 gofmt -s -w shared/*.go cmd/*/*.go
 
+
+
+For linting:
+
+https://github.com/alecthomas/gometalinter
