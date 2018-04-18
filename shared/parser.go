@@ -306,6 +306,7 @@ func getArtifactNames(pr parserResult, srcFileIndex int, hidden bool) (objBase s
 func getHashedPath(path string) string {
 	inputBytes := []byte(path)
 	hasher := sha256.New()
+	//Hash interface claims this never returns an error
 	hasher.Write(inputBytes)
 	hash := hex.EncodeToString(hasher.Sum(nil))
 	return hash
@@ -371,7 +372,7 @@ func (pr *parserResult) compileUnaryCallback(flag string, _ []string) {
 }
 
 func (pr *parserResult) darwinWarningLinkUnaryCallback(flag string, _ []string) {
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == osDARWIN {
 		fmt.Println("The flag", flag, "cannot be used with this tool.")
 	} else {
 		pr.LinkArgs = append(pr.LinkArgs, flag)

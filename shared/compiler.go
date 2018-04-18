@@ -127,7 +127,6 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 			}
 		}
 	}
-	return
 }
 
 func attachBitcodePathToObject(bcFile, objFile string) {
@@ -148,7 +147,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 			// was LogFatal
 			return
 		}
-		defer os.Remove(tmpFile.Name())
+		defer CheckDefer(func() error { return os.Remove(tmpFile.Name()) })
 		if _, err := tmpFile.Write(tmpContent); err != nil {
 			LogError("attachBitcodePathToObject: %v\n", err)
 			// was LogFatal
@@ -163,7 +162,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		// Let's write the bitcode section
 		var attachCmd string
 		var attachCmdArgs []string
-		if runtime.GOOS == "darwin" {
+		if runtime.GOOS == osDARWIN {
 			attachCmd = "ld"
 			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
 		} else {
@@ -172,17 +171,27 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		}
 
 		// Run the attach command and ignore errors
-		execCmd(attachCmd, attachCmdArgs, "")
+		_, nerr := execCmd(attachCmd, attachCmdArgs, "")
+		if nerr != nil {
+			LogDebug("%v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
+		}
 
 		// Copy bitcode file to store, if necessary
 		if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
 			destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
 			in, _ := os.Open(absBcPath)
-			defer in.Close()
+			defer CheckDefer(func() error { return in.Close() })
 			out, _ := os.Create(destFilePath)
-			defer out.Close()
-			io.Copy(out, in)
-			out.Sync()
+			defer CheckDefer(func() error { return out.Close() })
+			_, err := io.Copy(out, in)
+			if err != nil {
+				LogWarning("Copying bc to bitcode archive %v failed because %v\n", destFilePath, err)
+			}
+			err = out.Sync()
+			if err != nil {
+				LogWarning("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
+			}
+
 		}
 	}
 }
@@ -256,5 +265,12 @@ func GetCompilerExecName(compiler string) string {
 		LogError("The compiler %s is not supported by this tool.", compiler)
 		// was LogFatal
 		return ""
+	}
+}
+
+//CheckDefer is used to check the return values of defers
+func CheckDefer(f func() error) {
+	if err := f(); err != nil {
+		LogWarning("CheckDefer received error: %v\n", err)
 	}
 }

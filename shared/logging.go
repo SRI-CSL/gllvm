@@ -95,9 +95,17 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 			//need to futz with it.
 			prefix := loggingPrefixes[lvl]
 			if len(prefix) > 0 {
-				loggingFilePointer.WriteString(prefix)
+				_, err := loggingFilePointer.WriteString(prefix)
+				if err != nil && loggingFilePointer != os.Stderr {
+					_, _ = os.Stderr.WriteString(fmt.Sprintf("Logging failed: %v\n", err))
+					return
+				}
 			}
-			loggingFilePointer.WriteString(msg)
+			_, err := loggingFilePointer.WriteString(msg)
+			if err != nil && loggingFilePointer != os.Stderr {
+				_, _ = os.Stderr.WriteString(fmt.Sprintf("Logging failed: %v\n", err))
+				return
+			}
 		}
 	}
 }

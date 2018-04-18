@@ -98,6 +98,8 @@ then LLVM_AR_NAME should be set to llvm-ar-3.5.
 //
 func SanityCheck() {
 
+	LogWrite("\nVersion info: gsanity-check version %v\nReleased: %v\n", gllvmVersion, gllvmReleaseDate)
+
 	checkLogging()
 
 	checkOS()
@@ -118,7 +120,7 @@ func checkOS() {
 
 	platform := runtime.GOOS
 
-	if platform == "darwin" || platform == "linux" || platform == "freebsd" {
+	if platform == osDARWIN || platform == osLINUX || platform == osFREEBSD {
 		LogWrite("Happily sitting atop \"%s\" operating system.\n\n", platform)
 		return
 	}
@@ -132,6 +134,9 @@ func checkCompilers() bool {
 	ccOK, ccVersion, _ := checkExecutable(cc, "-v")
 	if !ccOK {
 		LogError("The C compiler %s was not found or not executable.\nBetter not try using gclang!\n", cc)
+		LogError(explainLLVMCOMPILERPATH)
+		LogError(explainLLVMCCNAME)
+
 	} else {
 		LogWrite("The C compiler %s is:\n\n\t%s\n\n", cc, extractLine(ccVersion, 0))
 	}
@@ -140,6 +145,8 @@ func checkCompilers() bool {
 	cxxOK, cxxVersion, _ := checkExecutable(cxx, "-v")
 	if !ccOK {
 		LogError("The CXX compiler %s was not found or not executable.\nBetter not try using gclang++!\n", cxx)
+		LogError(explainLLVMCOMPILERPATH)
+		LogError(explainLLVMCXXNAME)
 	} else {
 		LogWrite("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}

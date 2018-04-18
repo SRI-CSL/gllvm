@@ -65,7 +65,7 @@ func Extract(args []string) {
 
 	// Set arguments according to runtime OS
 	switch platform := runtime.GOOS; platform {
-	case "freebsd", "linux":
+	case osFREEBSD, osLINUX:
 		ea.Extractor = extractSectionUnix
 		if ea.Verbose {
 			ea.ArArgs = append(ea.ArArgs, "xv")
@@ -73,7 +73,7 @@ func Extract(args []string) {
 			ea.ArArgs = append(ea.ArArgs, "x")
 		}
 		ea.ObjectTypeInArchive = fileTypeELFOBJECT
-	case "darwin":
+	case osDARWIN:
 		ea.Extractor = extractSectionDarwin
 		ea.ArArgs = append(ea.ArArgs, "-x")
 		if ea.Verbose {
@@ -221,7 +221,7 @@ func handleArchive(ea extractionArgs) {
 	if err != nil {
 		LogFatal("The temporary directory in which to extract object files could not be created.")
 	}
-	defer os.RemoveAll(tmpDirName)
+	defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
 
 	// Extract objects to tmpDir
 	arArgs := ea.ArArgs
@@ -254,7 +254,10 @@ func handleArchive(ea extractionArgs) {
 	}
 
 	// Handle object files
-	filepath.Walk(tmpDirName, walkHandlingFunc)
+	err = filepath.Walk(tmpDirName, walkHandlingFunc)
+	if err != nil {
+		LogFatal("handleArchive: walking %v failed with %v\n", tmpDirName, err)
+	}
 
 	LogDebug("handleArchive: walked %v\nartifactFiles:\n%v\nbcFiles:\n%v\n", tmpDirName, artifactFiles, bcFiles)
 
