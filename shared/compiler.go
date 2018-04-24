@@ -241,9 +241,9 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 // Tries to build object file
 func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, ok *bool) {
 	defer (*wg).Done()
-	success, err := execCmd(compilerExecName, pr.InputList, "")
+	success, _ := execCmd(compilerExecName, pr.InputList, "")
 	if !success {
-		LogError("Failed to compile using given arguments: %v\n", err)
+		LogError("Failed to compile using given arguments [%v]\n", pr.InputList)
 		*ok = false
 	}
 }

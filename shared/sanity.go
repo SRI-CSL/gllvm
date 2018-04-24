@@ -260,6 +260,6 @@ func checkLogging() {
 			LogWrite("Logging level is set to UNKNOWN level %s, using default of ERROR.\n\n", LLVMLoggingLevel)
 		}
 	} else {
-		LogWrite("Logging level not set, using default of ERROR.\n\n")
+		LogWrite("Logging level not set, using default of WARNING.\n\n")
 	}
 }
