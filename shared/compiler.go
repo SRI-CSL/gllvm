@@ -243,7 +243,7 @@ func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, o
 	defer (*wg).Done()
 	success, _ := execCmd(compilerExecName, pr.InputList, "")
 	if !success {
-		LogError("Failed to compile using given arguments [%v]\n", pr.InputList)
+		LogError("Failed to compile using given arguments: %v\n", pr.InputList)
 		*ok = false
 	}
 }
