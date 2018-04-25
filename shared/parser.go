@@ -88,6 +88,9 @@ func parse(argList []string) parserResult {
 	pr.InputList = argList
 
 	var argsExactMatches = map[string]flagInfo{
+
+		"/dev/null": {0, pr.inputFileCallback}, //iam: linux kernel
+
 		"-":  {0, pr.printOnlyCallback},
 		"-o": {1, pr.outputFileCallback},
 		"-c": {0, pr.compileOnlyCallback},
@@ -128,6 +131,8 @@ func parse(argList []string) parserResult {
 		"-mno-red-zone":   {0, pr.compileUnaryCallback},
 		"-mmmx":           {0, pr.compileUnaryCallback},
 		"-mno-mmx":        {0, pr.compileUnaryCallback},
+		"-mno-global-merge":     {0, pr.compileUnaryCallback},   //iam: linux kernel stuff
+		"-mno-80387":     {0, pr.compileUnaryCallback},   //iam: linux kernel stuff
 		"-msse":           {0, pr.compileUnaryCallback},
 		"-mno-sse":        {0, pr.compileUnaryCallback},
 		"-msse2":          {0, pr.compileUnaryCallback},
@@ -145,13 +150,21 @@ func parse(argList []string) parserResult {
 		"-msoft-float":    {0, pr.compileUnaryCallback},
 		"-m3dnow":         {0, pr.compileUnaryCallback},
 		"-mno-3dnow":      {0, pr.compileUnaryCallback},
+		"-m16":            {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		"-m32":            {0, pr.compileUnaryCallback},
 		"-m64":            {0, pr.compileUnaryCallback},
 		"-mstackrealign":  {0, pr.compileUnaryCallback},
+		"-mretpoline-external-thunk": {0, pr.compileUnaryCallback},   //iam: linux kernel stuff
+		"-mno-fp-ret-in-387":  {0, pr.compileUnaryCallback},          //iam: linux kernel stuff
+		"-mskip-rax-setup":  {0, pr.compileUnaryCallback},            //iam: linux kernel stuff
+		"-mindirect-branch-register":  {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
 
 		"-A": {1, pr.compileBinaryCallback},
 		"-D": {1, pr.compileBinaryCallback},
 		"-U": {1, pr.compileBinaryCallback},
+
+		"-P": {1, pr.compileUnaryCallback},     //iam: linux kernel stuff (linker script stuff)
+		"-C": {1, pr.compileUnaryCallback},     //iam: linux kernel stuff (linker script stuff)
 
 		"-M":   {0, pr.dependencyOnlyCallback},
 		"-MM":  {0, pr.dependencyOnlyCallback},
@@ -198,6 +211,7 @@ func parse(argList []string) parserResult {
 		"-Os":    {0, pr.compileUnaryCallback},
 		"-Ofast": {0, pr.compileUnaryCallback},
 		"-Og":    {0, pr.compileUnaryCallback},
+		"-Oz":    {0, pr.compileUnaryCallback},  //iam: linux kernel
 
 		"-Xclang":        {1, pr.compileBinaryCallback},
 		"-Xpreprocessor": {1, pr.defaultBinaryCallback},
@@ -254,6 +268,14 @@ func parse(argList []string) parserResult {
 		`^--sysroot=.+$`:                        {0, pr.compileUnaryCallback},
 		`^-print-prog-name=.*$`:                 {0, pr.compileUnaryCallback},
 		`^-print-file-name=.*$`:                 {0, pr.compileUnaryCallback},
+		`^-mstack-alignment=.+$`:                {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+		`^-march=.+$`:                           {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+		`^-mregparm=.+$`:                        {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+		`^-mcmodel=.+$`:                         {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+		`^-mpreferred-stack-boundary=.+$`:       {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+		`^-mindirect-branch=.+$`:                {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+		`^--param=.+$` :                         {0, pr.compileUnaryCallback},  //iam: linux kernel stuff
+
 	}
 
 	for len(argList) > 0 {
@@ -266,17 +288,23 @@ func parse(argList []string) parserResult {
 			// Else try to match a pattern
 		} else {
 			var listShift = 0
+			var matched = false
 			for pattern, fi := range argPatterns {
 				var regExp = regexp.MustCompile(pattern)
 				if regExp.MatchString(elem) {
 					fi.handler(elem, argList[1:1+fi.arity])
 					listShift = fi.arity
+					matched = true
 					break
 				}
 			}
+			if !matched {
+				LogWarning("Did not recognize the compiler flag: %v\n", elem)
+				//LogWarning("CC %v\n", pr.InputList)
+				pr.compileUnaryCallback(elem, argList[1:1])
+			}
 			argList = argList[1+listShift:]
 		}
-
 	}
 	return pr
 }
