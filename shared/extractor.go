@@ -42,6 +42,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 )
 
@@ -56,6 +57,7 @@ type extractionArgs struct {
 	Extractor           func(string) []string
 	Verbose             bool
 	WriteManifest       bool
+	SortManifest        bool
 	BuildBitcodeArchive bool
 }
 
@@ -127,6 +129,8 @@ func parseSwitches() (ea extractionArgs) {
 
 	writeManifestPtr := flag.Bool("m", false, "write the manifest")
 
+	sortManifestPtr := flag.Bool("s", false, "sort the manifest")
+
 	buildBitcodeArchive := flag.Bool("b", false, "build a bitcode module(FIXME? should this be archive)")
 
 	outputFilePtr := flag.String("o", "", "the output file")
@@ -139,6 +143,7 @@ func parseSwitches() (ea extractionArgs) {
 
 	ea.Verbose = *verbosePtr
 	ea.WriteManifest = *writeManifestPtr
+	ea.SortManifest = *sortManifestPtr
 	ea.BuildBitcodeArchive = *buildBitcodeArchive
 
 	if *archiverNamePtr != "" {
@@ -438,10 +443,15 @@ func resolveBitcodePath(bcPath string) string {
 }
 
 func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) {
+	manifestFilename := ea.OutputFile + ".llvm.manifest"
+	if ea.SortManifest {
+		LogWarning("Manifest sorting %s.", manifestFilename)
+		sort.Strings(bcFiles)
+		sort.Strings(artifactFiles)
+	}
 	section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
 	section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
 	contents := []byte(section1 + section2)
-	manifestFilename := ea.OutputFile + ".llvm.manifest"
 	if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
 		LogFatal("There was an error while writing the manifest file: ", err)
 	}
