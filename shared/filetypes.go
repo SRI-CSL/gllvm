@@ -48,6 +48,7 @@ const (
 	fileTypeMACHOBJECT
 	fileTypeMACHSHARED
 	fileTypeARCHIVE
+	fileTypeTHINARCHIVE
 )
 
 func getFileType(realPath string) (fileType int) {
@@ -69,6 +70,8 @@ func getFileType(realPath string) (fileType int) {
 		fileType = fileTypeMACHSHARED
 	} else if strings.Contains(fo, "current ar archive") {
 		fileType = fileTypeARCHIVE
+	} else if strings.Contains(fo, "thin archive") {
+		fileType = fileTypeTHINARCHIVE
 	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "relocatable") {
 		fileType = fileTypeELFOBJECT
 	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "object") {

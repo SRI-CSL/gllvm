@@ -86,7 +86,7 @@ func Extract(args []string) {
 
 	// Create output filename if not given
 	if ea.OutputFile == "" {
-		if ea.InputType == fileTypeARCHIVE {
+		if ea.InputType == fileTypeARCHIVE || ea.InputType == fileTypeTHINARCHIVE {
 			var ext string
 			if ea.BuildBitcodeArchive {
 				ext = ".a.bc"
@@ -109,6 +109,8 @@ func Extract(args []string) {
 		handleExecutable(ea)
 	case fileTypeARCHIVE:
 		handleArchive(ea)
+	case fileTypeTHINARCHIVE:
+		handleThinArchive(ea)
 	default:
 		LogFatal("Incorrect input file type %v.", ea.InputType)
 	}
@@ -207,6 +209,67 @@ func handleExecutable(ea extractionArgs) {
 	if ea.WriteManifest {
 		writeManifest(ea, filesToLink, artifactPaths)
 	}
+}
+
+func extractFromThinArchive(inputFile string) (contents []string) {
+	var arArgs []string
+	arArgs = append(arArgs, "-t")
+	arArgs = append(arArgs, inputFile)
+	output, err := runCmd("ar", arArgs)
+	if err != nil {
+		LogFatal("Failed to extract from thin archive %s because: %v.\n", inputFile, err)
+	}
+	contents = strings.Split(output, "\n")
+	return
+}
+
+func handleThinArchive(ea extractionArgs) {
+	// List bitcode files to link
+	var artifactFiles []string
+
+	var objectFiles []string
+	var bcFiles []string
+
+	objectFiles = extractFromThinArchive(ea.InputFile)
+
+	LogInfo("handleThinArchive: extractionArgs = %v\nobjectFiles = %v\n", ea, objectFiles)
+
+	for index, obj := range objectFiles {
+		LogInfo("obj = '%v'\n", obj)
+		if len(obj) > 0 {
+			artifacts := ea.Extractor(obj)
+			LogInfo("\t%v\n", artifacts)
+			artifactFiles = append(artifactFiles, artifacts...)
+			for _, bc := range artifacts {
+				bcPath := resolveBitcodePath(bc)
+				if bcPath != "" {
+					bcFiles = append(bcFiles, bcPath)
+				}
+			}
+		} else {
+			LogDebug("\tskipping empty entry at index %v\n", index)
+		}
+	}
+
+	LogInfo("bcFiles: %v\n", bcFiles)
+	LogInfo("len(bcFiles) = %v\n", len(bcFiles))
+
+	if len(bcFiles) > 0 {
+		// Build archive
+		if ea.BuildBitcodeArchive {
+			extractTimeLinkFiles(ea, bcFiles)
+		} else {
+			archiveBcFiles(ea, bcFiles)
+		}
+
+		// Write manifest
+		if ea.WriteManifest {
+			writeManifest(ea, bcFiles, artifactFiles)
+		}
+	} else {
+		LogError("No bitcode files found\n")
+	}
+
 }
 
 func handleArchive(ea extractionArgs) {
