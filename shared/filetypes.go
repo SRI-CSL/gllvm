@@ -93,26 +93,5 @@ func getFileType(realPath string) (fileType int) {
 		fileType = fileTypeUNDEFINED
 	}
 
-	// Test the output
-	//	if fo := string(out); strings.Contains(fo, "ELF") && strings.Contains(fo, "executable") {
-	//		fileType = fileTypeELFEXECUTABLE
-	//	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "executable") {
-	//		fileType = fileTypeMACHEXECUTABLE
-	//	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "shared") {
-	//		fileType = fileTypeELFSHARED
-	//	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "dynamically linked shared") {
-	//		fileType = fileTypeMACHSHARED
-	//	} else if strings.Contains(fo, "current ar archive") {
-	//		fileType = fileTypeARCHIVE
-	//	} else if strings.Contains(fo, "thin archive") {
-	//		fileType = fileTypeTHINARCHIVE
-	//	} else if strings.Contains(fo, "ELF") && strings.Contains(fo, "relocatable") {
-	//		fileType = fileTypeELFOBJECT
-	//	} else if strings.Contains(fo, "Mach-O") && strings.Contains(fo, "object") {
-	//		fileType = fileTypeMACHOBJECT
-	//	} else {
-	//		fileType = fileTypeUNDEFINED
-	//	}
-
 	return
 }
