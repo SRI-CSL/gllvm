@@ -73,8 +73,6 @@ func getFileType(realPath string) (fileType int) {
 			fileType = fileTypeUNDEFINED
 		}
 
-
-
 	} else if strings.Contains(fo, "Mach-O") {
 
 		if strings.Contains(fo, "executable") {
@@ -91,11 +89,9 @@ func getFileType(realPath string) (fileType int) {
 		fileType = fileTypeARCHIVE
 	} else if strings.Contains(fo, "thin archive") {
 		fileType = fileTypeTHINARCHIVE
-	}  else {
+	} else {
 		fileType = fileTypeUNDEFINED
 	}
-
-
 
 	// Test the output
 	//	if fo := string(out); strings.Contains(fo, "ELF") && strings.Contains(fo, "executable") {
