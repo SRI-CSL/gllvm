@@ -33,8 +33,14 @@
 
 package shared
 
-const gllvmVersion = "1.0.1"
-const gllvmReleaseDate = "April 118 2018"
+//  version history:
+//
+//  1.0.0
+//  1.0.1                 various bug fixes
+//  1.0.2 April 28 2018   linux kernel work, sorting manifest, etc. corresponds with wllvm 1.1.6
+
+const gllvmVersion = "1.0.2"
+const gllvmReleaseDate = "April 28 2018"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
