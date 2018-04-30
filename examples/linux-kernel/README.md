@@ -54,6 +54,24 @@ echo ". /vagrant/bash_profile" >> /home/vagrant/.bashrc
 
 ```
 
+## Shell Settings
+
+```bash
+####  llvm
+export LLVM_HOME=/usr/lib/llvm-5.0
+export GOPATH=/vagrant/go
+
+######## gllvm/wllvm configuration #############
+
+export LLVM_COMPILER=clang
+export WLLVM_OUTPUT_LEVEL=WARNING
+export WLLVM_OUTPUT_FILE=/vagrant/wrapper.log
+export PATH=${GOPATH}/bin:${PATH}
+
+```
+
+
+
 ## Configuration stuff.
 
 The file `tinyconfig64` is generated ...
