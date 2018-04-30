@@ -104,3 +104,5 @@ get-bc -m vmlinux
 
 ```
 
+## Extracting the bitcode
+
