@@ -33,6 +33,8 @@
 
 package shared
 
+//  Remember to tag the repo, and publish a release on GitHub.
+//
 //  version history:
 //
 //  1.0.0
