@@ -6,7 +6,7 @@ the relatively simple task. We assume familiarity with Vagrant.
 
 ## Vagrantfile
 
-```
+```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -28,7 +28,7 @@ end
 
 ## Bootstrapping 
 
-```
+```bash
 #!/usr/bin/env bash
 
 sudo apt-get update
@@ -63,7 +63,7 @@ The file `tinyconfig64` is generated ...
 The build process is carried out by running the `build_linux_gllvm.sh`
 script.
 
-```
+```bash
 #!/usr/bin/env bash
 
 export GOPATH=/vagrant/go
