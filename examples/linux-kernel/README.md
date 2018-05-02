@@ -2,7 +2,7 @@
 
 In this directory we include all the necessary files needed to
 build the kernel in a Ubuntu 16.04 vagrant box. We will guide the reader through
-the relatively simple task. We assume familiarity with Vagrant.
+the relatively simple task. We assume familiarity with [Vagrant.](https://www.vagrantup.com/)
 
 ## Vagrantfile
 
