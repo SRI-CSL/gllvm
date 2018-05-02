@@ -329,7 +329,7 @@ func fetchTOC(inputFile string) map[string]int {
 //      1. first creating a table of contents of the archive, which maps file names (in the archive) to the number of
 //    times a file with that name is stored in the archive.
 //
-//      2. for each OCCURENCE of a file (name and count) it extracts the section from the object file, and adds the
+//      2. for each OCCURRENCE of a file (name and count) it extracts the section from the object file, and adds the
 //    bitcode paths to the bitcode list.
 //
 //      3. it then either links all these bitcode files together using llvm-link,  or else is creates a bitcode
@@ -453,7 +453,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	if !success {
 		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
-	LogInfo("Bitcode file extracted to: %s.", ea.OutputFile)
+	LogWarning("Bitcode file extracted to: %s.", ea.OutputFile)
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
