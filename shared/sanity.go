@@ -35,6 +35,7 @@ package shared
 
 import (
 	"bytes"
+	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -87,6 +88,10 @@ then LLVM_AR_NAME should be set to llvm-ar-3.5.
 
 `
 
+type sanityArgs struct {
+	Environment bool
+}
+
 // SanityCheck performs the environmental sanity check.
 //
 //        Performs the following checks in order:
@@ -98,7 +103,13 @@ then LLVM_AR_NAME should be set to llvm-ar-3.5.
 //
 func SanityCheck() {
 
+	sa := parseSanitySwitches()
+
 	LogWrite("\nVersion info: gsanity-check version %v\nReleased: %v\n", gllvmVersion, gllvmReleaseDate)
+
+	if sa.Environment {
+		printEnvironment()
+	}
 
 	checkLogging()
 
@@ -114,6 +125,20 @@ func SanityCheck() {
 
 	checkStore()
 
+}
+
+func parseSanitySwitches() (sa sanityArgs) {
+	sa = sanityArgs{
+		Environment: false,
+	}
+
+	environmentPtr := flag.Bool("e", false, "show environment")
+
+	flag.Parse()
+
+	sa.Environment = *environmentPtr
+
+	return
 }
 
 func checkOS() {
