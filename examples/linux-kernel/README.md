@@ -6,7 +6,7 @@ the relatively simple task. We assume familiarity with Vagrant.
 
 ## Vagrantfile
 
-```
+```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -28,7 +28,7 @@ end
 
 ## Bootstrapping 
 
-```
+```bash
 #!/usr/bin/env bash
 
 sudo apt-get update
@@ -54,6 +54,24 @@ echo ". /vagrant/bash_profile" >> /home/vagrant/.bashrc
 
 ```
 
+## Shell Settings
+
+```bash
+####  llvm
+export LLVM_HOME=/usr/lib/llvm-5.0
+export GOPATH=/vagrant/go
+
+######## gllvm/wllvm configuration #############
+
+export LLVM_COMPILER=clang
+export WLLVM_OUTPUT_LEVEL=WARNING
+export WLLVM_OUTPUT_FILE=/vagrant/wrapper.log
+export PATH=${GOPATH}/bin:${PATH}
+
+```
+
+
+
 ## Configuration stuff.
 
 The file `tinyconfig64` is generated ...
@@ -63,7 +81,7 @@ The file `tinyconfig64` is generated ...
 The build process is carried out by running the `build_linux_gllvm.sh`
 script.
 
-```
+```bash
 #!/usr/bin/env bash
 
 export GOPATH=/vagrant/go
@@ -85,4 +103,6 @@ get-bc -m -b built-in.o
 get-bc -m vmlinux
 
 ```
+
+## Extracting the bitcode
 
