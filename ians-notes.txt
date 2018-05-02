@@ -16,3 +16,5 @@ gofmt -s -w shared/*.go cmd/*/*.go
 For linting:
 
 https://github.com/alecthomas/gometalinter
+
+gometalinter.v2 ./...
