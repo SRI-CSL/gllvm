@@ -7,4 +7,4 @@ export GOPATH=/vagrant/go
 export LLVM_COMPILER=clang
 export WLLVM_OUTPUT_LEVEL=WARNING
 export WLLVM_OUTPUT_FILE=/vagrant/wrapper.log
-export PATH=${GOPATH}/bin:${PATH}
+export PATH=${GOPATH}/bin:${LLVM_HOME}/bin:${PATH}

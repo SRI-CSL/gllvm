@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-export GOPATH=/vagrant/go
-
 mkdir -p ${GOPATH}
 go get github.com/SRI-CSL/gllvm/cmd/...
 
