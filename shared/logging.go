@@ -131,7 +131,6 @@ func LogFatal(format string, a ...interface{}) {
 //LogWrite writes to the logging stream, irregardless of levels.
 var LogWrite = makeLogger(-1)
 
-
 func informUser(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stdout, format, a...)
 }

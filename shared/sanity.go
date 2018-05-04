@@ -152,7 +152,7 @@ func checkOS() {
 
 	informUser("We do not support the OS %s", platform)
 	os.Exit(1)
-	
+
 }
 
 func checkCompilers() bool {

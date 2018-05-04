@@ -109,13 +109,14 @@ func parse(argList []string) parserResult {
 
 		"-emit-llvm": {0, pr.emitLLVMCallback},
 
-		"-pipe":              {0, pr.compileUnaryCallback},
-		"-undef":             {0, pr.compileUnaryCallback},
-		"-nostdinc":          {0, pr.compileUnaryCallback},
-		"-nostdinc++":        {0, pr.compileUnaryCallback},
-		"-Qunused-arguments": {0, pr.compileUnaryCallback},
-		"-no-integrated-as":  {0, pr.compileUnaryCallback},
-		"-integrated-as":     {0, pr.compileUnaryCallback},
+		"-pipe":                  {0, pr.compileUnaryCallback},
+		"-undef":                 {0, pr.compileUnaryCallback},
+		"-nostdinc":              {0, pr.compileUnaryCallback},
+		"-nostdinc++":            {0, pr.compileUnaryCallback},
+		"-Qunused-arguments":     {0, pr.compileUnaryCallback},
+		"-no-integrated-as":      {0, pr.compileUnaryCallback},
+		"-integrated-as":         {0, pr.compileUnaryCallback},
+		"-no-canonical-prefixes": {0, pr.compileLinkUnaryCallback},
 
 		"-pthread":     {0, pr.compileUnaryCallback},
 		"-nostdlibinc": {0, pr.compileUnaryCallback},
@@ -193,6 +194,7 @@ func parse(argList []string) parserResult {
 
 		"-g":                 {0, pr.compileUnaryCallback},
 		"-g0":                {0, pr.compileUnaryCallback},
+		"-g1":                {0, pr.compileUnaryCallback},
 		"-ggdb":              {0, pr.compileUnaryCallback},
 		"-ggdb3":             {0, pr.compileUnaryCallback},
 		"-gdwarf-2":          {0, pr.compileUnaryCallback},
@@ -256,6 +258,8 @@ func parse(argList []string) parserResult {
 		`^-(l|L).+$`:                            {0, pr.linkUnaryCallback},
 		`^-I.+$`:                                {0, pr.compileUnaryCallback},
 		`^-D.+$`:                                {0, pr.compileUnaryCallback},
+		`^-B.+$`:                                {0, pr.compileLinkUnaryCallback},
+		`^-isystem.+$`:                          {0, pr.compileLinkUnaryCallback},
 		`^-U.+$`:                                {0, pr.compileUnaryCallback},
 		`^-Wl,.+$`:                              {0, pr.linkUnaryCallback},
 		`^-W[^l].*$`:                            {0, pr.compileUnaryCallback},
