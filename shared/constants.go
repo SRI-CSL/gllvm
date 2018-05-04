@@ -44,7 +44,7 @@ package shared
 //                        corresponds with wllvm 1.1.6
 //
 const gllvmVersion = "1.2.0"
-const gllvmReleaseDate = "May 2 2018"
+const gllvmReleaseDate = "May 4 2018"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
