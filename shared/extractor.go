@@ -42,6 +42,8 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -56,6 +58,7 @@ type extractionArgs struct {
 	Extractor           func(string) []string
 	Verbose             bool
 	WriteManifest       bool
+	SortBitcodeFiles    bool
 	BuildBitcodeArchive bool
 }
 
@@ -86,7 +89,7 @@ func Extract(args []string) {
 
 	// Create output filename if not given
 	if ea.OutputFile == "" {
-		if ea.InputType == fileTypeARCHIVE {
+		if ea.InputType == fileTypeARCHIVE || ea.InputType == fileTypeTHINARCHIVE {
 			var ext string
 			if ea.BuildBitcodeArchive {
 				ext = ".a.bc"
@@ -109,6 +112,8 @@ func Extract(args []string) {
 		handleExecutable(ea)
 	case fileTypeARCHIVE:
 		handleArchive(ea)
+	case fileTypeTHINARCHIVE:
+		handleThinArchive(ea)
 	default:
 		LogFatal("Incorrect input file type %v.", ea.InputType)
 	}
@@ -125,6 +130,8 @@ func parseSwitches() (ea extractionArgs) {
 
 	writeManifestPtr := flag.Bool("m", false, "write the manifest")
 
+	sortBitcodeFilesPtr := flag.Bool("s", false, "sort the bitcode files")
+
 	buildBitcodeArchive := flag.Bool("b", false, "build a bitcode module(FIXME? should this be archive)")
 
 	outputFilePtr := flag.String("o", "", "the output file")
@@ -137,6 +144,7 @@ func parseSwitches() (ea extractionArgs) {
 
 	ea.Verbose = *verbosePtr
 	ea.WriteManifest = *writeManifestPtr
+	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
 	ea.BuildBitcodeArchive = *buildBitcodeArchive
 
 	if *archiverNamePtr != "" {
@@ -201,20 +209,141 @@ func handleExecutable(ea extractionArgs) {
 	for i, artPath := range artifactPaths {
 		filesToLink[i] = resolveBitcodePath(artPath)
 	}
-	extractTimeLinkFiles(ea, filesToLink)
+
+	// Sort the bitcode files
+	if ea.SortBitcodeFiles {
+		LogWarning("Sorting bitcode files.")
+		sort.Strings(filesToLink)
+		sort.Strings(artifactPaths)
+	}
 
 	// Write manifest
 	if ea.WriteManifest {
 		writeManifest(ea, filesToLink, artifactPaths)
 	}
+
+	extractTimeLinkFiles(ea, filesToLink)
 }
 
+func handleThinArchive(ea extractionArgs) {
+	// List bitcode files to link
+	var artifactFiles []string
+
+	var objectFiles []string
+	var bcFiles []string
+
+	objectFiles = listArchiveFiles(ea.InputFile)
+
+	LogInfo("handleThinArchive: extractionArgs = %v\nobjectFiles = %v\n", ea, objectFiles)
+
+	for index, obj := range objectFiles {
+		LogInfo("obj = '%v'\n", obj)
+		if len(obj) > 0 {
+			artifacts := ea.Extractor(obj)
+			LogInfo("\t%v\n", artifacts)
+			artifactFiles = append(artifactFiles, artifacts...)
+			for _, bc := range artifacts {
+				bcPath := resolveBitcodePath(bc)
+				if bcPath != "" {
+					bcFiles = append(bcFiles, bcPath)
+				}
+			}
+		} else {
+			LogDebug("\tskipping empty entry at index %v\n", index)
+		}
+	}
+
+	LogInfo("bcFiles: %v\n", bcFiles)
+	LogInfo("len(bcFiles) = %v\n", len(bcFiles))
+
+	if len(bcFiles) > 0 {
+
+		// Sort the bitcode files
+		if ea.SortBitcodeFiles {
+			LogWarning("Sorting bitcode files.")
+			sort.Strings(bcFiles)
+			sort.Strings(artifactFiles)
+		}
+
+		// Build archive
+		if ea.BuildBitcodeArchive {
+			extractTimeLinkFiles(ea, bcFiles)
+		} else {
+			archiveBcFiles(ea, bcFiles)
+		}
+
+		// Write manifest
+		if ea.WriteManifest {
+			writeManifest(ea, bcFiles, artifactFiles)
+		}
+	} else {
+		LogError("No bitcode files found\n")
+	}
+
+}
+
+func listArchiveFiles(inputFile string) (contents []string) {
+	var arArgs []string
+	arArgs = append(arArgs, "-t")
+	arArgs = append(arArgs, inputFile)
+	output, err := runCmd("ar", arArgs)
+	if err != nil {
+		LogWarning("ar command: ar %v", arArgs)
+		LogFatal("Failed to extract contents from archive %s because: %v.\n", inputFile, err)
+	}
+	contents = strings.Split(output, "\n")
+	return
+}
+
+func extractFile(archive string, filename string, instance int) bool {
+	var arArgs []string
+	arArgs = append(arArgs, "xN")
+	arArgs = append(arArgs, strconv.Itoa(instance))
+	arArgs = append(arArgs, archive)
+	arArgs = append(arArgs, filename)
+	_, err := runCmd("ar", arArgs)
+	if err != nil {
+		LogWarning("Failed to extract instance %v of %v from archive %s because: %v.\n", instance, filename, archive, err)
+		return false
+	}
+	return true
+}
+
+func fetchTOC(inputFile string) map[string]int {
+	toc := make(map[string]int)
+
+	contents := listArchiveFiles(inputFile)
+
+	for _, item := range contents {
+		if item != "" {
+			toc[item]++
+		}
+	}
+	return toc
+}
+
+//handleArchive processes a archive, and creates either a bitcode archive, or a module, depending on the flags used.
+//
+//    Archives are strange beasts. handleArchive processes the archive by:
+//
+//      1. first creating a table of contents of the archive, which maps file names (in the archive) to the number of
+//    times a file with that name is stored in the archive.
+//
+//      2. for each OCCURRENCE of a file (name and count) it extracts the section from the object file, and adds the
+//    bitcode paths to the bitcode list.
+//
+//      3. it then either links all these bitcode files together using llvm-link,  or else is creates a bitcode
+//    archive using llvm-ar
+//
+//iam: 5/1/2018
 func handleArchive(ea extractionArgs) {
 	// List bitcode files to link
 	var bcFiles []string
 	var artifactFiles []string
 
-	LogInfo("handleArchive: extractionArgs = %v\n", ea)
+	inputFile, _ := filepath.Abs(ea.InputFile)
+
+	LogWarning("handleArchive: extractionArgs = %v\n", ea)
 
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
@@ -223,45 +352,55 @@ func handleArchive(ea extractionArgs) {
 	}
 	defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
 
-	// Extract objects to tmpDir
-	arArgs := ea.ArArgs
-	inputAbsPath, _ := filepath.Abs(ea.InputFile)
-	arArgs = append(arArgs, inputAbsPath)
-
-	LogInfo("handleArchive: executing  ar %v %v\n", arArgs, tmpDirName)
-
-	success, err := execCmd("ar", arArgs, tmpDirName)
-	if !success {
-		LogFatal("Failed to extract object files from %s to %s because: %v.\n", ea.InputFile, tmpDirName, err)
+	homeDir, err := os.Getwd()
+	if err != nil {
+		LogFatal("Could not ascertain our whereabouts: %v", err)
 	}
 
-	// Define object file handling closure
-	var walkHandlingFunc = func(path string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() {
-			fileType := getFileType(path)
-			if fileType == ea.ObjectTypeInArchive {
-				artifactPaths := ea.Extractor(path)
-				for _, artPath := range artifactPaths {
-					bcPath := resolveBitcodePath(artPath)
+	err = os.Chdir(tmpDirName)
+	if err != nil {
+		LogFatal("Could not cd to %v because: %v", tmpDirName, err)
+	}
+
+	//1. fetch the Table of Contents
+	toc := fetchTOC(inputFile)
+
+	LogDebug("Table of Contents of %v:\n%v\n", inputFile, toc)
+
+	for obj, instance := range toc {
+		for i := 1; i <= instance; i++ {
+
+			if obj != "" && extractFile(inputFile, obj, i) {
+
+				artifacts := ea.Extractor(obj)
+				LogInfo("\t%v\n", artifacts)
+				artifactFiles = append(artifactFiles, artifacts...)
+				for _, bc := range artifacts {
+					bcPath := resolveBitcodePath(bc)
 					if bcPath != "" {
 						bcFiles = append(bcFiles, bcPath)
 					}
 				}
-				artifactFiles = append(artifactFiles, artifactPaths...)
 			}
 		}
-		return nil
 	}
 
-	// Handle object files
-	err = filepath.Walk(tmpDirName, walkHandlingFunc)
+	err = os.Chdir(homeDir)
 	if err != nil {
-		LogFatal("handleArchive: walking %v failed with %v\n", tmpDirName, err)
+		LogFatal("Could not cd to %v because: %v", homeDir, err)
 	}
 
 	LogDebug("handleArchive: walked %v\nartifactFiles:\n%v\nbcFiles:\n%v\n", tmpDirName, artifactFiles, bcFiles)
 
 	if len(bcFiles) > 0 {
+
+		// Sort the bitcode files
+		if ea.SortBitcodeFiles {
+			LogWarning("Sorting bitcode files.")
+			sort.Strings(bcFiles)
+			sort.Strings(artifactFiles)
+		}
+
 		// Build archive
 		if ea.BuildBitcodeArchive {
 			extractTimeLinkFiles(ea, bcFiles)
@@ -300,7 +439,7 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 			LogFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
 	}
-	LogInfo("Built bitcode archive: %s.", ea.OutputFile)
+	LogWarning("Built bitcode archive: %s.", ea.OutputFile)
 }
 
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
@@ -314,7 +453,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	if !success {
 		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
-	LogInfo("Bitcode file extracted to: %s.", ea.OutputFile)
+	LogWarning("Bitcode file extracted to: %s.", ea.OutputFile)
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
@@ -375,12 +514,20 @@ func resolveBitcodePath(bcPath string) string {
 }
 
 func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) {
-	section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
-	section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
-	contents := []byte(section1 + section2)
 	manifestFilename := ea.OutputFile + ".llvm.manifest"
-	if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
-		LogFatal("There was an error while writing the manifest file: ", err)
+	//only go into the gory details if we have a store around.
+	if LLVMBitcodeStorePath != "" {
+		section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
+		section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
+		contents := []byte(section1 + section2)
+		if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
+			LogFatal("There was an error while writing the manifest file: ", err)
+		}
+	} else {
+		contents := []byte("\n" + strings.Join(bcFiles, "\n") + "\n")
+		if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
+			LogFatal("There was an error while writing the manifest file: ", err)
+		}
 	}
-	LogInfo("Manifest file written to %s.", manifestFilename)
+	LogWarning("Manifest file written to %s.", manifestFilename)
 }

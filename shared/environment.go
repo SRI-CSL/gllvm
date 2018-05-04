@@ -103,3 +103,13 @@ func init() {
 	LLVMLoggingFile = os.Getenv(envfile)
 
 }
+
+func printEnvironment() {
+	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile}
+
+	LogWrite("\nLiving in this environment:\n\n")
+	for _, v := range vars {
+		LogWrite("%v = %v\n", v, os.Getenv(v))
+	}
+
+}

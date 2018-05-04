@@ -55,14 +55,14 @@ var loggingLevels = map[string]int{
 }
 
 var loggingPrefixes = map[int]string{
-	errorV:   "Error: ",
-	warningV: "Warning: ",
-	infoV:    "Info: ",
-	debugV:   "Debug: ",
+	errorV:   "ERROR:",
+	warningV: "WARNING:",
+	infoV:    "INFO:",
+	debugV:   "DEBUG:",
 }
 
 //loggingLevel is the user configured level of logging: ERROR, WARNING, INFO, DEBUG
-var loggingLevel = errorV
+var loggingLevel = warningV
 
 //loggingFilePointer is where the logging is streamed too.
 var loggingFilePointer = os.Stderr

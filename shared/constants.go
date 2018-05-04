@@ -33,8 +33,18 @@
 
 package shared
 
-const gllvmVersion = "1.0.1"
-const gllvmReleaseDate = "April 118 2018"
+//  Remember to tag the repo, and publish a release on GitHub.
+//
+//  version history:
+//
+//  1.0.0
+//  1.0.1                 various bug fixes
+//  1.0.2 April 28 2018   linux kernel work, sorting bitcode files, etc.
+//        May 2 2018      handleArchives rewritten to handle multiple occurrences of files with the same name.
+//                        corresponds with wllvm 1.1.6
+//
+const gllvmVersion = "1.0.2"
+const gllvmReleaseDate = "May 2 2018"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"

@@ -39,14 +39,14 @@ import (
 )
 
 func main() {
-	shared.LogInfo("Entering %v\n", os.Args)
+	shared.LogInfo("Entering CC %v\n", os.Args[1:])
 	// Parse command line
 	args := os.Args
 	args = args[1:]
 
 	exitCode := shared.Compile(args, "clang")
 
-	shared.LogInfo("Calling %v returned %v\n", os.Args, exitCode)
+	shared.LogDebug("Calling %v returned %v\n", os.Args, exitCode)
 
 	//important to pretend to look like the actual wrapped command
 	os.Exit(exitCode)

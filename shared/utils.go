@@ -34,6 +34,7 @@
 package shared
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 )
@@ -55,5 +56,21 @@ func execCmd(cmdExecName string, args []string, workingDir string) (success bool
 		LogDebug("execCmd: error was %v\n", err)
 	}
 	success = (ecode == 0)
+	return
+}
+
+// Executes a command then returns the output as a string, err is either nil or the error.
+func runCmd(cmdExecName string, args []string) (output string, err error) {
+	var outb bytes.Buffer
+	var errb bytes.Buffer
+	cmd := exec.Command(cmdExecName, args...)
+	cmd.Stdout = &outb
+	cmd.Stderr = &errb
+	cmd.Stdin = os.Stdin
+	err = cmd.Run()
+	if err != nil {
+		LogDebug("runCmd: error was %v\n", err)
+	}
+	output = outb.String()
 	return
 }
