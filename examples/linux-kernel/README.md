@@ -31,6 +31,8 @@ end
 ```bash
 #!/usr/bin/env bash
 
+# vagrant bootstrapping file
+
 sudo apt-get update
 
 sudo apt-get install -y emacs24 dbus-x11 
@@ -46,6 +48,8 @@ echo ". /vagrant/bash_profile" >> /home/vagrant/.bashrc
 ## Shell Settings
 
 ```bash
+#### /vagrant/bash_profile
+
 ####  llvm
 export LLVM_HOME=/usr/lib/llvm-5.0
 export GOPATH=/vagrant/go
@@ -64,7 +68,7 @@ export PATH=${GOPATH}/bin:${LLVM_HOME}/bin:${PATH}
 
 The file `tinyconfig64` is generated ...
 
-## The Build with gllvm
+## The Tarball Build with gllvm
 
 The build process is carried out by running the `build_linux_gllvm.sh`
 script.
@@ -72,15 +76,15 @@ script.
 ```bash
 #!/usr/bin/env bash
 
-mkdir -p ${GOPATH}
+### building from a tarball with gllvm
+
 go get github.com/SRI-CSL/gllvm/cmd/...
 
-mkdir ${HOME}/linux_kernel
-cd ${HOME}/linux_kernel
-git clone git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+cd ${HOME}
+wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.39.tar.xz
+tar xvf linux-4.14.39.tar.xz
+cd linux-4.14.39
 
-cd linux-stable
-git checkout tags/v4.14.34
 cp /vagrant/tinyconfig64 .config
 
 make CC=gclang HOSTCC=gclang
@@ -89,7 +93,7 @@ get-bc -m -b built-in.o
 get-bc -m vmlinux
 ```
 
-## The Build with wllvm
+## The Tarball Build with wllvm
 
 The build process is carried out by running the `build_linux_wllvm.sh`
 script.
@@ -97,14 +101,15 @@ script.
 ```bash
 #!/usr/bin/env bash
 
+### building from a tarball with wllvm
+
 sudo pip install wllvm
 
-mkdir ${HOME}/linux_kernel
-cd ${HOME}/linux_kernel
-git clone git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+cd ${HOME}
+wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.39.tar.xz
+tar xvf linux-4.14.39.tar.xz
+cd linux-4.14.39
 
-cd linux-stable
-git checkout tags/v4.14.34
 cp /vagrant/tinyconfig64 .config
 
 
@@ -113,6 +118,14 @@ make CC=wllvm HOSTCC=wllvm
 extract-bc -m -b built-in.o
 extract-bc -m vmlinux
 ```
+
+## Building from a git clone
+
+You can also build from a [git clone using gllvm,](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_gllvm_git.sh)
+or build from a [git clone using wllvm.](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_wllvm_git.sh)
+Though using a tarball is faster, and seemingly more reliable.
+
+
 
 ## Extracting the bitcode
 

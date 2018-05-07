@@ -1,3 +1,5 @@
+#### /vagrant/bash_profile
+
 ####  llvm
 export LLVM_HOME=/usr/lib/llvm-5.0
 export GOPATH=/vagrant/go

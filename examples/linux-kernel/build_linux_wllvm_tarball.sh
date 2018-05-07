@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+### building from a tarball with wllvm
+
 sudo pip install wllvm
 
 cd ${HOME}

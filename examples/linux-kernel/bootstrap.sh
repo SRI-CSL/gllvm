@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# vagrant bootstrapping file
+
 sudo apt-get update
 
 sudo apt-get install -y emacs24 dbus-x11 

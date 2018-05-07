@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+### building from a tarball with gllvm
+
 go get github.com/SRI-CSL/gllvm/cmd/...
 
 cd ${HOME}
