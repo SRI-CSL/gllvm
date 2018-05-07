@@ -8,7 +8,7 @@ cd ${HOME}
 git clone git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 
 cd linux-stable
-git checkout tags/v4.14.34
+git checkout tags/v4.14.39
 cp /vagrant/tinyconfig64 .config
 
 make CC=gclang HOSTCC=gclang

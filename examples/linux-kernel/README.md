@@ -120,6 +120,27 @@ extract-bc -m -b built-in.o
 extract-bc -m vmlinux
 ```
 
+
+## Comparing the two
+
+
+`gclang` build:
+
+```
+real	2m55.689s
+user	4m10.036s
+sys     0m34.780s
+```
+
+`wllvm` build:
+```
+real	6m52.443s
+user	4m32.124s
+sys  	0m44.072s
+
+```
+
+
 ## Building from a git clone
 
 You can also build from a [git clone using gllvm,](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_gllvm_git.sh)
