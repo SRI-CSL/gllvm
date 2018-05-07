@@ -66,7 +66,8 @@ export PATH=${GOPATH}/bin:${LLVM_HOME}/bin:${PATH}
 
 ## Configuration stuff.
 
-The file `tinyconfig64` is generated ...
+The file [`tinyconfig64`](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/tinyconfig64) is generated
+by `make tinyconfig` and the using `make menuconfig` to specialize the build to 64 bits. 
 
 ## The Tarball Build with gllvm
 
@@ -124,8 +125,4 @@ extract-bc -m vmlinux
 You can also build from a [git clone using gllvm,](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_gllvm_git.sh)
 or build from a [git clone using wllvm.](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_wllvm_git.sh)
 Though using a tarball is faster, and seemingly more reliable.
-
-
-
-## Extracting the bitcode
 
