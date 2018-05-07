@@ -67,7 +67,7 @@ export PATH=${GOPATH}/bin:${LLVM_HOME}/bin:${PATH}
 ## Configuration stuff.
 
 The file [`tinyconfig64`](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/tinyconfig64) is generated
-by `make tinyconfig` and the using `make menuconfig` to specialize the build to 64 bits. 
+by `make tinyconfig` and then using `make menuconfig` to specialize the build to 64 bits. 
 
 ## The Tarball Build with gllvm
 
