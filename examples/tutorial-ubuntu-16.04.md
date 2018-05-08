@@ -9,9 +9,15 @@ On a clean 16.04 server machine I will build apache.  Desktop instructions shoul
 DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=16.04
 DISTRIB_CODENAME=xenial
-DISTRIB_DESCRIPTION="Ubuntu 16.04 LTS"
+DISTRIB_DESCRIPTION="Ubuntu 16.04.4 LTS"
 ```
 
+## Step 0. 
+
+Install the `go` language.
+```
+>sudo apt-get install golang
+```
 
 ## Step 1.
 
