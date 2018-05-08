@@ -26,8 +26,6 @@ Install `gllvm`.
 ```
 >export GOPATH=/vagrant/go
 
->mkdir -p ${GOPATH}
-
 >go get github.com/SRI-CSL/gllvm/cmd/...
 
 >export PATH=${GOPATH}/bin:${PATH}
