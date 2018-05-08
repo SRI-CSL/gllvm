@@ -74,10 +74,65 @@ It should be at least clang-3.8.
 Extract the bitcode.
 
 ```
->get-bc httpd
+>get-bc -m httpd
 
 >ls -la httpd.bc
--rw-r--r-- 1 vagrant vagrant 1119584 Aug  4 20:02 httpd.bc
+-rw-rw-r-- 1 vagrant vagrant 1172844 May  8 22:39 httpd.bc
+```
+
+The `-m` flag instructs the `get-bc` tool to write a manifest too, the manifest lists all the bitcode modules
+that were linked together to create the `httpd.bc` module.
+
+```
+more httpd.bc.llvm.manifest
+
+/home/vagrant/httpd-2.4.33/.modules.o.bc
+/home/vagrant/httpd-2.4.33/.buildmark.o.bc
+/home/vagrant/httpd-2.4.33/server/.main.o.bc
+/home/vagrant/httpd-2.4.33/server/.vhost.o.bc
+/home/vagrant/httpd-2.4.33/server/.util.o.bc
+/home/vagrant/httpd-2.4.33/server/.mpm_common.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_filter.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_pcre.o.bc
+/home/vagrant/httpd-2.4.33/server/.exports.o.bc
+/home/vagrant/httpd-2.4.33/server/.scoreboard.o.bc
+/home/vagrant/httpd-2.4.33/server/.error_bucket.o.bc
+/home/vagrant/httpd-2.4.33/server/.protocol.o.bc
+/home/vagrant/httpd-2.4.33/server/.core.o.bc
+/home/vagrant/httpd-2.4.33/server/.request.o.bc
+/home/vagrant/httpd-2.4.33/server/.provider.o.bc
+/home/vagrant/httpd-2.4.33/server/.eoc_bucket.o.bc
+/home/vagrant/httpd-2.4.33/server/.eor_bucket.o.bc
+/home/vagrant/httpd-2.4.33/server/.core_filters.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_expr_eval.o.bc
+/home/vagrant/httpd-2.4.33/server/.config.o.bc
+/home/vagrant/httpd-2.4.33/server/.log.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_fcgi.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_script.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_md5.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_cfgtree.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_time.o.bc
+/home/vagrant/httpd-2.4.33/server/.connection.o.bc
+/home/vagrant/httpd-2.4.33/server/.listen.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_mutex.o.bc
+/home/vagrant/httpd-2.4.33/server/.mpm_unix.o.bc
+/home/vagrant/httpd-2.4.33/server/.mpm_fdqueue.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_cookies.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_debug.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_xml.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_regex.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_expr_parse.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_expr_scan.o.bc
+/home/vagrant/httpd-2.4.33/modules/core/.mod_so.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_core.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_protocol.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_request.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_filters.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.chunk_filter.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.byterange_filter.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_etag.o.bc
+/home/vagrant/httpd-2.4.33/server/mpm/event/.event.o.bc
+/home/vagrant/httpd-2.4.33/os/unix/.unixd.o.bc
 ```
 
 ## Step 6.  
