@@ -13,8 +13,23 @@ On a clean 14.04 machine I will build apache.
 DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=14.04
 DISTRIB_CODENAME=trusty
-DISTRIB_DESCRIPTION="Ubuntu 14.04.2 LTS"
+DISTRIB_DESCRIPTION="Ubuntu 14.04.5 LTS"
 ```
+
+
+## Step 0.
+
+We want a recent version of `go` so we install `1.10`. Currently this requires some effort.
+
+```
+>sudo add-apt-repository ppa:gophers/archive
+>sudo apt-get update
+>sudo apt-get install golang-1.10-go
+
+
+>export PATH=/usr/lib/go-1.10/bin:${PATH}
+```
+
 
 
 ## Step 1.
@@ -24,8 +39,6 @@ Install `gllvm`.
 
 ```
 >export GOPATH=/vagrant/go
-
->mkdir -p ${GOPATH}
 
 >go get github.com/SRI-CSL/gllvm/cmd/...
 
@@ -78,7 +91,61 @@ tightly coupled to the gcc and plugin versions you are using.
 Extract the bitcode.
 
 ```
->get-bc httpd
+>get-bc -m httpd
 
 ```
 
+The `-m` flag tells the get-bc tool to also write a manifest listing all the bitcode modules
+that were linked together to create the `httpd.bc` module.
+
+```
+ >more httpd.bc.llvm.manifest
+
+/home/vagrant/httpd-2.4.33/.modules.o.bc
+/home/vagrant/httpd-2.4.33/.buildmark.o.bc
+/home/vagrant/httpd-2.4.33/server/.main.o.bc
+/home/vagrant/httpd-2.4.33/server/.vhost.o.bc
+/home/vagrant/httpd-2.4.33/server/.util.o.bc
+/home/vagrant/httpd-2.4.33/server/.mpm_common.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_filter.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_pcre.o.bc
+/home/vagrant/httpd-2.4.33/server/.exports.o.bc
+/home/vagrant/httpd-2.4.33/server/.scoreboard.o.bc
+/home/vagrant/httpd-2.4.33/server/.error_bucket.o.bc
+/home/vagrant/httpd-2.4.33/server/.protocol.o.bc
+/home/vagrant/httpd-2.4.33/server/.core.o.bc
+/home/vagrant/httpd-2.4.33/server/.request.o.bc
+/home/vagrant/httpd-2.4.33/server/.provider.o.bc
+/home/vagrant/httpd-2.4.33/server/.eoc_bucket.o.bc
+/home/vagrant/httpd-2.4.33/server/.eor_bucket.o.bc
+/home/vagrant/httpd-2.4.33/server/.core_filters.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_expr_eval.o.bc
+/home/vagrant/httpd-2.4.33/server/.config.o.bc
+/home/vagrant/httpd-2.4.33/server/.log.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_fcgi.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_script.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_md5.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_cfgtree.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_time.o.bc
+/home/vagrant/httpd-2.4.33/server/.connection.o.bc
+/home/vagrant/httpd-2.4.33/server/.listen.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_mutex.o.bc
+/home/vagrant/httpd-2.4.33/server/.mpm_unix.o.bc
+/home/vagrant/httpd-2.4.33/server/.mpm_fdqueue.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_cookies.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_debug.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_xml.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_regex.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_expr_parse.o.bc
+/home/vagrant/httpd-2.4.33/server/.util_expr_scan.o.bc
+/home/vagrant/httpd-2.4.33/modules/core/.mod_so.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_core.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_protocol.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_request.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_filters.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.chunk_filter.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.byterange_filter.o.bc
+/home/vagrant/httpd-2.4.33/modules/http/.http_etag.o.bc
+/home/vagrant/httpd-2.4.33/server/mpm/event/.event.o.bc
+/home/vagrant/httpd-2.4.33/os/unix/.unixd.o.bc
+```

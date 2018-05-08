@@ -107,9 +107,14 @@ func init() {
 func printEnvironment() {
 	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile}
 
-	LogWrite("\nLiving in this environment:\n\n")
+	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {
-		LogWrite("%v = %v\n", v, os.Getenv(v))
+		val, defined := os.LookupEnv(v)
+		if defined {
+			informUser("%v = \"%v\"\n", v, val)
+		} else {
+			informUser("%v is NOT defined\n", v)
+		}
 	}
 
 }

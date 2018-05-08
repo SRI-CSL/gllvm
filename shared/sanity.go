@@ -212,6 +212,8 @@ func checkExecutable(cmdExecName string, varg string) (success bool, output stri
 	err = cmd.Run()
 	success = (err == nil)
 	output = out.String()
+	LogInfo("checkExecutable: %s %s returned %s\n", cmdExecName, varg, output)
+	LogInfo("checkExecutable: returning (%s %s %s)\n", success, output, err)
 	return
 }
 
@@ -231,7 +233,8 @@ func checkAuxiliaries() bool {
 
 	linkerOK, linkerVersion, _ := checkExecutable(linkerName, "-version")
 
-	if !linkerOK {
+	// iam: 5/8/2018 3.4 llvm-link and llvm-ar return exit status 1 for -version. GO FIGURE.
+	if !linkerOK && !strings.Contains(linkerVersion, "LLVM") {
 		informUser("The bitcode linker %s was not found or not executable.\nBetter not try using get-bc!\n", linkerName)
 		informUser(explainLLVMLINKNAME)
 	} else {
@@ -241,7 +244,8 @@ func checkAuxiliaries() bool {
 	archiverName = filepath.Join(LLVMToolChainBinDir, archiverName)
 	archiverOK, archiverVersion, _ := checkExecutable(archiverName, "-version")
 
-	if !archiverOK {
+	// iam: 5/8/2018 3.4 llvm-link and llvm-ar return exit status 1 for -version. GO FIGURE.
+	if !archiverOK && !strings.Contains(linkerVersion, "LLVM") {
 		informUser("The bitcode archiver %s was not found or not executable.\nBetter not try using get-bc!\n", archiverName)
 		informUser(explainLLVMARNAME)
 	} else {
