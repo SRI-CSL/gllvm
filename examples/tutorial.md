@@ -39,7 +39,9 @@ I am only going to build apache, not apr, so I first install the prerequisites.
 ```
 >sudo apt-get install llvm libclang-dev clang libapr1-dev libaprutil1-dev
 
-``` Note `gclang` is agnostic with respect to llvm versions
+``` 
+
+Note `gclang` is agnostic with respect to llvm versions
 so feel free to install a more recent version if you
 wish. However, if you are going to use dragonegg the llvm version is
 tightly coupled to the gcc and plugin versions you are using.
