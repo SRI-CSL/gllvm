@@ -120,6 +120,21 @@ func Extract(args []string) {
 
 }
 
+func resolveTool(defaultPath string, envPath string, usrPath *string) (path string) {
+	if *usrPath != "" {
+		path = *usrPath
+	} else {
+		if LLVMToolChainBinDir != "" {
+			if envPath != "" {
+				path = filepath.Join(LLVMToolChainBinDir, envPath)
+			} else {
+				path = filepath.Join(LLVMToolChainBinDir, defaultPath)
+			}
+		}
+	}
+	return
+}
+
 func parseSwitches() (ea extractionArgs) {
 	ea = extractionArgs{
 		LinkerName:   "llvm-link",
@@ -147,29 +162,9 @@ func parseSwitches() (ea extractionArgs) {
 	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
 	ea.BuildBitcodeArchive = *buildBitcodeArchive
 
-	if *archiverNamePtr != "" {
-		ea.ArchiverName = *archiverNamePtr
-	} else {
-		if LLVMToolChainBinDir != "" {
-			if LLVMARName != "" {
-				ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, LLVMARName)
-			} else {
-				ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, ea.ArchiverName)
-			}
-		}
-	}
+	ea.ArchiverName = resolveTool(ea.ArchiverName, LLVMARName, archiverNamePtr)
 
-	if *linkerNamePtr != "" {
-		ea.LinkerName = *linkerNamePtr
-	} else {
-		if LLVMToolChainBinDir != "" {
-			if LLVMLINKName != "" {
-				ea.LinkerName = filepath.Join(LLVMToolChainBinDir, LLVMLINKName)
-			} else {
-				ea.LinkerName = filepath.Join(LLVMToolChainBinDir, ea.LinkerName)
-			}
-		}
-	}
+	ea.LinkerName = resolveTool(ea.LinkerName, LLVMLINKName, linkerNamePtr)
 
 	ea.OutputFile = *outputFilePtr
 
