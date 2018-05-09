@@ -150,16 +150,24 @@ func parseSwitches() (ea extractionArgs) {
 	if *archiverNamePtr != "" {
 		ea.ArchiverName = *archiverNamePtr
 	} else {
-		if LLVMARName != "" {
-			ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, LLVMARName)
+		if LLVMToolChainBinDir != "" {
+			if LLVMARName != "" {
+				ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, LLVMARName)
+			} else {
+				ea.ArchiverName = filepath.Join(LLVMToolChainBinDir, ea.ArchiverName)
+			}
 		}
 	}
 
 	if *linkerNamePtr != "" {
 		ea.LinkerName = *linkerNamePtr
 	} else {
-		if LLVMLINKName != "" {
-			ea.LinkerName = filepath.Join(LLVMToolChainBinDir, LLVMLINKName)
+		if LLVMToolChainBinDir != "" {
+			if LLVMLINKName != "" {
+				ea.LinkerName = filepath.Join(LLVMToolChainBinDir, LLVMLINKName)
+			} else {
+				ea.LinkerName = filepath.Join(LLVMToolChainBinDir, ea.LinkerName)
+			}
 		}
 	}
 
