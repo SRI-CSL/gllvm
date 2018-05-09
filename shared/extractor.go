@@ -120,9 +120,9 @@ func Extract(args []string) {
 
 }
 
-func resolveTool(defaultPath string, envPath string, usrPath *string) (path string) {
-	if *usrPath != "" {
-		path = *usrPath
+func resolveTool(defaultPath string, envPath string, usrPath string) (path string) {
+	if usrPath != "" {
+		path = usrPath
 	} else {
 		if LLVMToolChainBinDir != "" {
 			if envPath != "" {
@@ -130,8 +130,18 @@ func resolveTool(defaultPath string, envPath string, usrPath *string) (path stri
 			} else {
 				path = filepath.Join(LLVMToolChainBinDir, defaultPath)
 			}
+		} else {
+			if envPath != "" {
+				path = envPath
+			} else {
+				path = defaultPath
+			}
 		}
 	}
+	LogDebug("defaultPath = %s", defaultPath)
+	LogDebug("envPath = %s", envPath)
+	LogDebug("usrPath = %s", usrPath)
+	LogDebug("path = %s", path)
 	return
 }
 
@@ -162,9 +172,9 @@ func parseSwitches() (ea extractionArgs) {
 	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
 	ea.BuildBitcodeArchive = *buildBitcodeArchive
 
-	ea.ArchiverName = resolveTool(ea.ArchiverName, LLVMARName, archiverNamePtr)
+	ea.ArchiverName = resolveTool(ea.ArchiverName, LLVMARName, *archiverNamePtr)
 
-	ea.LinkerName = resolveTool(ea.LinkerName, LLVMLINKName, linkerNamePtr)
+	ea.LinkerName = resolveTool(ea.LinkerName, LLVMLINKName, *linkerNamePtr)
 
 	ea.OutputFile = *outputFilePtr
 
