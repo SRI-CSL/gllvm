@@ -62,6 +62,8 @@ type extractionArgs struct {
 	WriteManifest       bool
 	SortBitcodeFiles    bool
 	BuildBitcodeArchive bool
+	LinkArgSize         int  //maximum size of a llvm-link command line
+	KeepTemp            bool //keep temporary linking folder
 }
 
 //Extract extracts the LLVM bitcode according to the arguments it is passed.
@@ -142,12 +144,18 @@ func parseSwitches() (ea extractionArgs) {
 
 	linkerNamePtr := flag.String("l", "", "the llvm linker")
 
+	linkArgSizePtr := flag.Int("n", 0, "maximum llvm-link command line size")
+
+	keepTempPtr := flag.Bool("t", false, "keep temporary linking folder")
+
 	flag.Parse()
 
 	ea.Verbose = *verbosePtr
 	ea.WriteManifest = *writeManifestPtr
 	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
 	ea.BuildBitcodeArchive = *buildBitcodeArchive
+	ea.LinkArgSize = *linkArgSizePtr
+	ea.KeepTemp = *keepTempPtr
 
 	if *archiverNamePtr != "" {
 		ea.ArchiverName = *archiverNamePtr
@@ -195,7 +203,8 @@ func parseSwitches() (ea extractionArgs) {
 	ea.InputType = getFileType(realPath)
 
 	LogInfo("ea.InputFile real path: %v\n", ea.InputFile)
-
+	LogInfo("ea.LinkArgSize %d", ea.LinkArgSize)
+	LogInfo("ea.KeepTemp %v", ea.KeepTemp)
 	return
 }
 
@@ -462,18 +471,25 @@ func formatStdOut(stdout bytes.Buffer, usefulIndex int) string {
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	var linkArgs []string
 	var tmpFileList []string
-	// Extracting the command line max size from the environment
-	getArgMax := exec.Command("getconf", "ARG_MAX")
-	var argMaxStr bytes.Buffer
-	getArgMax.Stdout = &argMaxStr
-	err := getArgMax.Run()
-	if err != nil {
-		LogError("getconf ARG_MAX failed with %s\n", err)
+	var argMax int //llvm-link command line maximum size
+	// Extracting the command line max size from the environment if it is not specified
+	if ea.LinkArgSize == 0 {
+		getArgMax := exec.Command("getconf", "ARG_MAX")
+		var argMaxStr bytes.Buffer
+		getArgMax.Stdout = &argMaxStr
+		err := getArgMax.Run()
+		if err != nil {
+			LogError("getconf ARG_MAX failed with %s\n", err)
+		}
+		argMax, err = strconv.Atoi(formatStdOut(argMaxStr, 0))
+		if err != nil {
+			LogError("string conversion for argMax failed with %s\n", err)
+		}
+		argMax = int(0.9 * float32(argMax)) // keeping a comfort margin
+	} else {
+		argMax = ea.LinkArgSize
 	}
-	argMax, err := strconv.Atoi(formatStdOut(argMaxStr, 0))
-	if err != nil {
-		LogError("string conversion for argMax failed with %s\n", err)
-	}
+
 	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
@@ -481,11 +497,17 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	if getsize(filesToLink) > argMax { //command line size too large for the OS
 
 		// Create tmp dir
-		tmpDirName, err := ioutil.TempDir("", "glinking")
+		tmpDirName, err := ioutil.TempDir(".", "glinking")
 		if err != nil {
 			LogFatal("The temporary directory in which to put temporary linking files could not be created.")
 		}
-		defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
+		if !ea.KeepTemp { // delete temporary folder after used unless told otherwise
+			LogInfo("Temporary folder will be deleted")
+			defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
+		} else {
+			LogInfo("Keeping the temporary folder")
+		}
+
 		tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
 		if err != nil {
 			LogFatal("The temporary linking file could not be created.")
@@ -496,7 +518,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 		LogInfo("llvm-link argument size : %d", getsize(filesToLink))
 		for _, file := range filesToLink {
 			linkArgs = append(linkArgs, file)
-			if getsize(linkArgs) > (argMax - 10000) { //keeping a small margin
+			if getsize(linkArgs) > argMax {
 				LogInfo("Linking command size exceeding system capacity : splitting the command")
 				success, err := execCmd(ea.LinkerName, linkArgs, "")
 				if !success {
