@@ -50,20 +50,20 @@ import (
 )
 
 type extractionArgs struct {
-	InputFile           string
-	InputType           int
-	OutputFile          string
-	LinkerName          string
-	ArchiverName        string
-	ArArgs              []string
-	ObjectTypeInArchive int // Type of file that can be put into an archive
-	Extractor           func(string) []string
 	Verbose             bool
 	WriteManifest       bool
 	SortBitcodeFiles    bool
 	BuildBitcodeArchive bool
-	LinkArgSize         int  //maximum size of a llvm-link command line
-	KeepTemp            bool //keep temporary linking folder
+	KeepTemp            bool     // keep temporary linking folder
+	LinkArgSize         int      // maximum size of a llvm-link command line
+	InputType           int
+	ObjectTypeInArchive int      // Type of file that can be put into an archive
+	InputFile           string
+	OutputFile          string
+	LinkerName          string
+	ArchiverName        string
+	ArArgs              []string
+	Extractor           func(string) []string
 }
 
 //Extract extracts the LLVM bitcode according to the arguments it is passed.
@@ -533,8 +533,9 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 			linkArgs = append(linkArgs, file)
 			if getsize(linkArgs) > argMax {
 				LogInfo("Linking command size exceeding system capacity : splitting the command")
-				success, err := execCmd(ea.LinkerName, linkArgs, "")
-				if !success {
+				var success bool 
+				success, err = execCmd(ea.LinkerName, linkArgs, "")
+				if !success || err != nil {
 					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
 				}
 				linkArgs = nil
@@ -542,7 +543,10 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 				if ea.Verbose {
 					linkArgs = append(linkArgs, "-v")
 				}
-				tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+				tmpFile, err = ioutil.TempFile(tmpDirName, "tmp")
+				if err != nil {
+					LogFatal("Could not generate a temp file in %s because %v.\n", tmpDirName, err)
+				}
 				tmpFileList = append(tmpFileList, tmpFile.Name())
 				linkArgs = append(linkArgs, "-o", tmpFile.Name())
 			}
