@@ -43,7 +43,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"sort"
 	"strconv"
@@ -463,7 +462,7 @@ func formatStdOut(stdout bytes.Buffer, usefulIndex int) string {
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	var linkArgs []string
 	var tmpFileList []string
-
+	// Extracting the command line max size from the environment
 	getArgMax := exec.Command("getconf", "ARG_MAX")
 	var argMaxStr bytes.Buffer
 	getArgMax.Stdout = &argMaxStr
@@ -479,7 +478,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 		linkArgs = append(linkArgs, "-v")
 	}
 
-	if getsize(filesToLink) > argMax {
+	if getsize(filesToLink) > argMax { //command line size too large for the OS
 
 		// Create tmp dir
 		tmpDirName, err := ioutil.TempDir("", "glinking")
@@ -494,7 +493,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 		tmpFileList = append(tmpFileList, tmpFile.Name())
 		linkArgs = append(linkArgs, "-o", tmpFile.Name())
 
-		LogInfo("llvm-link argument size : %d, or %d", uintptr(len(filesToLink))*reflect.TypeOf(linkArgs).Elem().Size(), getsize(filesToLink))
+		LogInfo("llvm-link argument size : %d", getsize(filesToLink))
 		for _, file := range filesToLink {
 			linkArgs = append(linkArgs, file)
 			if getsize(linkArgs) > (argMax - 10000) { //keeping a small margin
@@ -530,7 +529,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 		if !success {
 			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 		}
-
+		LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
 	} else {
 		linkArgs = append(linkArgs, "-o", ea.OutputFile)
 		linkArgs = append(linkArgs, filesToLink...)
@@ -538,8 +537,9 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 		if !success {
 			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 		}
+		LogWarning("Bitcode file extracted to: %s \n", ea.OutputFile)
 	}
-	LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
+
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
