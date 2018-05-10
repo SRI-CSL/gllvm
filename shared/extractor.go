@@ -34,11 +34,13 @@
 package shared
 
 import (
+	"bytes"
 	"debug/elf"
 	"debug/macho"
 	"flag"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -60,6 +62,8 @@ type extractionArgs struct {
 	WriteManifest       bool
 	SortBitcodeFiles    bool
 	BuildBitcodeArchive bool
+	LinkArgSize         int  //maximum size of a llvm-link command line
+	KeepTemp            bool //keep temporary linking folder
 }
 
 //Extract extracts the LLVM bitcode according to the arguments it is passed.
@@ -165,12 +169,18 @@ func parseSwitches() (ea extractionArgs) {
 
 	linkerNamePtr := flag.String("l", "", "the llvm linker")
 
+	linkArgSizePtr := flag.Int("n", 0, "maximum llvm-link command line size")
+
+	keepTempPtr := flag.Bool("t", false, "keep temporary linking folder")
+
 	flag.Parse()
 
 	ea.Verbose = *verbosePtr
 	ea.WriteManifest = *writeManifestPtr
 	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
 	ea.BuildBitcodeArchive = *buildBitcodeArchive
+	ea.LinkArgSize = *linkArgSizePtr
+	ea.KeepTemp = *keepTempPtr
 
 	ea.ArchiverName = resolveTool(ea.ArchiverName, LLVMARName, *archiverNamePtr)
 
@@ -206,14 +216,17 @@ func parseSwitches() (ea extractionArgs) {
 	ea.InputType = getFileType(realPath)
 
 	LogInfo("ea.InputFile real path: %v\n", ea.InputFile)
-
+	LogInfo("ea.LinkArgSize %d", ea.LinkArgSize)
+	LogInfo("ea.KeepTemp %v", ea.KeepTemp)
 	return
 }
 
 func handleExecutable(ea extractionArgs) {
 	artifactPaths := ea.Extractor(ea.InputFile)
 
-	LogInfo("handleExecutable: artifactPaths = %v\n", artifactPaths)
+	if len(artifactPaths) < 20 { //naert: to avoid saturating the log when dealing with big file lists
+		LogInfo("handleExecutable: artifactPaths = %v\n", artifactPaths)
+	}
 
 	if len(artifactPaths) == 0 {
 		return
@@ -455,18 +468,113 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 	LogWarning("Built bitcode archive: %s.", ea.OutputFile)
 }
 
+func getsize(stringslice []string) (totalLength int) {
+	totalLength = 0
+	for _, s := range stringslice {
+		totalLength += len(s)
+	}
+	return totalLength
+}
+func formatStdOut(stdout bytes.Buffer, usefulIndex int) string {
+	infoArr := strings.Split(stdout.String(), "\n")[usefulIndex]
+	ret := strings.Fields(infoArr)
+	return ret[0]
+}
+
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	var linkArgs []string
+	var tmpFileList []string
+	var argMax int //llvm-link command line maximum size
+	// Extracting the command line max size from the environment if it is not specified
+	if ea.LinkArgSize == 0 {
+		getArgMax := exec.Command("getconf", "ARG_MAX")
+		var argMaxStr bytes.Buffer
+		getArgMax.Stdout = &argMaxStr
+		err := getArgMax.Run()
+		if err != nil {
+			LogError("getconf ARG_MAX failed with %s\n", err)
+		}
+		argMax, err = strconv.Atoi(formatStdOut(argMaxStr, 0))
+		if err != nil {
+			LogError("string conversion for argMax failed with %s\n", err)
+		}
+		argMax = int(0.9 * float32(argMax)) // keeping a comfort margin
+	} else {
+		argMax = ea.LinkArgSize
+	}
+
 	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
-	linkArgs = append(linkArgs, "-o", ea.OutputFile)
-	linkArgs = append(linkArgs, filesToLink...)
-	success, err := execCmd(ea.LinkerName, linkArgs, "")
-	if !success {
-		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+
+	if getsize(filesToLink) > argMax { //command line size too large for the OS
+
+		// Create tmp dir
+		tmpDirName, err := ioutil.TempDir(".", "glinking")
+		if err != nil {
+			LogFatal("The temporary directory in which to put temporary linking files could not be created.")
+		}
+		if !ea.KeepTemp { // delete temporary folder after used unless told otherwise
+			LogInfo("Temporary folder will be deleted")
+			defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
+		} else {
+			LogInfo("Keeping the temporary folder")
+		}
+
+		tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+		if err != nil {
+			LogFatal("The temporary linking file could not be created.")
+		}
+		tmpFileList = append(tmpFileList, tmpFile.Name())
+		linkArgs = append(linkArgs, "-o", tmpFile.Name())
+
+		LogInfo("llvm-link argument size : %d", getsize(filesToLink))
+		for _, file := range filesToLink {
+			linkArgs = append(linkArgs, file)
+			if getsize(linkArgs) > argMax {
+				LogInfo("Linking command size exceeding system capacity : splitting the command")
+				success, err := execCmd(ea.LinkerName, linkArgs, "")
+				if !success {
+					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
+				}
+				linkArgs = nil
+
+				if ea.Verbose {
+					linkArgs = append(linkArgs, "-v")
+				}
+				tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+				tmpFileList = append(tmpFileList, tmpFile.Name())
+				linkArgs = append(linkArgs, "-o", tmpFile.Name())
+			}
+
+		}
+		success, err := execCmd(ea.LinkerName, linkArgs, "")
+		if !success {
+			LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
+		}
+		linkArgs = nil
+		if ea.Verbose {
+			linkArgs = append(linkArgs, "-v")
+		}
+		linkArgs = append(linkArgs, tmpFileList...)
+
+		linkArgs = append(linkArgs, "-o", ea.OutputFile)
+
+		success, err = execCmd(ea.LinkerName, linkArgs, "")
+		if !success {
+			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		}
+		LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
+	} else {
+		linkArgs = append(linkArgs, "-o", ea.OutputFile)
+		linkArgs = append(linkArgs, filesToLink...)
+		success, err := execCmd(ea.LinkerName, linkArgs, "")
+		if !success {
+			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		}
+		LogWarning("Bitcode file extracted to: %s \n", ea.OutputFile)
 	}
-	LogWarning("Bitcode file extracted to: %s.", ea.OutputFile)
+
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
