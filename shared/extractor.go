@@ -34,11 +34,13 @@
 package shared
 
 import (
+	"bytes"
 	"debug/elf"
 	"debug/macho"
 	"flag"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -452,63 +454,91 @@ func getsize(stringslice []string) (totalLength int) {
 	}
 	return totalLength
 }
+func formatStdOut(stdout bytes.Buffer, usefulIndex int) string {
+	infoArr := strings.Split(stdout.String(), "\n")[usefulIndex]
+	ret := strings.Fields(infoArr)
+	return ret[0]
+}
+
 func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	var linkArgs []string
 	var tmpFileList []string
 
+	getArgMax := exec.Command("getconf", "ARG_MAX")
+	var argMaxStr bytes.Buffer
+	getArgMax.Stdout = &argMaxStr
+	err := getArgMax.Run()
+	if err != nil {
+		LogError("getconf ARG_MAX failed with %s\n", err)
+	}
+	argMax, err := strconv.Atoi(formatStdOut(argMaxStr, 0))
+	if err != nil {
+		LogError("string conversion for argMax failed with %s\n", err)
+	}
 	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
-	// Create tmp dir
-	tmpDirName, err := ioutil.TempDir("", "glinking")
-	if err != nil {
-		LogFatal("The temporary directory in which to put temporary linking files could not be created.")
-	}
-	defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
-	tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
-	if err != nil {
-		LogFatal("The temporary linking file could not be created.")
-	}
-	tmpFileList = append(tmpFileList, tmpFile.Name())
-	linkArgs = append(linkArgs, "-o", tmpFile.Name())
 
-	LogInfo("llvm-link argument size : %d, or %d", uintptr(len(filesToLink))*reflect.TypeOf(linkArgs).Elem().Size(), getsize(filesToLink))
-	for _, file := range filesToLink {
-		linkArgs = append(linkArgs, file)
-		if uintptr(len(linkArgs))*reflect.TypeOf(linkArgs).Elem().Size() > 280000 { //Actual maximum argument size for llvm-link is probably around 256KB
-			LogInfo("Linking command size exceeding system capacity : splitting the command")
-			success, err := execCmd(ea.LinkerName, linkArgs, "")
-			if !success {
-				LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
-			}
-			linkArgs = nil
+	if getsize(filesToLink) > argMax {
 
-			if ea.Verbose {
-				linkArgs = append(linkArgs, "-v")
+		// Create tmp dir
+		tmpDirName, err := ioutil.TempDir("", "glinking")
+		if err != nil {
+			LogFatal("The temporary directory in which to put temporary linking files could not be created.")
+		}
+		defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
+		tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+		if err != nil {
+			LogFatal("The temporary linking file could not be created.")
+		}
+		tmpFileList = append(tmpFileList, tmpFile.Name())
+		linkArgs = append(linkArgs, "-o", tmpFile.Name())
+
+		LogInfo("llvm-link argument size : %d, or %d", uintptr(len(filesToLink))*reflect.TypeOf(linkArgs).Elem().Size(), getsize(filesToLink))
+		for _, file := range filesToLink {
+			linkArgs = append(linkArgs, file)
+			if getsize(linkArgs) > (argMax - 10000) { //keeping a small margin
+				LogInfo("Linking command size exceeding system capacity : splitting the command")
+				success, err := execCmd(ea.LinkerName, linkArgs, "")
+				if !success {
+					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
+				}
+				linkArgs = nil
+
+				if ea.Verbose {
+					linkArgs = append(linkArgs, "-v")
+				}
+				tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+				tmpFileList = append(tmpFileList, tmpFile.Name())
+				linkArgs = append(linkArgs, "-o", tmpFile.Name())
 			}
-			tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
-			tmpFileList = append(tmpFileList, tmpFile.Name())
-			linkArgs = append(linkArgs, "-o", tmpFile.Name())
+
+		}
+		success, err := execCmd(ea.LinkerName, linkArgs, "")
+		if !success {
+			LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
+		}
+		linkArgs = nil
+		if ea.Verbose {
+			linkArgs = append(linkArgs, "-v")
+		}
+		linkArgs = append(linkArgs, tmpFileList...)
+
+		linkArgs = append(linkArgs, "-o", ea.OutputFile)
+
+		success, err = execCmd(ea.LinkerName, linkArgs, "")
+		if !success {
+			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 		}
 
+	} else {
+		linkArgs = append(linkArgs, "-o", ea.OutputFile)
+		linkArgs = append(linkArgs, filesToLink...)
+		success, err := execCmd(ea.LinkerName, linkArgs, "")
+		if !success {
+			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		}
 	}
-	success, err := execCmd(ea.LinkerName, linkArgs, "")
-	if !success {
-		LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
-	}
-	linkArgs = nil
-	if ea.Verbose {
-		linkArgs = append(linkArgs, "-v")
-	}
-	linkArgs = append(linkArgs, tmpFileList...)
-
-	linkArgs = append(linkArgs, "-o", ea.OutputFile)
-
-	success, err = execCmd(ea.LinkerName, linkArgs, "")
-	if !success {
-		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
-	}
-
 	LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
 }
 
