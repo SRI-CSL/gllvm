@@ -50,14 +50,14 @@ import (
 )
 
 type extractionArgs struct {
-	Verbose             bool
-	WriteManifest       bool
-	SortBitcodeFiles    bool
-	BuildBitcodeArchive bool
-	KeepTemp            bool     // keep temporary linking folder
-	LinkArgSize         int      // maximum size of a llvm-link command line
+	Verbose             bool // inform the user of what is going on
+	WriteManifest       bool // write a manifest of bitcode files used
+	SortBitcodeFiles    bool // sort the arguments to linking and archiving (debugging too)
+	BuildBitcodeModule  bool // buld an archive rather than a module
+	KeepTemp            bool // keep temporary linking folder
+	LinkArgSize         int  // maximum size of a llvm-link command line
 	InputType           int
-	ObjectTypeInArchive int      // Type of file that can be put into an archive
+	ObjectTypeInArchive int // Type of file that can be put into an archive
 	InputFile           string
 	OutputFile          string
 	LinkerName          string
@@ -95,7 +95,7 @@ func Extract(args []string) {
 	if ea.OutputFile == "" {
 		if ea.InputType == fileTypeARCHIVE || ea.InputType == fileTypeTHINARCHIVE {
 			var ext string
-			if ea.BuildBitcodeArchive {
+			if ea.BuildBitcodeModule {
 				ext = ".a.bc"
 			} else {
 				ext = ".bca"
@@ -161,7 +161,7 @@ func parseSwitches() (ea extractionArgs) {
 
 	sortBitcodeFilesPtr := flag.Bool("s", false, "sort the bitcode files")
 
-	buildBitcodeArchive := flag.Bool("b", false, "build a bitcode module(FIXME? should this be archive)")
+	buildBitcodeModule := flag.Bool("b", false, "build a bitcode module")
 
 	outputFilePtr := flag.String("o", "", "the output file")
 
@@ -169,7 +169,7 @@ func parseSwitches() (ea extractionArgs) {
 
 	linkerNamePtr := flag.String("l", "", "the llvm linker")
 
-	linkArgSizePtr := flag.Int("n", 0, "maximum llvm-link command line size")
+	linkArgSizePtr := flag.Int("n", 0, "maximum llvm-link command line size (in bytes)")
 
 	keepTempPtr := flag.Bool("t", false, "keep temporary linking folder")
 
@@ -178,7 +178,7 @@ func parseSwitches() (ea extractionArgs) {
 	ea.Verbose = *verbosePtr
 	ea.WriteManifest = *writeManifestPtr
 	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
-	ea.BuildBitcodeArchive = *buildBitcodeArchive
+	ea.BuildBitcodeModule = *buildBitcodeModule
 	ea.LinkArgSize = *linkArgSizePtr
 	ea.KeepTemp = *keepTempPtr
 
@@ -192,7 +192,7 @@ func parseSwitches() (ea extractionArgs) {
 
 	LogInfo("ea.Verbose: %v\n", ea.Verbose)
 	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
-	LogInfo("ea.BuildBitcodeArchive: %v\n", ea.BuildBitcodeArchive)
+	LogInfo("ea.BuildBitcodeModule: %v\n", ea.BuildBitcodeModule)
 	LogInfo("ea.ArchiverName: %v\n", ea.ArchiverName)
 	LogInfo("ea.LinkerName: %v\n", ea.LinkerName)
 	LogInfo("ea.OutputFile: %v\n", ea.OutputFile)
@@ -224,7 +224,8 @@ func parseSwitches() (ea extractionArgs) {
 func handleExecutable(ea extractionArgs) {
 	artifactPaths := ea.Extractor(ea.InputFile)
 
-	if len(artifactPaths) < 20 { //naert: to avoid saturating the log when dealing with big file lists
+	if len(artifactPaths) < 20 {
+		// naert: to avoid saturating the log when dealing with big file lists
 		LogInfo("handleExecutable: artifactPaths = %v\n", artifactPaths)
 	}
 
@@ -248,7 +249,7 @@ func handleExecutable(ea extractionArgs) {
 		writeManifest(ea, filesToLink, artifactPaths)
 	}
 
-	extractTimeLinkFiles(ea, filesToLink)
+	linkBitcodeFiles(ea, filesToLink)
 }
 
 func handleThinArchive(ea extractionArgs) {
@@ -292,8 +293,8 @@ func handleThinArchive(ea extractionArgs) {
 		}
 
 		// Build archive
-		if ea.BuildBitcodeArchive {
-			extractTimeLinkFiles(ea, bcFiles)
+		if ea.BuildBitcodeModule {
+			linkBitcodeFiles(ea, bcFiles)
 		} else {
 			archiveBcFiles(ea, bcFiles)
 		}
@@ -428,8 +429,8 @@ func handleArchive(ea extractionArgs) {
 		}
 
 		// Build archive
-		if ea.BuildBitcodeArchive {
-			extractTimeLinkFiles(ea, bcFiles)
+		if ea.BuildBitcodeModule {
+			linkBitcodeFiles(ea, bcFiles)
 		} else {
 			archiveBcFiles(ea, bcFiles)
 		}
@@ -475,17 +476,14 @@ func getsize(stringslice []string) (totalLength int) {
 	}
 	return totalLength
 }
+
 func formatStdOut(stdout bytes.Buffer, usefulIndex int) string {
 	infoArr := strings.Split(stdout.String(), "\n")[usefulIndex]
 	ret := strings.Fields(infoArr)
 	return ret[0]
 }
 
-func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
-	var linkArgs []string
-	var tmpFileList []string
-	var argMax int //llvm-link command line maximum size
-	// Extracting the command line max size from the environment if it is not specified
+func fetchArgMax(ea extractionArgs) (argMax int) {
 	if ea.LinkArgSize == 0 {
 		getArgMax := exec.Command("getconf", "ARG_MAX")
 		var argMaxStr bytes.Buffer
@@ -502,73 +500,84 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 	} else {
 		argMax = ea.LinkArgSize
 	}
+	LogInfo("argMax = %v\n", argMax)
+	return
+}
 
+func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argMax int, linkArgs []string) {
+	var tmpFileList []string
+	// Create tmp dir
+	tmpDirName, err := ioutil.TempDir(".", "glinking")
+	if err != nil {
+		LogFatal("The temporary directory in which to put temporary linking files could not be created.")
+	}
+	if !ea.KeepTemp {
+		// delete temporary folder after used unless told otherwise
+		LogInfo("Temporary folder will be deleted")
+		defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
+	} else {
+		LogInfo("Keeping the temporary folder")
+	}
+
+	tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+	if err != nil {
+		LogFatal("The temporary linking file could not be created.")
+	}
+	tmpFileList = append(tmpFileList, tmpFile.Name())
+	linkArgs = append(linkArgs, "-o", tmpFile.Name())
+
+	LogInfo("llvm-link argument size : %d", getsize(filesToLink))
+	for _, file := range filesToLink {
+		linkArgs = append(linkArgs, file)
+		if getsize(linkArgs) > argMax {
+			LogInfo("Linking command size exceeding system capacity : splitting the command")
+			var success bool
+			success, err = execCmd(ea.LinkerName, linkArgs, "")
+			if !success || err != nil {
+				LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
+			}
+			linkArgs = nil
+
+			if ea.Verbose {
+				linkArgs = append(linkArgs, "-v")
+			}
+			tmpFile, err = ioutil.TempFile(tmpDirName, "tmp")
+			if err != nil {
+				LogFatal("Could not generate a temp file in %s because %v.\n", tmpDirName, err)
+			}
+			tmpFileList = append(tmpFileList, tmpFile.Name())
+			linkArgs = append(linkArgs, "-o", tmpFile.Name())
+		}
+
+	}
+	success, err := execCmd(ea.LinkerName, linkArgs, "")
+	if !success {
+		LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
+	}
+	linkArgs = nil
 	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
+	linkArgs = append(linkArgs, tmpFileList...)
 
-	if getsize(filesToLink) > argMax { //command line size too large for the OS
+	linkArgs = append(linkArgs, "-o", ea.OutputFile)
 
-		// Create tmp dir
-		tmpDirName, err := ioutil.TempDir(".", "glinking")
-		if err != nil {
-			LogFatal("The temporary directory in which to put temporary linking files could not be created.")
-		}
-		if !ea.KeepTemp { // delete temporary folder after used unless told otherwise
-			LogInfo("Temporary folder will be deleted")
-			defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
-		} else {
-			LogInfo("Keeping the temporary folder")
-		}
+	success, err = execCmd(ea.LinkerName, linkArgs, "")
+	if !success {
+		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+	}
+	LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
+}
 
-		tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
-		if err != nil {
-			LogFatal("The temporary linking file could not be created.")
-		}
-		tmpFileList = append(tmpFileList, tmpFile.Name())
-		linkArgs = append(linkArgs, "-o", tmpFile.Name())
-
-		LogInfo("llvm-link argument size : %d", getsize(filesToLink))
-		for _, file := range filesToLink {
-			linkArgs = append(linkArgs, file)
-			if getsize(linkArgs) > argMax {
-				LogInfo("Linking command size exceeding system capacity : splitting the command")
-				var success bool 
-				success, err = execCmd(ea.LinkerName, linkArgs, "")
-				if !success || err != nil {
-					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
-				}
-				linkArgs = nil
-
-				if ea.Verbose {
-					linkArgs = append(linkArgs, "-v")
-				}
-				tmpFile, err = ioutil.TempFile(tmpDirName, "tmp")
-				if err != nil {
-					LogFatal("Could not generate a temp file in %s because %v.\n", tmpDirName, err)
-				}
-				tmpFileList = append(tmpFileList, tmpFile.Name())
-				linkArgs = append(linkArgs, "-o", tmpFile.Name())
-			}
-
-		}
-		success, err := execCmd(ea.LinkerName, linkArgs, "")
-		if !success {
-			LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
-		}
-		linkArgs = nil
-		if ea.Verbose {
-			linkArgs = append(linkArgs, "-v")
-		}
-		linkArgs = append(linkArgs, tmpFileList...)
-
-		linkArgs = append(linkArgs, "-o", ea.OutputFile)
-
-		success, err = execCmd(ea.LinkerName, linkArgs, "")
-		if !success {
-			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
-		}
-		LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
+func linkBitcodeFiles(ea extractionArgs, filesToLink []string) {
+	var linkArgs []string
+	// Extracting the command line max size from the environment if it is not specified
+	argMax := fetchArgMax(ea)
+	if ea.Verbose {
+		linkArgs = append(linkArgs, "-v")
+	}
+	if getsize(filesToLink) > argMax { //command line size too large for the OS (necessitated by chromium)
+		linkBitcodeFilesIncrementally(ea, filesToLink, argMax, linkArgs)
 	} else {
 		linkArgs = append(linkArgs, "-o", ea.OutputFile)
 		linkArgs = append(linkArgs, filesToLink...)
@@ -578,7 +587,6 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 		}
 		LogWarning("Bitcode file extracted to: %s \n", ea.OutputFile)
 	}
-
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {

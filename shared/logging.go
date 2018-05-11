@@ -74,8 +74,7 @@ func init() {
 		}
 	}
 	if LLVMLoggingFile != "" {
-		//FIXME: is it overboard to defer a close? the OS will close when the process gets cleaned up, do we win
-		//anything by being OCD?
+		//the OS will close when the process gets cleaned up, do we don't gain anything by being OCD.
 		if loggingFP, err := os.OpenFile(LLVMLoggingFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err == nil {
 			loggingFilePointer = loggingFP
 		}
@@ -89,10 +88,6 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 			if !strings.HasSuffix(msg, "\n") {
 				msg += "\n"
 			}
-			//FIXME: (?) if loggingFilePointer != os.Stderr, we could multiplex here
-			//and send output to both os.Stderr and loggingFilePointer. We wouldn't
-			//want the user to miss any excitement. Then the sanity checker would not
-			//need to futz with it.
 			prefix := loggingPrefixes[lvl]
 			if len(prefix) > 0 {
 				_, err := loggingFilePointer.WriteString(prefix)

@@ -178,7 +178,7 @@ func checkCompilers() bool {
 		informUser("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}
 
-	//FIXME: why "or" rather than "and"?
+	//FIXME: why "or" rather than "and"? BECAUSE: if you only need CC, not having CXX is not an error.
 	return ccOK || cxxOK
 }
 
@@ -199,7 +199,6 @@ func extractLine(version string, n int) string {
 
 }
 
-// FIXME: this and execCmd in utils.go could be one routine, if that seems reasonable, or is it overboard?
 // Executes a command then returns true for success, false if there was an error, err is either nil or the error.
 func checkExecutable(cmdExecName string, varg string) (success bool, output string, err error) {
 	cmd := exec.Command(cmdExecName, varg)
