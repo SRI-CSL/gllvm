@@ -54,10 +54,10 @@ type extractionArgs struct {
 	WriteManifest       bool
 	SortBitcodeFiles    bool
 	BuildBitcodeArchive bool
-	KeepTemp            bool     // keep temporary linking folder
-	LinkArgSize         int      // maximum size of a llvm-link command line
+	KeepTemp            bool // keep temporary linking folder
+	LinkArgSize         int  // maximum size of a llvm-link command line
 	InputType           int
-	ObjectTypeInArchive int      // Type of file that can be put into an archive
+	ObjectTypeInArchive int // Type of file that can be put into an archive
 	InputFile           string
 	OutputFile          string
 	LinkerName          string
@@ -533,7 +533,7 @@ func extractTimeLinkFiles(ea extractionArgs, filesToLink []string) {
 			linkArgs = append(linkArgs, file)
 			if getsize(linkArgs) > argMax {
 				LogInfo("Linking command size exceeding system capacity : splitting the command")
-				var success bool 
+				var success bool
 				success, err = execCmd(ea.LinkerName, linkArgs, "")
 				if !success || err != nil {
 					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
