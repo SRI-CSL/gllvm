@@ -511,8 +511,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 	if err != nil {
 		LogFatal("The temporary directory in which to put temporary linking files could not be created.")
 	}
-	if !ea.KeepTemp {
-		// delete temporary folder after used unless told otherwise
+	if !ea.KeepTemp { // delete temporary folder after used unless told otherwise
 		LogInfo("Temporary folder will be deleted")
 		defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
 	} else {
@@ -548,20 +547,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 			tmpFileList = append(tmpFileList, tmpFile.Name())
 			linkArgs = append(linkArgs, "-o", tmpFile.Name())
 		}
-		tmpFileList = append(tmpFileList, tmpFile.Name())
-		linkArgs = append(linkArgs, "-o", tmpFile.Name())
 
-		LogInfo("llvm-link argument size : %d", getsize(filesToLink))
-		for _, file := range filesToLink {
-			linkArgs = append(linkArgs, file)
-			if getsize(linkArgs) > argMax {
-				LogInfo("Linking command size exceeding system capacity : splitting the command")
-				var success bool
-				success, err = execCmd(ea.LinkerName, linkArgs, "")
-				if !success || err != nil {
-					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
-				}
-				linkArgs = nil
 	}
 	success, err := execCmd(ea.LinkerName, linkArgs, "")
 	if !success {
