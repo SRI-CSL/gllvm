@@ -50,17 +50,10 @@ import (
 )
 
 type extractionArgs struct {
-<<<<<<< HEAD
 	Verbose             bool // inform the user of what is going on
 	WriteManifest       bool // write a manifest of bitcode files used
 	SortBitcodeFiles    bool // sort the arguments to linking and archiving (debugging too)
 	BuildBitcodeModule  bool // buld an archive rather than a module
-=======
-	Verbose             bool
-	WriteManifest       bool
-	SortBitcodeFiles    bool
-	BuildBitcodeArchive bool
->>>>>>> 00420e9a95899d235c308ad5b9f50600c025d423
 	KeepTemp            bool // keep temporary linking folder
 	LinkArgSize         int  // maximum size of a llvm-link command line
 	InputType           int
