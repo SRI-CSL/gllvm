@@ -50,10 +50,17 @@ import (
 )
 
 type extractionArgs struct {
+<<<<<<< HEAD
 	Verbose             bool // inform the user of what is going on
 	WriteManifest       bool // write a manifest of bitcode files used
 	SortBitcodeFiles    bool // sort the arguments to linking and archiving (debugging too)
 	BuildBitcodeModule  bool // buld an archive rather than a module
+=======
+	Verbose             bool
+	WriteManifest       bool
+	SortBitcodeFiles    bool
+	BuildBitcodeArchive bool
+>>>>>>> 00420e9a95899d235c308ad5b9f50600c025d423
 	KeepTemp            bool // keep temporary linking folder
 	LinkArgSize         int  // maximum size of a llvm-link command line
 	InputType           int
@@ -548,7 +555,20 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 			tmpFileList = append(tmpFileList, tmpFile.Name())
 			linkArgs = append(linkArgs, "-o", tmpFile.Name())
 		}
+		tmpFileList = append(tmpFileList, tmpFile.Name())
+		linkArgs = append(linkArgs, "-o", tmpFile.Name())
 
+		LogInfo("llvm-link argument size : %d", getsize(filesToLink))
+		for _, file := range filesToLink {
+			linkArgs = append(linkArgs, file)
+			if getsize(linkArgs) > argMax {
+				LogInfo("Linking command size exceeding system capacity : splitting the command")
+				var success bool
+				success, err = execCmd(ea.LinkerName, linkArgs, "")
+				if !success || err != nil {
+					LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
+				}
+				linkArgs = nil
 	}
 	success, err := execCmd(ea.LinkerName, linkArgs, "")
 	if !success {
