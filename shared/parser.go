@@ -263,6 +263,7 @@ func parse(argList []string) parserResult {
 		`^-U.+$`:                                {0, pr.compileUnaryCallback},
 		`^-Wl,.+$`:                              {0, pr.linkUnaryCallback},
 		`^-W[^l].*$`:                            {0, pr.compileUnaryCallback},
+		`^-fsanitize=.+$`:                       {0, pr.compileLinkUnaryCallback},
 		`^-f.+$`:                                {0, pr.compileUnaryCallback},
 		`^-rtlib=.+$`:                           {0, pr.linkUnaryCallback},
 		`^-std=.+$`:                             {0, pr.compileUnaryCallback},
