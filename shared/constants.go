@@ -40,11 +40,13 @@ package shared
 //  1.0.0
 //  1.0.1                 various bug fixes
 //  1.2.0 April 28 2018   linux kernel work, sorting bitcode files, etc.
-//         May 2 2018      handleArchives rewritten to handle multiple occurrences of files with the same name.
-//                        corresponds with wllvm 1.1.6
+//        May 2 2018      handleArchives rewritten to handle multiple occurrences of files with the same name.
+//                        corresponds with wllvm 1.2.0. Gonna try and keep them in synch.
+//  1.2.1 May 13th 2018   -fsanitize= needs to be compile AND link.
+
 //
-const gllvmVersion = "1.2.0"
-const gllvmReleaseDate = "May 4 2018"
+const gllvmVersion = "1.2.1"
+const gllvmReleaseDate = "May 13 2018"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
