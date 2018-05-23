@@ -74,7 +74,7 @@ by `make tinyconfig` and then using `make menuconfig` to specialize the build to
 ## The Tarball Build with gllvm
 
 The build process is carried out by running the `build_linux_gllvm_tarball.sh`
-script.
+script within the vagrant box, configured as described above.
 
 ```bash
 #!/usr/bin/env bash
