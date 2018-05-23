@@ -13,6 +13,4 @@ sudo apt-get install -y libelf-dev libssl-dev
 
 echo ". /vagrant/bash_profile" >> /home/vagrant/.bashrc
 
-bash /vagrant/init_script.sh
-
 
