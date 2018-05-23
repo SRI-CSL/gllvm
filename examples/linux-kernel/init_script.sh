@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+### creating the folder architecture necessary for the kernel build
+
+cd $HOME
+mkdir standalone-build
+sudo cp /vagrant/convert-thin-archive.sh /usr/bin/
+
+cd standalone-build
+cp /vagrant/copy-missing-o.sh .
+cp /vagrant/copy-native-bi.sh .
+cp /vagrant/handle-bi.sh .
+cp /vagrant/copy.sh .
+
+mkdir arch
+mkdir arch/x86
+mkdir arch/x86/lib
+mkdir arch/x86/kernel
+
+mkdir built-ins
+mkdir built-ins/objects
+mkdir built-ins/objects/lib_assembly_objects
+mkdir built-ins/objects/arch_assembly_objects
+mkdir built-ins/objects/xlib_assembly_objects
+mkdir built-ins/objects/pow_assembly_objects
+mkdir built-ins/objects/ker_objects
+mkdir built-ins/objects/libx_objects
+
+mkdir built-ins/fs
+mkdir built-ins/fs/objects
+
+mkdir lib/
+
+bash /vagrant/build_linux_gllvm.sh
+
+bash copy.sh
+
+#bash /vagrant/bootable-kernel.sh

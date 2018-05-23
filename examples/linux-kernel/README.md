@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
     vb.memory = "4096"
     vb.customize ["modifyvm", :id, "--ioapic", "on"]
     vb.customize ["modifyvm", :id, "--memory", "4096"]
-    vb.customize ["modifyvm", :id, "--cpus", "4"]
+    vb.customize ["modifyvm", :id, "--cpus", "2"]
    end
 
 end
@@ -43,6 +43,8 @@ sudo apt-get install -y flex bison bc libncurses5-dev
 sudo apt-get install -y libelf-dev libssl-dev
 
 echo ". /vagrant/bash_profile" >> /home/vagrant/.bashrc
+
+bash /vagrant/init_script.sh
 ```
 
 ## Shell Settings
@@ -71,7 +73,7 @@ by `make tinyconfig` and then using `make menuconfig` to specialize the build to
 
 ## The Tarball Build with gllvm
 
-The build process is carried out by running the `build_linux_gllvm.sh`
+The build process is carried out by running the `build_linux_gllvm_tarball.sh`
 script.
 
 ```bash
@@ -147,3 +149,24 @@ You can also build from a [git clone using gllvm,](https://github.com/SRI-CSL/gl
 or build from a [git clone using wllvm.](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_wllvm_git.sh)
 Though using a tarball is faster, and seemingly more reliable.
 
+# Building a bootable kernel from bitcode
+
+The init_script.sh script will build a bootable kernel from mostly bitcode (drivers and ext4 file system are currently not translated).
+
+## Building the kernel with gclang
+
+The init script will build the required folder architecture for the build and call build_linux_gllvm, only this time with a default configuration instead of tinyconfig.
+
+## Building the kernel from bitcode
+
+The copy.sh script will then extract the bitcode from the archives in the linux build folder, and copy them along with necessary object files (the files compiled straight from assembly will not emit a bitcode file).
+It will then call the link command on those files and generate a vmlinux executable containing the kernel.
+
+## Booting on the generated kernel
+
+The gclang build of the kernel adds llvm_bc headers to most files, and those mess with the generation of a compressed bootable kernel. 
+We need to have a separate folder built form clang or gcc on which to finish the kernel build and install.
+Finally, calling the install-kernel script will copy the new kernel into the clang generated folder and finish the build and install. Rebooting will be on the bitcode kernel.
+
+NB: I was not able to boot on any custom kernel via Vagrant.
+NB: On a dedicated VirtualBox machine, the generated kernel boots properly but it may be buggy. Most notably, I have experienced issues when shutting down and booting the machine a second time.
