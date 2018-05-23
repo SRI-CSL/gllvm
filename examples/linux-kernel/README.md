@@ -73,7 +73,7 @@ by `make tinyconfig` and then using `make menuconfig` to specialize the build to
 
 ## The Tarball Build with gllvm
 
-The build process is carried out by running the `build_linux_gllvm.sh`
+The build process is carried out by running the `build_linux_gllvm_tarball.sh`
 script.
 
 ```bash
