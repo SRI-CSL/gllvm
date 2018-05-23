@@ -46,7 +46,7 @@ package shared
 
 //
 const gllvmVersion = "1.2.1"
-const gllvmReleaseDate = "May 13 2018"
+const gllvmReleaseDate = "May 23 2018"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"

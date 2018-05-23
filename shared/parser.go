@@ -241,6 +241,7 @@ func parse(argList []string) parserResult {
 		"-print-multi-directory":  {0, pr.compileUnaryCallback},
 		"-print-multi-lib":        {0, pr.compileUnaryCallback},
 		"-print-libgcc-file-name": {0, pr.compileUnaryCallback},
+		"-print-search-dirs":      {0, pr.compileUnaryCallback},
 
 		"-fprofile-arcs": {0, pr.compileLinkUnaryCallback},
 		"-coverage":      {0, pr.compileLinkUnaryCallback},
@@ -272,6 +273,7 @@ func parse(argList []string) parserResult {
 		`^--sysroot=.+$`:                        {0, pr.compileUnaryCallback},
 		`^-print-prog-name=.*$`:                 {0, pr.compileUnaryCallback},
 		`^-print-file-name=.*$`:                 {0, pr.compileUnaryCallback},
+		`^-mmacosx-version-min=.+$`:             {0, pr.compileLinkUnaryCallback},
 		`^-mstack-alignment=.+$`:                {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		`^-march=.+$`:                           {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		`^-mregparm=.+$`:                        {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
