@@ -43,8 +43,6 @@ sudo apt-get install -y flex bison bc libncurses5-dev
 sudo apt-get install -y libelf-dev libssl-dev
 
 echo ". /vagrant/bash_profile" >> /home/vagrant/.bashrc
-
-bash /vagrant/init_script.sh
 ```
 
 ## Shell Settings
@@ -151,7 +149,8 @@ Though using a tarball is faster, and seemingly more reliable.
 
 # Building a bootable kernel from bitcode
 
-The init_script.sh script will build a bootable kernel from mostly bitcode (drivers and ext4 file system are currently not translated).
+
+The [init_script.sh](init_script.sh) script will build a bootable kernel from mostly bitcode (drivers and ext4 file system are currently not translated).
 
 ## Building the kernel with gclang
 
