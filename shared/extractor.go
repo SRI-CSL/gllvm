@@ -324,8 +324,12 @@ func listArchiveFiles(inputFile string) (contents []string) {
 
 func extractFile(archive string, filename string, instance int) bool {
 	var arArgs []string
-	arArgs = append(arArgs, "xN")
-	arArgs = append(arArgs, strconv.Itoa(instance))
+	if runtime.GOOS  != osDARWIN {
+		arArgs = append(arArgs, "xN")
+		arArgs = append(arArgs, strconv.Itoa(instance))
+	} else {
+		arArgs = append(arArgs, "x")
+	}
 	arArgs = append(arArgs, archive)
 	arArgs = append(arArgs, filename)
 	_, err := runCmd("ar", arArgs)
@@ -342,7 +346,8 @@ func fetchTOC(inputFile string) map[string]int {
 	contents := listArchiveFiles(inputFile)
 
 	for _, item := range contents {
-		if item != "" {
+		//iam: this is a hack to make get-bc work on libcurl.a
+		if item != "" && !strings.HasPrefix(item, "__.SYMDEF") {
 			toc[item]++
 		}
 	}
@@ -370,7 +375,7 @@ func handleArchive(ea extractionArgs) {
 
 	inputFile, _ := filepath.Abs(ea.InputFile)
 
-	LogWarning("handleArchive: extractionArgs = %v\n", ea)
+	LogInfo("handleArchive: extractionArgs = %v\n", ea)
 
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
@@ -466,7 +471,7 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 			LogFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
 	}
-	LogWarning("Built bitcode archive: %s.", ea.OutputFile)
+	informUser("Built bitcode archive: %s.\n", ea.OutputFile)
 }
 
 func getsize(stringslice []string) (totalLength int) {
@@ -565,7 +570,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 	if !success {
 		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
-	LogWarning("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
+	LogInfo("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
 }
 
 func linkBitcodeFiles(ea extractionArgs, filesToLink []string) {
@@ -584,7 +589,7 @@ func linkBitcodeFiles(ea extractionArgs, filesToLink []string) {
 		if !success {
 			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 		}
-		LogWarning("Bitcode file extracted to: %s \n", ea.OutputFile)
+		informUser("Bitcode file extracted to: %s.\n", ea.OutputFile)
 	}
 }
 
@@ -661,5 +666,5 @@ func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) 
 			LogFatal("There was an error while writing the manifest file: ", err)
 		}
 	}
-	LogWarning("Manifest file written to %s.", manifestFilename)
+	informUser("Manifest file written to %s.\n", manifestFilename)
 }
