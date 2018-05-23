@@ -223,6 +223,7 @@ func parse(argList []string) parserResult {
 		"-L": {1, pr.linkBinaryCallback},
 		"-T": {1, pr.linkBinaryCallback},
 		"-u": {1, pr.linkBinaryCallback},
+		"-install_name": {1, pr.linkBinaryCallback},
 
 		"-e":     {1, pr.linkBinaryCallback},
 		"-rpath": {1, pr.linkBinaryCallback},
