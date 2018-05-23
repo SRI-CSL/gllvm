@@ -12,22 +12,17 @@ cp /vagrant/copy-native-bi.sh .
 cp /vagrant/handle-bi.sh .
 cp /vagrant/copy.sh .
 
-mkdir arch
-mkdir arch/x86
-mkdir arch/x86/lib
-mkdir arch/x86/kernel
+mkdir -p arch/x86/lib
+mkdir -p arch/x86/kernel
 
-mkdir built-ins
-mkdir built-ins/objects
-mkdir built-ins/objects/lib_assembly_objects
-mkdir built-ins/objects/arch_assembly_objects
-mkdir built-ins/objects/xlib_assembly_objects
-mkdir built-ins/objects/pow_assembly_objects
-mkdir built-ins/objects/ker_objects
-mkdir built-ins/objects/libx_objects
+mkdir -p built-ins/objects/lib_assembly_objects
+mkdir -p built-ins/objects/arch_assembly_objects
+mkdir -p built-ins/objects/xlib_assembly_objects
+mkdir -p built-ins/objects/pow_assembly_objects
+mkdir -p built-ins/objects/ker_objects
+mkdir -p built-ins/objects/libx_objects
 
-mkdir built-ins/fs
-mkdir built-ins/fs/objects
+mkdir -p built-ins/fs/objects
 
 mkdir lib/
 

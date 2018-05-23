@@ -10,7 +10,7 @@ tar xf linux-4.14.39.tar.xz
 mv linux-4.14.39 linux-stable
 cd linux-stable
 
-cp /vagrant/link-vmlinux.sh scripts/ #to keep a copy of kallsyms.o
+cp /vagrant/link-vmlinux.sh scripts/ #to retain a copy of kallsyms.o
 cp /vagrant/parse-bi.py .
 cp /vagrant/make-script.sh .
 

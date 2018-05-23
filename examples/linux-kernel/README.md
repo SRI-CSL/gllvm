@@ -4,6 +4,9 @@ In this directory we include all the necessary files needed to
 build the kernel in a Ubuntu 16.04 vagrant box. We will guide the reader through
 the relatively simple task. We assume familiarity with [Vagrant.](https://www.vagrantup.com/)
 
+We begin with a warm up exercise that just builds a version of the kernel (based on tinyconfig) that does not boot.
+We then beef up the process somewhat so that we produce a bootable kernel.
+
 ## Vagrantfile
 
 ```ruby
@@ -12,7 +15,7 @@ the relatively simple task. We assume familiarity with [Vagrant.](https://www.va
 
 
 Vagrant.configure("2") do |config|
-  
+
   config.vm.box = "ubuntu/xenial64"
   config.vm.provision :shell, path: "bootstrap.sh"
 
@@ -26,7 +29,7 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-## Bootstrapping 
+## Bootstrapping
 
 ```bash
 #!/usr/bin/env bash
@@ -35,7 +38,7 @@ end
 
 sudo apt-get update
 
-sudo apt-get install -y emacs24 dbus-x11 
+sudo apt-get install -y emacs24 dbus-x11
 sudo apt-get install -y git
 sudo apt-get install -y llvm-5.0 libclang-5.0-dev clang-5.0
 sudo apt-get install -y python-pip golang-go
@@ -67,7 +70,7 @@ export PATH=${GOPATH}/bin:${LLVM_HOME}/bin:${PATH}
 ## Configuration stuff.
 
 The file [`tinyconfig64`](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/tinyconfig64) is generated
-by `make tinyconfig` and then using `make menuconfig` to specialize the build to 64 bits. 
+by `make tinyconfig` and then using `make menuconfig` to specialize the build to 64 bits.
 
 ## The Tarball Build with gllvm
 
@@ -147,23 +150,19 @@ You can also build from a [git clone using gllvm,](https://github.com/SRI-CSL/gl
 or build from a [git clone using wllvm.](https://github.com/SRI-CSL/gllvm/blob/master/examples/linux-kernel/build_linux_wllvm_git.sh)
 Though using a tarball is faster, and seemingly more reliable.
 
-# Building a bootable kernel from bitcode
+# Building a Bootable Kernel from the Bitcode
 
 
-The [init_script.sh](init_script.sh) script will build a bootable kernel from mostly bitcode (drivers and ext4 file system are currently not translated).
+In this section we will describe how to build a bootable kernel from LLVM bitcode.
+The [init_script.sh](init_script.sh) script will build a bootable kernel that is constructed from mostly bitcode (drivers and ext4 file system are currently not translated).
 
-## Building the kernel with gclang
-
-The init script will build the required folder architecture for the build and call build_linux_gllvm, only this time with a default configuration instead of tinyconfig.
-
-## Building the kernel from bitcode
+The init script first builds the required folder architecture for the build,  and then calls build_linux_gllvm,
+only this time with a default configuration instead of tinyconfig.
 
 The copy.sh script will then extract the bitcode from the archives in the linux build folder, and copy them along with necessary object files (the files compiled straight from assembly will not emit a bitcode file).
 It will then call the link command on those files and generate a vmlinux executable containing the kernel.
 
-## Booting on the generated kernel
-
-The gclang build of the kernel adds llvm_bc headers to most files, and those mess with the generation of a compressed bootable kernel. 
+The gclang build of the kernel adds llvm_bc headers to most files, and those mess with the generation of a compressed bootable kernel.
 We need to have a separate folder built form clang or gcc on which to finish the kernel build and install.
 Finally, calling the install-kernel script will copy the new kernel into the clang generated folder and finish the build and install. Rebooting will be on the bitcode kernel.
 
