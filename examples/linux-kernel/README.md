@@ -168,3 +168,9 @@ Finally, calling the install-kernel script will copy the new kernel into the cla
 
 NB: I was not able to boot on any custom kernel via Vagrant.
 NB: On a dedicated VirtualBox machine, the generated kernel boots properly but it may be buggy. Most notably, I have experienced issues when shutting down and booting the machine a second time.
+
+
+## Using built-in-parsing.py
+
+Another possibility after building the linux with gclang, it is possible to run [built-in-parsing.py](built-in-parsing.py) in order to write a script that will do the extracting, copying and linking of bitcode.
+This script automates the writing process for other configs than defconfig.
