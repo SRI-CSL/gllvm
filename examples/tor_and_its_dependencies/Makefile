@@ -33,7 +33,10 @@ LLVMGET=get-bc
 
 BITCODE = libz.a.bc libssl.a.bc libevent.a.bc tor.bc
 
-all: ${BITCODE}
+all: tor.bc
+
+
+#${BITCODE}
 
 ${TOR_TARBALL}:
 	wget ${TOR_URL}
@@ -42,7 +45,9 @@ ${TOR}: ${TOR_TARBALL}
 	tar xvfz ${TOR_TARBALL}
 
 ${TOR_INSTALL}/bin/tor: ${TOR}
-	cd ${TOR}; CC=${LLVMCC} ./configure --prefix=${TOR_INSTALL}; make && make install
+	cd ${TOR}; CC=${LLVMCC} ./configure;  make && make install
+#on linux we should try this:
+#	cd ${TOR}; CC=${LLVMCC} ./configure --disable-dependency-tracking  --enable-static-tor  --with-openssl-dir=${OPENSSL_INSTALL}  --with-libevent-dir=${LIBEVENT_INSTALL}/lib  --with-zlib-dir=${ZLIB_INSTALL}  --prefix=${TOR_INSTALL};  make && make install
 
 tor.bc: ${TOR_INSTALL}/bin/tor
 	cd ${TOR_INSTALL}/bin; ${LLVMGET} tor; mv tor.bc ${THISDIR}
