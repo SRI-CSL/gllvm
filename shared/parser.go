@@ -163,6 +163,8 @@ func parse(argList []string) parserResult {
 		"-D": {1, pr.compileBinaryCallback},
 		"-U": {1, pr.compileBinaryCallback},
 
+		"-arch": {1, pr.compileBinaryCallback}, //iam: openssl
+
 		"-P": {1, pr.compileUnaryCallback}, //iam: linux kernel stuff (linker script stuff)
 		"-C": {1, pr.compileUnaryCallback}, //iam: linux kernel stuff (linker script stuff)
 
