@@ -118,7 +118,8 @@ archbi=["lib","pci","video","power"]
 write_script(excluded,0,"")
 
 # Dealing with both lib files 
-out.writelines("get-bc -b $build_home/lib/lib.a \n ")
+out.writelines("get-bc -b lib/lib.a \n")
+out.writelines("mkdir $build_home/lib")
 out.writelines("cp lib/lib.a.bc $build_home/lib \n")
 out.writelines("clang -c -no-integrated-as -mcmodel=kernel -o $build_home/lib/lib.a.o $build_home/lib/lib.a.bc \n")
 
