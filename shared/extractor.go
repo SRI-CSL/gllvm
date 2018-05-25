@@ -328,6 +328,10 @@ func extractFile(archive string, filename string, instance int) bool {
 		arArgs = append(arArgs, "xN")
 		arArgs = append(arArgs, strconv.Itoa(instance))
 	} else {
+		if instance > 1 {
+			LogWarning("Cannot extract instance %v of %v from archive %s for instance > 1.\n", instance, filename, archive)
+			return false
+		}
 		arArgs = append(arArgs, "x")
 	}
 	arArgs = append(arArgs, archive)
