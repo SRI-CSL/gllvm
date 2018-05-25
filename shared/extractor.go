@@ -324,7 +324,7 @@ func listArchiveFiles(inputFile string) (contents []string) {
 
 func extractFile(archive string, filename string, instance int) bool {
 	var arArgs []string
-	if runtime.GOOS  != osDARWIN {
+	if runtime.GOOS != osDARWIN {
 		arArgs = append(arArgs, "xN")
 		arArgs = append(arArgs, strconv.Itoa(instance))
 	} else {

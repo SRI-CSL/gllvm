@@ -1,9 +1,8 @@
 
+all: test
 
-
-
-one:
-	${CC} test.c -fsanitize=address -o test
+#one:
+#	${CC} test.c -dead_strip -fsanitize=address -o test
 
 
 test.o:
@@ -11,10 +10,9 @@ test.o:
 
 
 test:  test.o
-	${CC} test.o -fsanitize=address  -o test
+	${CC} test.o -dead_strip  -fsanitize=address  -o test
 
 
 
 clean:
 	rm -f test.o test .test* *~
-

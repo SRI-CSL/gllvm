@@ -51,7 +51,7 @@ func execCmd(cmdExecName string, args []string, workingDir string) (success bool
 	if err != nil {
 		ecode = 1
 	}
-	LogDebug("execCmd: %v %v in %v had exitCode %v\n", cmdExecName, args, workingDir, ecode)
+	LogDebug("execCmd: %v %v had exitCode %v\n", cmdExecName, args, ecode)
 	if err != nil {
 		LogDebug("execCmd: error was %v\n", err)
 	}

@@ -40,7 +40,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 )
 
@@ -51,6 +50,7 @@ type parserResult struct {
 	OutputFilename   string
 	CompileArgs      []string
 	LinkArgs         []string
+	ForbiddenFlags   []string
 	IsVerbose        bool
 	IsDependencyOnly bool
 	IsPreprocessOnly bool
@@ -219,10 +219,10 @@ func parse(argList []string) parserResult {
 		"-Xassembler":    {1, pr.defaultBinaryCallback},
 		"-Xlinker":       {1, pr.defaultBinaryCallback},
 
-		"-l": {1, pr.linkBinaryCallback},
-		"-L": {1, pr.linkBinaryCallback},
-		"-T": {1, pr.linkBinaryCallback},
-		"-u": {1, pr.linkBinaryCallback},
+		"-l":            {1, pr.linkBinaryCallback},
+		"-L":            {1, pr.linkBinaryCallback},
+		"-T":            {1, pr.linkBinaryCallback},
+		"-u":            {1, pr.linkBinaryCallback},
 		"-install_name": {1, pr.linkBinaryCallback},
 
 		"-e":     {1, pr.linkBinaryCallback},
@@ -248,7 +248,8 @@ func parse(argList []string) parserResult {
 		"-coverage":      {0, pr.compileLinkUnaryCallback},
 		"--coverage":     {0, pr.compileLinkUnaryCallback},
 
-		"-Wl,-dead_strip": {0, pr.darwinWarningLinkUnaryCallback},
+		"-Wl,-dead_strip": {0, pr.warningLinkUnaryCallback},
+		"-dead_strip":     {0, pr.warningLinkUnaryCallback}, //iam: tor does this. We lose the bitcode :-(
 	}
 
 	var argPatterns = map[string]flagInfo{
@@ -263,25 +264,27 @@ func parse(argList []string) parserResult {
 		`^-B.+$`:                                {0, pr.compileLinkUnaryCallback},
 		`^-isystem.+$`:                          {0, pr.compileLinkUnaryCallback},
 		`^-U.+$`:                                {0, pr.compileUnaryCallback},
-		`^-Wl,.+$`:                              {0, pr.linkUnaryCallback},
-		`^-W[^l].*$`:                            {0, pr.compileUnaryCallback},
-		`^-fsanitize=.+$`:                       {0, pr.compileLinkUnaryCallback},
-		`^-f.+$`:                                {0, pr.compileUnaryCallback},
-		`^-rtlib=.+$`:                           {0, pr.linkUnaryCallback},
-		`^-std=.+$`:                             {0, pr.compileUnaryCallback},
-		`^-stdlib=.+$`:                          {0, pr.compileLinkUnaryCallback},
-		`^-mtune=.+$`:                           {0, pr.compileUnaryCallback},
-		`^--sysroot=.+$`:                        {0, pr.compileUnaryCallback},
-		`^-print-prog-name=.*$`:                 {0, pr.compileUnaryCallback},
-		`^-print-file-name=.*$`:                 {0, pr.compileUnaryCallback},
-		`^-mmacosx-version-min=.+$`:             {0, pr.compileLinkUnaryCallback},
-		`^-mstack-alignment=.+$`:                {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-march=.+$`:                           {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mregparm=.+$`:                        {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mcmodel=.+$`:                         {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mpreferred-stack-boundary=.+$`:       {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mindirect-branch=.+$`:                {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^--param=.+$`:                          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		//iam: need to be careful here, not mix up linker and warning flags.
+		`^-Wl,.+$`:                        {0, pr.linkUnaryCallback},
+		`^-W[^l].*$`:                      {0, pr.compileUnaryCallback},
+		`^-W[l][^,].*$`:                   {0, pr.compileUnaryCallback}, //iam: tor has a few -Wl...
+		`^-fsanitize=.+$`:                 {0, pr.compileLinkUnaryCallback},
+		`^-f.+$`:                          {0, pr.compileUnaryCallback},
+		`^-rtlib=.+$`:                     {0, pr.linkUnaryCallback},
+		`^-std=.+$`:                       {0, pr.compileUnaryCallback},
+		`^-stdlib=.+$`:                    {0, pr.compileLinkUnaryCallback},
+		`^-mtune=.+$`:                     {0, pr.compileUnaryCallback},
+		`^--sysroot=.+$`:                  {0, pr.compileUnaryCallback},
+		`^-print-prog-name=.*$`:           {0, pr.compileUnaryCallback},
+		`^-print-file-name=.*$`:           {0, pr.compileUnaryCallback},
+		`^-mmacosx-version-min=.+$`:       {0, pr.compileLinkUnaryCallback},
+		`^-mstack-alignment=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^-march=.+$`:                     {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^-mregparm=.+$`:                  {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^-mcmodel=.+$`:                   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^-mpreferred-stack-boundary=.+$`: {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^-mindirect-branch=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^--param=.+$`:                    {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 
 	}
 
@@ -406,12 +409,9 @@ func (pr *parserResult) compileUnaryCallback(flag string, _ []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }
 
-func (pr *parserResult) darwinWarningLinkUnaryCallback(flag string, _ []string) {
-	if runtime.GOOS == osDARWIN {
-		fmt.Println("The flag", flag, "cannot be used with this tool.")
-	} else {
-		pr.LinkArgs = append(pr.LinkArgs, flag)
-	}
+func (pr *parserResult) warningLinkUnaryCallback(flag string, _ []string) {
+	LogWarning("The flag %v cannot be used with this tool, we ignore it, else we lose the bitcode section.\n", flag)
+	pr.ForbiddenFlags = append(pr.ForbiddenFlags, flag)
 }
 
 func (pr *parserResult) defaultBinaryCallback(_ string, _ []string) {

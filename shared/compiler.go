@@ -211,6 +211,8 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 		LogError("%v %v failed to link: %v.", compilerExecName, args, err)
 		//was LogFatal
 		return
+	} else {
+		LogInfo("LINKING: %v %v", compilerExecName, args)
 	}
 }
 
@@ -241,7 +243,30 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 // Tries to build object file
 func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, ok *bool) {
 	defer (*wg).Done()
-	success, err := execCmd(compilerExecName, pr.InputList, "")
+	//iam: strickly speaking we should do more work here depending on whether this is
+	//     a compile only, a link only, or ...
+	//     But for the now, we just remove forbidden arguments
+	var success bool
+	var err error
+	if len(pr.ForbiddenFlags) > 0 {
+		filteredArgs := pr.InputList[:0]
+		for _, arg := range pr.InputList {
+			found := false
+			for _, bad := range pr.ForbiddenFlags {
+				if bad == arg {
+					found = true
+					break
+				}
+			}
+			if !found {
+				filteredArgs = append(filteredArgs, arg)
+			}
+		}
+		success, err = execCmd(compilerExecName, filteredArgs, "")
+	} else {
+		success, err = execCmd(compilerExecName, pr.InputList, "")
+	}
+
 	if !success {
 		LogError("Failed to compile using given arguments:\n%v %v\nexit status: %v\n", compilerExecName, pr.InputList, err)
 		*ok = false
