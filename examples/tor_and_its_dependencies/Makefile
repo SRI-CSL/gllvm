@@ -31,7 +31,7 @@ TOR_INSTALL=${THISDIR}/install/tor
 LLVMCC=gclang
 LLVMGET=get-bc
 
-BITCODE = tor.bc libz.a.bc libssl.a.bc libevent.a.bc
+BITCODE = libz.a.bc libssl.a.bc libevent.a.bc tor.bc
 
 all: ${BITCODE}
 
@@ -45,7 +45,7 @@ ${TOR_INSTALL}/bin/tor: ${TOR}
 	cd ${TOR}; CC=${LLVMCC} ./configure --prefix=${TOR_INSTALL}; make && make install
 
 tor.bc: ${TOR_INSTALL}/bin/tor
-	cd ${TOR_INSTALL}; ${LLVMGET} tor; mv tor.bc ${THISDIR}
+	cd ${TOR_INSTALL}/bin; ${LLVMGET} tor; mv tor.bc ${THISDIR}
 
 
 ${ZLIB_TARBALL}:

@@ -43,11 +43,12 @@ package shared
 //        May 2 2018      handleArchives rewritten to handle multiple occurrences of files with the same name.
 //                        corresponds with wllvm 1.2.0. Gonna try and keep them in synch.
 //  1.2.1 May 13th 2018   -fsanitize= needs to be compile AND link.
-//  1.2.2 May 24th 2018   Fix extracting from archives on darwin, plus travis build for both linux and darwin.
+//  1.2.2 June 1st 2018   Fix extracting from archives on darwin, plus travis build for both linux and darwin,
+//                        a few ittle fixes from building tor and it's dependencies.
 
 //
 const gllvmVersion = "1.2.2"
-const gllvmReleaseDate = "May 24 2018"
+const gllvmReleaseDate = "June 1st 2018"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
