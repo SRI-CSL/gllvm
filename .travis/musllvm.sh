@@ -16,7 +16,7 @@ git clone https://github.com/SRI-CSL/musllvm.git musllvm
 cd musllvm
 WLLVM_CONFIGURE_ONLY=1  CC=gclang ./configure --target=LLVM --build=LLVM
 make
-get-bc --bitcode ./lib/libc.a
+get-bc -b ./lib/libc.a
 
 if [ -s "./lib/libc.a.bc" ]
 then
@@ -28,7 +28,7 @@ fi
 #now lets makes sure the store has the bitcode too.
 mv ./lib/libc.a .
 make clean
-get-bc --bitcode ./libc.a
+get-bc -b ./libc.a
 
 if [ -s "./libc.a.bc" ]
 then
