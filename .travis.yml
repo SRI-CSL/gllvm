@@ -31,3 +31,4 @@ before_install:
 script:
   - go get -t -v ./...
   - ./.travis/test.sh
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./.travis/musllvm.sh         ; fi
