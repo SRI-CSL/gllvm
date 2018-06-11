@@ -1,18 +1,34 @@
 language: go
 
-sudo: required
-dist: trusty
+compiler:
+    - clang
 
 go:
-    - 1.8.x
     - 1.9.x
 
-install:
-  - sudo apt-get update
-  - sudo apt-get install -y llvm-3.8 clang-3.8
-  - go get -t -v ./...
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+    - os: osx
+      osx_image: xcode9.3
+
+
+addons:
+    apt:
+        packages:
+         - llvm-3.8
+         - clang-3.8
+
+before_install:
+  - export GLLVM_SRC=`pwd`
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - ${GLLVM_SRC}/.travis/install_llvm.sh
+  - export PATH="/usr/local/opt/llvm_lite/bin:$PATH"
 
 
 script:
+  - go get -t -v ./...
   - ./.travis/test.sh
-  
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./.travis/musllvm.sh         ; fi

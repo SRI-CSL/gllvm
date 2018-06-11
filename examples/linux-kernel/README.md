@@ -172,5 +172,5 @@ NB: On a dedicated VirtualBox machine, the generated kernel boots properly but i
 
 ## Using built-in-parsing.py
 
-Another possibility after building the linux with gclang, it is possible to run [built-in-parsing.py](built-in-parsing.py) in order to write a script that will do the extracting, copying and linking of bitcode.
-This script automates the writing process for other configs than defconfig.
+Another possibility after building the linux with gclang is running [built-in-parsing.py](built-in-parsing.py) in order to write a script that will do the extracting, copying and linking of bitcode.
+This script automates the script-writing process for other configs than defconfig.

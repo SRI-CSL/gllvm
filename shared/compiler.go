@@ -209,8 +209,6 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
 		LogError("%v %v failed to link: %v.", compilerExecName, args, err)
-		//was LogFatal
-		return
 	} else {
 		LogInfo("LINKING: %v %v", compilerExecName, args)
 	}
