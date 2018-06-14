@@ -167,7 +167,9 @@ We need to have a separate folder built form clang or gcc on which to finish the
 Finally, calling the install-kernel script will copy the new kernel into the clang generated folder and finish the build and install. Rebooting will be on the bitcode kernel.
 
 NB: I was not able to boot on any custom kernel via Vagrant with a defconfig build.
+
 NB2: On a dedicated VirtualBox machine, the generated kernel boots properly but it may be buggy. Most notably, I have experienced issues when shutting down and booting the machine a second time.
+
 NB3: Some default kernel modules loaded with olddefconfig cannot be compiled with clang due to VLAIS
 
 
