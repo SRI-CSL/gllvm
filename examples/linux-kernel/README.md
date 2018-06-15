@@ -177,4 +177,5 @@ NB3: Some default kernel modules loaded with olddefconfig cannot be compiled wit
 
 Another possibility after building the linux with gclang is running [built-in-parsing.py](built-in-parsing.py) in order to write a script that will do the extracting, copying and linking of bitcode.
 This script automates the script-writing process for other configs than defconfig.
-Running "python built-in-parsing.py PATH_TO_NEW_SCRIPT drivers fs/ext4" from whithin the kernel folder writes the NEW_SCRIPT with the right instructions to build the kernel.
+Running "python built-in-parsing.py BUILD_PATH drivers fs/ext4" from whithin the kernel folder writes a new build_script.sh with the right instructions to build the kernel in BUILD_PATH.
+NB: You will have to set the gclang output file to wrapper-logs/wrapper.log and create the corresponding directory before running the python script.
