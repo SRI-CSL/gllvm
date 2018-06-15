@@ -62,9 +62,7 @@ def write_script(excluded_paths, depth, base_dir):
             # For each file that does not have a bitcode version (compiled straight from assembly) we copy it into the build folder directly and add it to the linker args
             else:
                 if os.path.isfile("/vagrant/wrapper-logs/wrapper.log"):
-                    direc_no_slash=direc.split('/')[0]
-                    os.rename("/vagrant/wrapper-logs/wrapper.log","/vagrant/wrapper-logs/before_"+direc_no_slash+".log")
-                    #os.remove("/vagrant/wrapper-logs/wrapper.log")
+                    os.rename("/vagrant/wrapper-logs/wrapper.log","/vagrant/wrapper-logs/before_"+direc.replace('/','_')+".log")
                 path = base_dir + direc +"/built-in.o"
                 subprocess.call(["get-bc", "-b", path ])
                 subprocess.call(["touch","/vagrant/wrapper-logs/wrapper.log"])
@@ -79,16 +77,16 @@ def write_script(excluded_paths, depth, base_dir):
 
                 # Deal with those files
                 if assembly_objects:
-                    out.writelines("mkdir -p $build_home/built-ins/" + base_dir +direc+"\n")
+                    out.writelines("mkdir -p $build_home/built-ins/" + base_dir +direc.replace('/','_')+"\n")
                 for asf in assembly_objects:
-                    out.writelines("cp "+ asf + " $build_home/built-ins/" + base_dir +direc +"\n")
+                    out.writelines("cp "+ asf + " $build_home/built-ins/" + base_dir +direc.replace('/','_') +"\n")
                     filename= asf.split('/')[-1]
-                    link_args.writelines("built-ins/"+base_dir + direc +'/'+filename+" ")
+                    link_args.writelines("built-ins/"+base_dir + direc.replace('/','_') +'/'+filename+" ")
                 # Deal with the rest
                 if os.path.isfile(base_dir + direc +"/built-in.o.a.bc"):
-                    out.writelines("cp "+ base_dir + direc +"/built-in.o.a.bc $build_home/built-ins/"+ base_dir + direc+"bi.o.bc \n")
-                    out.writelines("clang -c -no-integrated-as -mcmodel=kernel -o $build_home/built-ins/"+ base_dir + direc + "bibc.o $build_home/built-ins/" + base_dir+direc+"bi.o.bc \n \n")
-                    link_args.writelines("built-ins/"+base_dir + direc +"bibc.o ")
+                    out.writelines("cp "+ base_dir + direc +"/built-in.o.a.bc $build_home/built-ins/"+ base_dir + direc.replace('/','_') +"bi.o.bc \n")
+                    out.writelines("clang -c -no-integrated-as -mcmodel=kernel -o $build_home/built-ins/"+ base_dir + direc.replace('/','_') + "bibc.o $build_home/built-ins/" + base_dir+direc.replace('/','_')+"bi.o.bc \n \n")
+                    link_args.writelines("built-ins/"+base_dir + direc.replace('/','_') +"bibc.o ")
 
                 builtin.close()
 
@@ -99,16 +97,20 @@ excluded_dirs=[]
 if len(sys.argv) > 2:
     excluded_dirs=sys.argv[2:]
 
-# Output file path
-script_out= sys.argv[1]
+for path in excluded_dirs:
+    if path[-1]=='/':
+        path=path[:-1]
 
+# Output file pathlib
+build_dir= sys.argv[1]
+if build_dir[-1]!='/':
+    build_dir+='/'
 #We transform excluded_dirs into a 2D array for better access to individual folders in the path
 excluded=[path.split('/') for path in excluded_dirs]
-
-out = open(script_out,"w+")
-link_args = open("/home/vagrant/standalone-build/link-args","w+")
+out = open("build_script.sh","w+")
+link_args = open(build_dir+"link-args","w+")
 out.writelines("# Script written by the built-in-parsing.py script \n")
-out.writelines("export build_home=/home/vagrant/standalone-build\n")
+out.writelines("export build_home="+build_dir+"\n")
 
 # List exceptions
 standalone_objects = ["arch/x86/kernel/head_64.o","arch/x86/kernel/head64.o","arch/x86/kernel/ebda.o","arch/x86/kernel/platform-quirks.o"]#,"usr/initramfs_data.o"]
@@ -118,27 +120,27 @@ archbi=["lib","pci","video","power"]
 write_script(excluded,0,"")
 
 # Dealing with both lib files 
-out.writelines("get-bc -b lib/lib.a \n")
-out.writelines("mkdir $build_home/lib")
-out.writelines("cp lib/lib.a.bc $build_home/lib \n")
+out.writelines("get-bc -b lib/lib.a \n ")
+out.writelines("mkdir -p $build_home/lib\n")
+out.writelines("cp lib/lib.a.bc $build_home/lib/ \n")
 out.writelines("clang -c -no-integrated-as -mcmodel=kernel -o $build_home/lib/lib.a.o $build_home/lib/lib.a.bc \n")
 
 if os.path.isfile("/vagrant/wrapper-logs/wrapper.log"):
     os.rename("/vagrant/wrapper-logs/wrapper.log","/vagrant/wrapper-logs/before_lib.log")
-    #os.remove("/vagrant/wrapper-logs/wrapper.log")
+    #os.remove("./wrapper-logs/wrapper.log")
+out.writelines("mkdir -p $build_home/arch/x86/lib/objects\n")
 subprocess.call(["get-bc", "-b", "arch/x86/lib/lib.a" ])
 subprocess.call(["touch","/vagrant/wrapper-logs/wrapper.log"])
 llvm_log=open("/vagrant/wrapper-logs/wrapper.log","r")
 assembly_objects=[]
 for line in llvm_log.readlines():
-    if len(line)>=54 and line[:54]=="WARNING:Error reading the .llvm_bc section of ELF file":
+    if len(line)>=55 and line[:54]=="WARNING:Error reading the .llvm_bc section of ELF file":
         assembly_objects.append(line[55:-2])
-if assembly_objects:
-    out.writelines("mkdir -p $build_home/arch/x86/lib/objects \n")
 for asf in assembly_objects:
     out.writelines("cp "+ asf + " $build_home/arch/x86/lib/objects/ \n")
     filename= asf.split('/')[-1]
-    #link_args.writelines("arch/x86/lib/objects/" +filename+" ") ##commented to keep the order of linked files 
+    #link_args.writelines("arch/x86/lib/objects/" +filename+" ") ##ignored to keep the order of linked files
+ 
 out.writelines("cp arch/x86/lib/lib.a.bc $build_home/arch/x86/lib/lib.a.bc \n")
 out.writelines("clang -c -no-integrated-as -mcmodel=kernel -o $build_home/arch/x86/lib/lib.a.o $build_home/arch/x86/lib/lib.a.bc \n \n")
 
