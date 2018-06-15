@@ -157,5 +157,5 @@ out.writelines("cd $build_home \n")
 out.writelines("ld --build-id -T vmlinux.lds --whole-archive ")
 for sto in standalone_objects:
     out.writelines(sto+" ")
-out.writelines("\@link-args ")
+out.writelines("@link-args ")
 out.writelines("--no-whole-archive --start-group lib/lib.a.o arch/x86/lib/lib.a.o arch/x86/lib/objects/*  .tmp_kallsyms2.o --end-group -o vmlinux")
