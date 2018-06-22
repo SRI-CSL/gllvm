@@ -25,7 +25,8 @@ before_install:
   - export GLLVM_SRC=`pwd`
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
   - ${GLLVM_SRC}/.travis/install_llvm.sh
-  - export PATH="/usr/local/opt/llvm_lite/bin:$PATH"
+  -  export PATH="/usr/local/opt/llvm/bin:$PATH
+#  - export PATH="/usr/local/opt/llvm_lite/bin:$PATH"
 
 
 script:
