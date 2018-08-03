@@ -147,4 +147,4 @@ See [here](http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) fo
 ```
 -Wl,--export-dynamic
 ```
-incantation.```
+incantation.
