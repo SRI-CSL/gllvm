@@ -609,7 +609,7 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		LogFatal("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
+		LogWarning("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
