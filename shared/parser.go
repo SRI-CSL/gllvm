@@ -109,7 +109,6 @@ func parse(argList []string) parserResult {
 
 		"-emit-llvm": {0, pr.emitLLVMCallback},
 
-
 		"-pipe":                  {0, pr.compileUnaryCallback},
 		"-undef":                 {0, pr.compileUnaryCallback},
 		"-nostdinc":              {0, pr.compileUnaryCallback},
@@ -120,7 +119,7 @@ func parse(argList []string) parserResult {
 		"-no-canonical-prefixes": {0, pr.compileLinkUnaryCallback},
 
 		//<archaic flags>
-		"-no-cpp-precomp":      {0, pr.compileUnaryCallback},
+		"-no-cpp-precomp": {0, pr.compileUnaryCallback},
 		//</archaic flags>
 
 		"-pthread":     {0, pr.compileUnaryCallback},
