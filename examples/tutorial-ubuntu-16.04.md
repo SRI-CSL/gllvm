@@ -147,4 +147,12 @@ See [here](http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) fo
 ```
 -Wl,--export-dynamic
 ```
-incantation.
+incantation. The salient point being
+```
+"In some cases, the call to gcc to create the object file will also need to include the option 
+'-Wl,-export-dynamic'. Normally, the dynamic symbol table contains only symbols which 
+are used by a dynamic object. This option (when creating an ELF file) adds all symbols to the
+dynamic symbol table (see ld(1) for more information). You need to use this option when there are 
+'reverse dependencies', i.e., a DL library has unresolved symbols that by convention must be 
+defined in the programs that intend to load these libraries."
+```
