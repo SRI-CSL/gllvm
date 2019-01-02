@@ -126,42 +126,42 @@ func parse(argList []string) parserResult {
 		"-nostdlibinc": {0, pr.compileUnaryCallback},
 
 		"-mno-omit-leaf-frame-pointer": {0, pr.compileUnaryCallback},
-		"-maes":                      {0, pr.compileUnaryCallback},
-		"-mno-aes":                   {0, pr.compileUnaryCallback},
-		"-mavx":                      {0, pr.compileUnaryCallback},
-		"-mno-avx":                   {0, pr.compileUnaryCallback},
-		"-mavx2":                     {0, pr.compileUnaryCallback},
-		"-mno-avx2":                  {0, pr.compileUnaryCallback},
-		"-mno-red-zone":              {0, pr.compileUnaryCallback},
-		"-mmmx":                      {0, pr.compileUnaryCallback},
-		"-mno-mmx":                   {0, pr.compileUnaryCallback},
-		"-mno-global-merge":          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-mno-80387":                 {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-msse":                      {0, pr.compileUnaryCallback},
-		"-mno-sse":                   {0, pr.compileUnaryCallback},
-		"-msse2":                     {0, pr.compileUnaryCallback},
-		"-mno-sse2":                  {0, pr.compileUnaryCallback},
-		"-msse3":                     {0, pr.compileUnaryCallback},
-		"-mno-sse3":                  {0, pr.compileUnaryCallback},
-		"-mssse3":                    {0, pr.compileUnaryCallback},
-		"-mno-ssse3":                 {0, pr.compileUnaryCallback},
-		"-msse4":                     {0, pr.compileUnaryCallback},
-		"-mno-sse4":                  {0, pr.compileUnaryCallback},
-		"-msse4.1":                   {0, pr.compileUnaryCallback},
-		"-mno-sse4.1":                {0, pr.compileUnaryCallback},
-		"-msse4.2":                   {0, pr.compileUnaryCallback},
-		"-mno-sse4.2":                {0, pr.compileUnaryCallback},
-		"-msoft-float":               {0, pr.compileUnaryCallback},
-		"-m3dnow":                    {0, pr.compileUnaryCallback},
-		"-mno-3dnow":                 {0, pr.compileUnaryCallback},
-		"-m16":                       {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-m32":                       {0, pr.compileUnaryCallback},
-		"-m64":                       {0, pr.compileUnaryCallback},
-		"-mstackrealign":             {0, pr.compileUnaryCallback},
-		"-mretpoline-external-thunk": {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-mno-fp-ret-in-387":         {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-mskip-rax-setup":           {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-mindirect-branch-register": {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-maes":                        {0, pr.compileUnaryCallback},
+		"-mno-aes":                     {0, pr.compileUnaryCallback},
+		"-mavx":                        {0, pr.compileUnaryCallback},
+		"-mno-avx":                     {0, pr.compileUnaryCallback},
+		"-mavx2":                       {0, pr.compileUnaryCallback},
+		"-mno-avx2":                    {0, pr.compileUnaryCallback},
+		"-mno-red-zone":                {0, pr.compileUnaryCallback},
+		"-mmmx":                        {0, pr.compileUnaryCallback},
+		"-mno-mmx":                     {0, pr.compileUnaryCallback},
+		"-mno-global-merge":            {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-mno-80387":                   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-msse":                        {0, pr.compileUnaryCallback},
+		"-mno-sse":                     {0, pr.compileUnaryCallback},
+		"-msse2":                       {0, pr.compileUnaryCallback},
+		"-mno-sse2":                    {0, pr.compileUnaryCallback},
+		"-msse3":                       {0, pr.compileUnaryCallback},
+		"-mno-sse3":                    {0, pr.compileUnaryCallback},
+		"-mssse3":                      {0, pr.compileUnaryCallback},
+		"-mno-ssse3":                   {0, pr.compileUnaryCallback},
+		"-msse4":                       {0, pr.compileUnaryCallback},
+		"-mno-sse4":                    {0, pr.compileUnaryCallback},
+		"-msse4.1":                     {0, pr.compileUnaryCallback},
+		"-mno-sse4.1":                  {0, pr.compileUnaryCallback},
+		"-msse4.2":                     {0, pr.compileUnaryCallback},
+		"-mno-sse4.2":                  {0, pr.compileUnaryCallback},
+		"-msoft-float":                 {0, pr.compileUnaryCallback},
+		"-m3dnow":                      {0, pr.compileUnaryCallback},
+		"-mno-3dnow":                   {0, pr.compileUnaryCallback},
+		"-m16":                         {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-m32":                         {0, pr.compileUnaryCallback},
+		"-m64":                         {0, pr.compileUnaryCallback},
+		"-mstackrealign":               {0, pr.compileUnaryCallback},
+		"-mretpoline-external-thunk":   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-mno-fp-ret-in-387":           {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-mskip-rax-setup":             {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		"-mindirect-branch-register":   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 
 		"-A": {1, pr.compileBinaryCallback},
 		"-D": {1, pr.compileBinaryCallback},
@@ -236,6 +236,7 @@ func parse(argList []string) parserResult {
 
 		"-shared":        {0, pr.linkUnaryCallback},
 		"-static":        {0, pr.linkUnaryCallback},
+		"-static-libgcc": {0, pr.linkUnaryCallback}, //iam: musl stuff
 		"-pie":           {0, pr.linkUnaryCallback},
 		"-nostdlib":      {0, pr.linkUnaryCallback},
 		"-nodefaultlibs": {0, pr.linkUnaryCallback},
@@ -280,7 +281,7 @@ func parse(argList []string) parserResult {
 		`^-std=.+$`:                       {0, pr.compileUnaryCallback},
 		`^-stdlib=.+$`:                    {0, pr.compileLinkUnaryCallback},
 		`^-mtune=.+$`:                     {0, pr.compileUnaryCallback},
-		`^--sysroot=.+$`:                  {0, pr.compileUnaryCallback},
+		`^--sysroot=.+$`:                  {0, pr.compileLinkUnaryCallback}, //both compile and link time
 		`^-print-prog-name=.*$`:           {0, pr.compileUnaryCallback},
 		`^-print-file-name=.*$`:           {0, pr.compileUnaryCallback},
 		`^-mmacosx-version-min=.+$`:       {0, pr.compileLinkUnaryCallback},
@@ -291,6 +292,7 @@ func parse(argList []string) parserResult {
 		`^-mpreferred-stack-boundary=.+$`: {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		`^-mindirect-branch=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		`^--param=.+$`:                    {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+		`^-fuse-ld=.+$`:                   {0, pr.linkUnaryCallback},    //iam: musl stuff
 
 	}
 
