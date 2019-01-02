@@ -122,7 +122,7 @@ func parse(argList []string) parserResult {
 		"-no-cpp-precomp": {0, pr.compileUnaryCallback},
 		//</archaic flags>
 
-		"-pthread":     {0, pr.compileUnaryCallback},
+		"-pthread":     {0, pr.linkUnaryCallback},
 		"-nostdlibinc": {0, pr.compileUnaryCallback},
 
 		"-mno-omit-leaf-frame-pointer": {0, pr.compileUnaryCallback},
