@@ -118,6 +118,8 @@ func parse(argList []string) parserResult {
 		"-integrated-as":         {0, pr.compileUnaryCallback},
 		"-no-canonical-prefixes": {0, pr.compileLinkUnaryCallback},
 
+		"--sysroot": {1, pr.compileLinkBinaryCallback}, //iam: musl stuff
+
 		//<archaic flags>
 		"-no-cpp-precomp": {0, pr.compileUnaryCallback},
 		//</archaic flags>
@@ -318,7 +320,6 @@ func parse(argList []string) parserResult {
 			}
 			if !matched {
 				LogWarning("Did not recognize the compiler flag: %v\n", elem)
-				//LogWarning("CC %v\n", pr.InputList)
 				pr.compileUnaryCallback(elem, argList[1:1])
 			}
 			argList = argList[1+listShift:]
@@ -442,4 +443,9 @@ func (pr *parserResult) linkBinaryCallback(flag string, args []string) {
 func (pr *parserResult) compileLinkUnaryCallback(flag string, _ []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag)
 	pr.CompileArgs = append(pr.CompileArgs, flag)
+}
+
+func (pr *parserResult) compileLinkBinaryCallback(flag string, args []string) {
+	pr.LinkArgs = append(pr.LinkArgs, flag, args[0])
+	pr.CompileArgs = append(pr.CompileArgs, flag, args[0])
 }
