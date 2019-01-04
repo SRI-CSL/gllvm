@@ -66,6 +66,11 @@ type flagInfo struct {
 	handler func(string, []string)
 }
 
+type argPattern struct {
+	pattern string
+	finfo   flagInfo
+}
+
 func skipBitcodeGeneration(pr parserResult) bool {
 	if LLVMConfigureOnly != "" {
 		return true
@@ -261,42 +266,80 @@ func parse(argList []string) parserResult {
 		"-dead_strip":     {0, pr.warningLinkUnaryCallback}, //iam: tor does this. We lose the bitcode :-(
 	}
 
-	var argPatterns = map[string]flagInfo{
-		`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`:       {0, pr.inputFileCallback},
-		`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`: {0, pr.inputFileCallback},
-		`^.+\.(o|lo|So|so|po|a|dylib)$`:         {0, pr.objectFileCallback},
-		`^.+\.dylib(\.\d)+$`:                    {0, pr.objectFileCallback},
-		`^.+\.(So|so)(\.\d)+$`:                  {0, pr.objectFileCallback},
-		`^-(l|L).+$`:                            {0, pr.linkUnaryCallback},
-		`^-I.+$`:                                {0, pr.compileUnaryCallback},
-		`^-D.+$`:                                {0, pr.compileUnaryCallback},
-		`^-B.+$`:                                {0, pr.compileLinkUnaryCallback},
-		`^-isystem.+$`:                          {0, pr.compileLinkUnaryCallback},
-		`^-U.+$`:                                {0, pr.compileUnaryCallback},
-		//iam: need to be careful here, not mix up linker and warning flags.
-		`^-Wl,.+$`:                        {0, pr.linkUnaryCallback},
-		`^-W[^l].*$`:                      {0, pr.compileUnaryCallback},
-		`^-W[l][^,].*$`:                   {0, pr.compileUnaryCallback}, //iam: tor has a few -Wl...
-		`^-fsanitize=.+$`:                 {0, pr.compileLinkUnaryCallback},
-		`^-f.+$`:                          {0, pr.compileUnaryCallback},
-		`^-rtlib=.+$`:                     {0, pr.linkUnaryCallback},
-		`^-std=.+$`:                       {0, pr.compileUnaryCallback},
-		`^-stdlib=.+$`:                    {0, pr.compileLinkUnaryCallback},
-		`^-mtune=.+$`:                     {0, pr.compileUnaryCallback},
-		`^--sysroot=.+$`:                  {0, pr.compileLinkUnaryCallback}, //both compile and link time
-		`^-print-prog-name=.*$`:           {0, pr.compileUnaryCallback},
-		`^-print-file-name=.*$`:           {0, pr.compileUnaryCallback},
-		`^-mmacosx-version-min=.+$`:       {0, pr.compileLinkUnaryCallback},
-		`^-mstack-alignment=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-march=.+$`:                     {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mregparm=.+$`:                  {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mcmodel=.+$`:                   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mpreferred-stack-boundary=.+$`: {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-mindirect-branch=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^--param=.+$`:                    {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		`^-fuse-ld=.+$`:                   {0, pr.linkUnaryCallback},    //iam: musl stuff
-
+	var argPatterns = [...]argPattern{
+		{`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`, flagInfo{0, pr.inputFileCallback}},
+		{`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`, flagInfo{0, pr.inputFileCallback}},
+		{`^.+\.(o|lo|So|so|po|a|dylib)$`, flagInfo{0, pr.objectFileCallback}},
+		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
+		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
+		{`^-(l|L).+$`, flagInfo{0, pr.linkUnaryCallback}},
+		{`^-I.+$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-D.+$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-B.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
+		{`^-isystem.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
+		{`^-U.+$`, flagInfo{0, pr.compileUnaryCallback}},
+		//iam, need to be careful here, not mix up linker and warning flags.
+		{`^-Wl,.+$`, flagInfo{0, pr.linkUnaryCallback}},
+		{`^-W[^l].*$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-W[l][^,].*$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: tor has a few -Wl...
+		{`^-fsanitize=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
+		{`^-fuse-ld=.+$`, flagInfo{0, pr.linkUnaryCallback}}, //iam:  musl stuff
+		{`^-f.+$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-rtlib=.+$`, flagInfo{0, pr.linkUnaryCallback}},
+		{`^-std=.+$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-stdlib=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
+		{`^-mtune=.+$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^--sysroot=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}}, //both compile and link time
+		{`^-print-prog-name=.*$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-print-file-name=.*$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-mmacosx-version-min=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
+		{`^-mstack-alignment=.+$`, flagInfo{0, pr.compileUnaryCallback}},          //iam, linux kernel stuff
+		{`^-march=.+$`, flagInfo{0, pr.compileUnaryCallback}},                     //iam: linux kernel stuff
+		{`^-mregparm=.+$`, flagInfo{0, pr.compileUnaryCallback}},                  //iam: linux kernel stuff
+		{`^-mcmodel=.+$`, flagInfo{0, pr.compileUnaryCallback}},                   //iam: linux kernel stuff
+		{`^-mpreferred-stack-boundary=.+$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: linux kernel stuff
+		{`^-mindirect-branch=.+$`, flagInfo{0, pr.compileUnaryCallback}},          //iam: linux kernel stuff
+		{`^--param=.+$`, flagInfo{0, pr.compileUnaryCallback}},                    //iam: linux kernel stuff
 	}
+
+	/*
+		var argPatterns = map[string]flagInfo{
+			`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`:       {0, pr.inputFileCallback},
+			`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`: {0, pr.inputFileCallback},
+			`^.+\.(o|lo|So|so|po|a|dylib)$`:         {0, pr.objectFileCallback},
+			`^.+\.dylib(\.\d)+$`:                    {0, pr.objectFileCallback},
+			`^.+\.(So|so)(\.\d)+$`:                  {0, pr.objectFileCallback},
+			`^-(l|L).+$`:                            {0, pr.linkUnaryCallback},
+			`^-I.+$`:                                {0, pr.compileUnaryCallback},
+			`^-D.+$`:                                {0, pr.compileUnaryCallback},
+			`^-B.+$`:                                {0, pr.compileLinkUnaryCallback},
+			`^-isystem.+$`:                          {0, pr.compileLinkUnaryCallback},
+			`^-U.+$`:                                {0, pr.compileUnaryCallback},
+			//iam: need to be careful here, not mix up linker and warning flags.
+			`^-Wl,.+$`:                        {0, pr.linkUnaryCallback},
+			`^-W[^l].*$`:                      {0, pr.compileUnaryCallback},
+			`^-W[l][^,].*$`:                   {0, pr.compileUnaryCallback}, //iam: tor has a few -Wl...
+			`^-fsanitize=.+$`:                 {0, pr.compileLinkUnaryCallback},
+			`^-f.+$`:                          {0, pr.compileUnaryCallback},
+			`^-rtlib=.+$`:                     {0, pr.linkUnaryCallback},
+			`^-std=.+$`:                       {0, pr.compileUnaryCallback},
+			`^-stdlib=.+$`:                    {0, pr.compileLinkUnaryCallback},
+			`^-mtune=.+$`:                     {0, pr.compileUnaryCallback},
+			`^--sysroot=.+$`:                  {0, pr.compileLinkUnaryCallback}, //both compile and link time
+			`^-print-prog-name=.*$`:           {0, pr.compileUnaryCallback},
+			`^-print-file-name=.*$`:           {0, pr.compileUnaryCallback},
+			`^-mmacosx-version-min=.+$`:       {0, pr.compileLinkUnaryCallback},
+			`^-mstack-alignment=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^-march=.+$`:                     {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^-mregparm=.+$`:                  {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^-mcmodel=.+$`:                   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^-mpreferred-stack-boundary=.+$`: {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^-mindirect-branch=.+$`:          {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^--param=.+$`:                    {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
+			`^-fuse-ld=.+$`:                   {0, pr.linkUnaryCallback},    //iam: musl stuff
+
+		}
+	*/
 
 	for len(argList) > 0 {
 		var elem = argList[0]
@@ -309,7 +352,10 @@ func parse(argList []string) parserResult {
 		} else {
 			var listShift = 0
 			var matched = false
-			for pattern, fi := range argPatterns {
+
+			for _, argPat := range argPatterns {
+				pattern := argPat.pattern
+				fi := argPat.finfo
 				var regExp = regexp.MustCompile(pattern)
 				if regExp.MatchString(elem) {
 					fi.handler(elem, argList[1:1+fi.arity])
@@ -318,6 +364,15 @@ func parse(argList []string) parserResult {
 					break
 				}
 			}
+			//for pattern, fi := range argPatterns {
+			//	var regExp = regexp.MustCompile(pattern)
+			//	if regExp.MatchString(elem) {
+			//		fi.handler(elem, argList[1:1+fi.arity])
+			//		listShift = fi.arity
+			//		matched = true
+			//		break
+			//	}
+			//}
 			if !matched {
 				LogWarning("Did not recognize the compiler flag: %v\n", elem)
 				pr.compileUnaryCallback(elem, argList[1:1])
