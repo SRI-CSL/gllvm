@@ -261,13 +261,14 @@ func parse(argList []string) parserResult {
 		"-fprofile-arcs": {0, pr.compileLinkUnaryCallback},
 		"-coverage":      {0, pr.compileLinkUnaryCallback},
 		"--coverage":     {0, pr.compileLinkUnaryCallback},
+		"-fopenmp":       {0, pr.compileLinkUnaryCallback},
 
 		"-Wl,-dead_strip": {0, pr.warningLinkUnaryCallback},
 		"-dead_strip":     {0, pr.warningLinkUnaryCallback}, //iam: tor does this. We lose the bitcode :-(
 	}
 
 	// iam: this is a list because matching needs to be done in order.
-	// if you add a NEW pattern; make sure it is befor any existing pattern that also
+	// if you add a NEW pattern; make sure it is before any existing pattern that also
 	// matches and has a conflicting flagInfo value.
 	var argPatterns = [...]argPattern{
 		{`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`, flagInfo{0, pr.inputFileCallback}},
