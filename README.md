@@ -110,32 +110,33 @@ are supported in exactly the same fashion.
 ## Under the hoods
 
 
-Both `wllvm` and `gllvm` toolsets do much the same thing, but the way they do it is
-slightly different. The `gllvm` toolset's code base is written in
-`golang`, and is largely derived from the `wllvm`'s python codebase.
+Both `wllvm` and `gllvm` toolsets do much the same thing, but the way
+they do it is slightly different. The `gllvm` toolset's code base is
+written in `golang`, and is largely derived from the `wllvm`'s python
+codebase.
 
-Both generate object files and bitcode files using the compiler. `wllvm`
-can use `gcc` and `dragonegg`, `gllvm` can only use `clang`. The `gllvm` toolset
-does these two tasks in parallel, while `wllvm` does them sequentially.
-This together with the slowness of python's `fork exec`-ing, and it's
-interpreted nature accounts for the large efficiency gap between the
-two toolsets.
+Both generate object files and bitcode files using the
+compiler. `wllvm` can use `gcc` and `dragonegg`, `gllvm` can only use
+`clang`. The `gllvm` toolset does these two tasks in parallel, while
+`wllvm` does them sequentially.  This together with the slowness of
+python's `fork exec`-ing, and it's interpreted nature accounts for the
+large efficiency gap between the two toolsets.
 
 Both inject the path of the bitcode version of the `.o` file into a
-dedicated segment of the `.o` file itself. This segment is the same across
-toolsets, so extracting the bitcode can be done by the appropriate
-tool in either toolset. On `*nix` both toolsets use `objcopy` to add the
-segment, while on OS X they use `ld`.
+dedicated segment of the `.o` file itself. This segment is the same
+across toolsets, so extracting the bitcode can be done by the
+appropriate tool in either toolset. On `*nix` both toolsets use
+`objcopy` to add the segment, while on OS X they use `ld`.
 
 When the object files are linked into the resulting library or
 executable, the bitcode path segments are appended, so the resulting
 binary contains the paths of all the bitcode files that constitute the
 binary.  To extract the sections the `gllvm` toolset uses the golang
-packages `"debug/elf"` and `"debug/macho"`, while the `wllvm` toolset uses
-`objdump` on `*nix`, and `otool` on OS X.
+packages `"debug/elf"` and `"debug/macho"`, while the `wllvm` toolset
+uses `objdump` on `*nix`, and `otool` on OS X.
 
-Both tools then use `llvm-link` or `llvm-ar` to combine the bitcode files
-into the desired form.
+Both tools then use `llvm-link` or `llvm-ar` to combine the bitcode
+files into the desired form.
 
 
 ## License
@@ -144,4 +145,9 @@ into the desired form.
 
 ---
 
-This material is based upon work supported by the National Science Foundation under Grant [ACI-1440800](http://www.nsf.gov/awardsearch/showAward?AWD_ID=1440800). Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
+This material is based upon work supported by the National Science
+Foundation under Grant
+[ACI-1440800](http://www.nsf.gov/awardsearch/showAward?AWD_ID=1440800). Any
+opinions, findings, and conclusions or recommendations expressed in
+this material are those of the author(s) and do not necessarily
+reflect the views of the National Science Foundation.
