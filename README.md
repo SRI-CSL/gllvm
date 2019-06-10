@@ -121,18 +121,18 @@ This together with the slowness of python's `fork exec`-ing, and it's
 interpreted nature accounts for the large efficiency gap between the
 tool toolsets.
 
-Both inject the path of the bitcode version of the .o file into a
-dedicated segment of the .o file itself. This segment is the same across
+Both inject the path of the bitcode version of the `.o` file into a
+dedicated segment of the `.o` file itself. This segment is the same across
 toolsets, so extracting the bitcode can be done by the appropriate
-tool in either toolset. On *nix both toolsets use objcopy to add the
-segment, while on OS X they use ld.
+tool in either toolset. On `*nix` both toolsets use `objcopy` to add the
+segment, while on OS X they use `ld`.
 
 When the object files are linked into the resulting library or
 executable, the bitcode path segments are appended, so the resulting
 binary contains the paths of all the bitcode files that constitute the
 binary.  To extract the sections the `gllvm` toolset uses the golang
 packages `"debug/elf"` and `"debug/macho"`, while the `wllvm` toolset uses
-`objdump` on *nix, and `otool` on OScX.
+`objdump` on *nix, and `otool` on OS X.
 
 Both tools then use `llvm-link` or `llvm-ar` to combine the bitcode files
 into the desired form.
