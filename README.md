@@ -119,7 +119,7 @@ can use `gcc` and `dragonegg`, `gllvm` can only use `clang`. The `gllvm` toolset
 does these two tasks in parallel, while `wllvm` does them sequentially.
 This together with the slowness of python's `fork exec`-ing, and it's
 interpreted nature accounts for the large efficiency gap between the
-tool toolsets.
+two toolsets.
 
 Both inject the path of the bitcode version of the `.o` file into a
 dedicated segment of the `.o` file itself. This segment is the same across
@@ -132,7 +132,7 @@ executable, the bitcode path segments are appended, so the resulting
 binary contains the paths of all the bitcode files that constitute the
 binary.  To extract the sections the `gllvm` toolset uses the golang
 packages `"debug/elf"` and `"debug/macho"`, while the `wllvm` toolset uses
-`objdump` on *nix, and `otool` on OS X.
+`objdump` on `*nix`, and `otool` on OS X.
 
 Both tools then use `llvm-link` or `llvm-ar` to combine the bitcode files
 into the desired form.
