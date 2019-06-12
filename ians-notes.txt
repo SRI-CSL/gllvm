@@ -16,7 +16,10 @@ For linting:
 
 https://github.com/alecthomas/gometalinter
 
-gometalinter.v2 ./...
+brew tap alecthomas/homebrew-tap
+brew install gometalinter
+
+gometalinter ./...
 
 
 For keeping up with the Jones:
