@@ -161,9 +161,9 @@ func parse(argList []string) parserResult {
 		"-msoft-float":                 {0, pr.compileUnaryCallback},
 		"-m3dnow":                      {0, pr.compileUnaryCallback},
 		"-mno-3dnow":                   {0, pr.compileUnaryCallback},
-		"-m16":                         {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
-		"-m32":                         {0, pr.compileUnaryCallback},
-		"-m64":                         {0, pr.compileUnaryCallback},
+		"-m16":                         {0, pr.compileLinkUnaryCallback}, //iam: linux kernel stuff
+		"-m32":                         {0, pr.compileLinkUnaryCallback},
+		"-m64":                         {0, pr.compileLinkUnaryCallback},
 		"-mstackrealign":               {0, pr.compileUnaryCallback},
 		"-mretpoline-external-thunk":   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		"-mno-fp-ret-in-387":           {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
