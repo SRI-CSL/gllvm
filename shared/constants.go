@@ -45,10 +45,10 @@ package shared
 //  1.2.1 May 13th 2018   -fsanitize= needs to be compile AND link.
 //  1.2.2 June 1st 2018   Fix extracting from archives on darwin, plus travis build for both linux and darwin,
 //                        a few ittle fixes from building tor and it's dependencies.
-
+//  1.2.4 June  21 2019   Random fixes (basically the same as wllvm 1.2.7)
 //
-const gllvmVersion = "1.2.2"
-const gllvmReleaseDate = "June 1st 2018"
+const gllvmVersion = "1.2.4"
+const gllvmReleaseDate = "June  21 2019"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
