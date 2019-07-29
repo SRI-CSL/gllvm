@@ -38,9 +38,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path"
-	// issue #30: "path/filepath"
+	"path/filepath"
 	"regexp"
-	// issue #30: "strings"
+	"strings"
 )
 
 type parserResult struct {
@@ -353,11 +353,10 @@ func getArtifactNames(pr parserResult, srcFileIndex int, hidden bool) (objBase s
 		srcFile := pr.InputFiles[srcFileIndex]
 		var _, baseNameWithExt = path.Split(srcFile)
 		// issue #30:  main.cpp and main.c cause conflicts.
-		// var baseName = strings.TrimSuffix(baseNameWithExt, filepath.Ext(baseNameWithExt))
-		var baseName = baseNameWithExt
-		bcBase = fmt.Sprintf(".%s.o.bc", baseName)
+		var baseName = strings.TrimSuffix(baseNameWithExt, filepath.Ext(baseNameWithExt))
+		bcBase = fmt.Sprintf(".%s.o.bc", baseNameWithExt)
 		if hidden {
-			objBase = fmt.Sprintf(".%s.o", baseName)
+			objBase = fmt.Sprintf(".%s.o", baseNameWithExt)
 		} else {
 			objBase = fmt.Sprintf("%s.o", baseName)
 		}
