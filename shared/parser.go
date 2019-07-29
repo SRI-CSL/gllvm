@@ -38,9 +38,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path"
-	// issue #30: "path/filepath"
+	"path/filepath"
 	"regexp"
-	// issue #30: "strings"
+	"strings"
 )
 
 type parserResult struct {
