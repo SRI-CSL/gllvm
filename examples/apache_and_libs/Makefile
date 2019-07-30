@@ -13,14 +13,14 @@ LLVMGET=get-bc
 
 #current versions as of 5/16/2018
 PCRE=pcre-8.42
-APR=apr-1.6.3
+APR=apr-1.7.0
 APR_UTIL=apr-util-1.6.1
-HTTPD=httpd-2.4.33
+HTTPD=httpd-2.4.39
 
 #the urls (if the versions change you should check these)
 PCRE_URL=https://ftp.pcre.org/pub/pcre/${PCRE}.tar.gz
-APR_URL=http://apache.mirrors.ionfish.org//apr/${APR}.tar.gz
-APR_UTIL_URL=http://apache.mirrors.pair.com//apr/${APR_UTIL}.tar.gz
+APR_URL=http://us.mirrors.quenda.co/apache/apr/${APR}.tar.gz
+APR_UTIL_URL=http://apache.mirrors.pair.com/apr/${APR_UTIL}.tar.gz
 HTTPD_URL=http://apache.cs.utah.edu/httpd/${HTTPD}.tar.gz
 
 
