@@ -1,5 +1,9 @@
 all: bzip2.bc bzip2_from_bitcode test
 
+CLANG = $(shell which clang)
+ifeq ($(CLANG),)
+	CLANG = gclang
+endif
 
 ./bzip2:
 	git clone git://sourceware.org/git/bzip2.git
@@ -34,7 +38,7 @@ modules: bzip2/bzip2
 
 # the override flag is necessary and is there to prevent any complaints about multiple definitions.
 bzip2_from_bitcode: bzip2.bc modules
-	clang bzip2.c.o.bc blocksort.c.o.bc huffman.c.o.bc crctable.c.o.bc randtable.c.o.bc compress.c.o.bc decompress.c.o.bc bzlib.c.o.bc -o bzip2_from_bitcode
+	${CLANG} bzip2.c.o.bc blocksort.c.o.bc huffman.c.o.bc crctable.c.o.bc randtable.c.o.bc compress.c.o.bc decompress.c.o.bc bzlib.c.o.bc -o bzip2_from_bitcode
 
 test: bzip2_from_bitcode
 	./bzip2_from_bitcode -1  < ./bzip2/sample1.ref > sample1.rb2
