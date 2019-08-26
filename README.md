@@ -104,7 +104,7 @@ Another useful environment variable is `WLLVM_CONFIGURE_ONLY`. Its use is explai
 README of  [wllvm](https://github.com/SRI-CSL/whole-program-llvm).
 
 `gllvm` does not support the dragonegg plugin. All other features of `wllvm`, such as logging, and the bitcode store,
-are supported in exactly the same fashion.
+are supported in exactly the same fashion as documented [here](https://github.com/SRI-CSL/whole-program-llvm).
 
 
 ## Under the hoods
