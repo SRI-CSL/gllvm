@@ -27,3 +27,7 @@ For keeping up with the Jones:
 clang -cc1 --help
 
 https://clang.llvm.org/docs/ClangCommandLineReference.html
+
+For fretting about race conditions:
+
+go build -race cmd
