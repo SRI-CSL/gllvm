@@ -321,9 +321,9 @@ func listArchiveFiles(ea extractionArgs, inputFile string) (contents []string) {
 	var arArgs []string
 	arArgs = append(arArgs, "-t")
 	arArgs = append(arArgs, inputFile)
-	output, err := runCmd("ar", arArgs)
+	output, err := runCmd(ea.ArchiverName, arArgs)
 	if err != nil {
-		LogWarning("ar command: ar %v", arArgs)
+		LogWarning("ar command: %v %v", ea.ArchiverName, arArgs)
 		LogFatal("Failed to extract contents from archive %s because: %v.\n", inputFile, err)
 	}
 	contents = strings.Split(output, "\n")
@@ -344,9 +344,9 @@ func extractFile(ea extractionArgs, archive string, filename string, instance in
 	}
 	arArgs = append(arArgs, archive)
 	arArgs = append(arArgs, filename)
-	_, err := runCmd("ar", arArgs)
+	_, err := runCmd(ea.ArchiverName, arArgs)
 	if err != nil {
-		LogWarning("Failed to extract instance %v of %v from archive %s because: %v.\n", instance, filename, archive, err)
+		LogWarning("The archiver %v failed to extract instance %v of %v from archive %s because: %v.\n", ea.ArchiverName, instance, filename, archive, err)
 		return false
 	}
 	return true
