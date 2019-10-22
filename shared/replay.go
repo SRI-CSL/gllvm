@@ -26,11 +26,15 @@ const (
 func Record(args []string, compiler string) {
 	logfile := os.Getenv(recording_env_var)
 	if len(logfile) > 0 {
-		fp, err := os.OpenFile(logfile, os.O_WRONLY | os.O_APPEND | os.O_CREATE, os.ModePerm)
-		if err != nil { panic(err) }
+		fp, err := os.OpenFile(logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
 		defer fp.Close()
 		dir, err := os.Getwd()
-		if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 		fp.WriteString(dir)
 		fp.WriteString("\n")
 		fp.WriteString(compiler)
@@ -43,23 +47,21 @@ func Record(args []string, compiler string) {
 	}
 }
 
-
 type CompilerCall struct {
-	Pwd string
+	Pwd  string
 	Name string
 	Args []string
 }
 
-
 func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
 	if scanner.Scan() {
 		//got one line, probably an entire call too ...
-		callp := new(CompilerCall)  //pass in a local version later, save on mallocing.
+		callp := new(CompilerCall) //pass in a local version later, save on mallocing.
 		line := scanner.Text()
 		if len(line) == 0 {
 			panic("empty CompilerCall.Pwd")
 		}
-		call.Pwd = line
+		callp.Pwd = line
 		if !scanner.Scan() {
 			panic("non-existant CompilerCall.Name")
 		}
@@ -67,37 +69,42 @@ func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
 		if len(line) == 0 {
 			panic("empty CompilerCall.Name")
 		}
-		call.Name = line
+		callp.Name = line
 
 		for scanner.Scan() {
 			line = scanner.Text()
 			if len(line) == 0 {
-				if len(call.Args) == 0 {
+				if len(callp.Args) == 0 {
 					panic("empty CompilerCall.Args")
 				}
 				break
 			}
-			call.Args = append(call.Args, line)
+			callp.Args = append(callp.Args, line)
 		}
 		call = callp
 	}
 	return
 }
 
-
 /*
  *
  */
 func Replay(path string) (ok bool) {
 	fp, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-	if err != nil { return }
-    defer fp.Close()
+	if err != nil {
+		return
+	}
+	defer fp.Close()
 	scanner := bufio.NewScanner(fp)
 	for {
 		callp := readCompilerCall(scanner)
-		if callp == nil { return }
+		if callp == nil {
+			return
+		}
 		ok = replayCall(callp)
-		if !ok { return }
+		if !ok {
+			return
+		}
 	}
 	ok = true
 	return
@@ -108,7 +115,9 @@ func Replay(path string) (ok bool) {
  */
 func replayCall(call *CompilerCall) bool {
 	err := os.Chdir(call.Pwd)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	exitCode := Compile(call.Args, call.Name)
 	if exitCode != 0 {
 		return false

@@ -44,6 +44,10 @@ import (
 	"sync"
 )
 
+const (
+	REPLAY_MODE = true
+)
+
 type bitcodeToObjectLink struct {
 	bcPath  string
 	objPath string
@@ -51,6 +55,11 @@ type bitcodeToObjectLink struct {
 
 //Compile wraps a call to the compiler with the given args.
 func Compile(args []string, compiler string) (exitCode int) {
+
+	if REPLAY_MODE {
+		Record(args, compiler)
+	}
+
 	exitCode = 0
 	//in the configureOnly case we have to know the exit code of the compile
 	//because that is how configure figures out what it can and cannot do.
