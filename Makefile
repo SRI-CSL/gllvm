@@ -4,7 +4,7 @@ install:
 
 
 race: install
-	 go test -v -race ./tests
+	 go test -v -race -timeout 24h ./tests
 
 
 clean:
