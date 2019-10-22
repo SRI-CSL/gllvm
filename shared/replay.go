@@ -27,11 +27,15 @@ const (
 func Record(args []string, compiler string) {
 	logfile := os.Getenv(recording_env_var)
 	if len(logfile) > 0 {
-		fp, err := os.OpenFile(logfile, os.O_WRONLY | os.O_APPEND | os.O_CREATE, os.ModePerm)
-		if err != nil { panic(err) }
+		fp, err := os.OpenFile(logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
 		defer fp.Close()
 		dir, err := os.Getwd()
-		if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 		fp.WriteString(dir)
 		fp.WriteString("\n")
 		fp.WriteString(compiler)
@@ -44,18 +48,16 @@ func Record(args []string, compiler string) {
 	}
 }
 
-
 type CompilerCall struct {
-	Pwd string
+	Pwd  string
 	Name string
 	Args []string
 }
 
-
 func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
 	if scanner.Scan() {
 		//got one line, probably an entire call too ...
-		callp := new(CompilerCall)  //pass in a local version later, save on mallocing.
+		callp := new(CompilerCall) //pass in a local version later, save on mallocing.
 		line := scanner.Text()
 		if len(line) == 0 {
 			panic("empty CompilerCall.Pwd")
@@ -84,7 +86,6 @@ func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
 	}
 	return
 }
-
 
 /*
  *
@@ -125,7 +126,9 @@ farewell:
  */
 func replayCall(call *CompilerCall) bool {
 	err := os.Chdir(call.Pwd)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	exitCode := Compile(call.Args, call.Name)
 	if exitCode != 0 {
 		return false
