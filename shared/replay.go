@@ -3,6 +3,7 @@ package shared
 import (
 	"bufio"
 	"os"
+	"fmt"
 )
 
 const (
@@ -59,7 +60,7 @@ func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
 		if len(line) == 0 {
 			panic("empty CompilerCall.Pwd")
 		}
-		call.Pwd = line
+		callp.Pwd = line
 		if !scanner.Scan() {
 			panic("non-existant CompilerCall.Name")
 		}
@@ -67,17 +68,17 @@ func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
 		if len(line) == 0 {
 			panic("empty CompilerCall.Name")
 		}
-		call.Name = line
+		callp.Name = line
 
 		for scanner.Scan() {
 			line = scanner.Text()
 			if len(line) == 0 {
-				if len(call.Args) == 0 {
+				if len(callp.Args) == 0 {
 					panic("empty CompilerCall.Args")
 				}
 				break
 			}
-			call.Args = append(call.Args, line)
+			callp.Args = append(callp.Args, line)
 		}
 		call = callp
 	}
@@ -89,17 +90,33 @@ func readCompilerCall(scanner *bufio.Scanner) (call *CompilerCall) {
  *
  */
 func Replay(path string) (ok bool) {
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Replay cwd = %v\n", cwd)
 	fp, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-	if err != nil { return }
-    defer fp.Close()
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
 	scanner := bufio.NewScanner(fp)
 	for {
 		callp := readCompilerCall(scanner)
-		if callp == nil { return }
+		if callp == nil {
+			goto farewell
+		}
 		ok = replayCall(callp)
-		if !ok { return }
+		if !ok {
+			goto farewell
+		}
 	}
 	ok = true
+
+farewell:
+	os.Chdir(cwd)
+	
 	return
 }
 

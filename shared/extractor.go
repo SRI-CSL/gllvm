@@ -61,6 +61,7 @@ type extractionArgs struct {
 	InputFile           string
 	OutputFile          string
 	LinkerName          string
+	LlvmArchiverName    string
 	ArchiverName        string
 	ArArgs              []string
 	Extractor           func(string) []string
@@ -152,7 +153,8 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 func parseSwitches() (ea extractionArgs) {
 	ea = extractionArgs{
 		LinkerName:   "llvm-link",
-		ArchiverName: "llvm-ar",
+		LlvmArchiverName: "llvm-ar",
+		ArchiverName: "ar",
 	}
 
 	verbosePtr := flag.Bool("v", false, "verbose mode")
@@ -165,9 +167,11 @@ func parseSwitches() (ea extractionArgs) {
 
 	outputFilePtr := flag.String("o", "", "the output file")
 
-	archiverNamePtr := flag.String("a", "", "the llvm archiver")
+	llvmArchiverNamePtr := flag.String("a", "", "the llvm archiver (i.e. llvm-ar)")
 
-	linkerNamePtr := flag.String("l", "", "the llvm linker")
+	archiverNamePtr := flag.String("r", "", "the system archiver (i.e. ar)")
+
+	linkerNamePtr := flag.String("l", "", "the llvm linker (i.e. llvm-link)")
 
 	linkArgSizePtr := flag.Int("n", 0, "maximum llvm-link command line size (in bytes)")
 
@@ -181,8 +185,12 @@ func parseSwitches() (ea extractionArgs) {
 	ea.BuildBitcodeModule = *buildBitcodeModule
 	ea.LinkArgSize = *linkArgSizePtr
 	ea.KeepTemp = *keepTempPtr
+	
+	if len(*archiverNamePtr) > 0 {
+		ea.ArchiverName = *archiverNamePtr
+	}
 
-	ea.ArchiverName = resolveTool(ea.ArchiverName, LLVMARName, *archiverNamePtr)
+	ea.LlvmArchiverName = resolveTool(ea.LlvmArchiverName, LLVMARName, *llvmArchiverNamePtr)
 
 	ea.LinkerName = resolveTool(ea.LinkerName, LLVMLINKName, *linkerNamePtr)
 
@@ -193,7 +201,7 @@ func parseSwitches() (ea extractionArgs) {
 	LogInfo("ea.Verbose: %v\n", ea.Verbose)
 	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
 	LogInfo("ea.BuildBitcodeModule: %v\n", ea.BuildBitcodeModule)
-	LogInfo("ea.ArchiverName: %v\n", ea.ArchiverName)
+	LogInfo("ea.LlvmArchiverName: %v\n", ea.LlvmArchiverName)
 	LogInfo("ea.LinkerName: %v\n", ea.LinkerName)
 	LogInfo("ea.OutputFile: %v\n", ea.OutputFile)
 
@@ -259,7 +267,7 @@ func handleThinArchive(ea extractionArgs) {
 	var objectFiles []string
 	var bcFiles []string
 
-	objectFiles = listArchiveFiles(ea.InputFile)
+	objectFiles = listArchiveFiles(ea, ea.InputFile)
 
 	LogInfo("handleThinArchive: extractionArgs = %v\nobjectFiles = %v\n", ea, objectFiles)
 
@@ -309,7 +317,7 @@ func handleThinArchive(ea extractionArgs) {
 
 }
 
-func listArchiveFiles(inputFile string) (contents []string) {
+func listArchiveFiles(ea extractionArgs, inputFile string) (contents []string) {
 	var arArgs []string
 	arArgs = append(arArgs, "-t")
 	arArgs = append(arArgs, inputFile)
@@ -322,7 +330,7 @@ func listArchiveFiles(inputFile string) (contents []string) {
 	return
 }
 
-func extractFile(archive string, filename string, instance int) bool {
+func extractFile(ea extractionArgs, archive string, filename string, instance int) bool {
 	var arArgs []string
 	if runtime.GOOS != osDARWIN {
 		arArgs = append(arArgs, "xN")
@@ -344,10 +352,10 @@ func extractFile(archive string, filename string, instance int) bool {
 	return true
 }
 
-func fetchTOC(inputFile string) map[string]int {
+func fetchTOC(ea extractionArgs, inputFile string) map[string]int {
 	toc := make(map[string]int)
 
-	contents := listArchiveFiles(inputFile)
+	contents := listArchiveFiles(ea, inputFile)
 
 	for _, item := range contents {
 		//iam: this is a hack to make get-bc work on libcurl.a
@@ -399,14 +407,14 @@ func handleArchive(ea extractionArgs) {
 	}
 
 	//1. fetch the Table of Contents
-	toc := fetchTOC(inputFile)
+	toc := fetchTOC(ea, inputFile)
 
 	LogDebug("Table of Contents of %v:\n%v\n", inputFile, toc)
 
 	for obj, instance := range toc {
 		for i := 1; i <= instance; i++ {
 
-			if obj != "" && extractFile(inputFile, obj, i) {
+			if obj != "" && extractFile(ea, inputFile, obj, i) {
 
 				artifacts := ea.Extractor(obj)
 				LogInfo("\t%v\n", artifacts)
@@ -469,8 +477,8 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 		var args []string
 		args = append(args, "rs", absOutputFile)
 		args = append(args, bcFilesInDir...)
-		success, err := execCmd(ea.ArchiverName, args, dir)
-		LogInfo("ea.ArchiverName = %s, args = %v, dir = %s\n", ea.ArchiverName, args, dir)
+		success, err := execCmd(ea.LlvmArchiverName, args, dir)
+		LogInfo("ea.LlvmArchiverName = %s, args = %v, dir = %s\n", ea.LlvmArchiverName, args, dir)
 		if !success {
 			LogFatal("There was an error creating the bitcode archive: %v.\n", err)
 		}
