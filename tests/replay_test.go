@@ -1,13 +1,12 @@
 package test
 
 import (
+	"fmt"
 	"github.com/SRI-CSL/gllvm/shared"
 	"testing"
-	"fmt"
 )
 
-
-func  Test_replay_thttpd(t *testing.T) {
+func Test_replay_thttpd(t *testing.T) {
 	arg := "../data/thttpd_replay.log"
 
 	ok := shared.Replay(arg)
@@ -19,7 +18,7 @@ func  Test_replay_thttpd(t *testing.T) {
 	}
 }
 
-func  Test_replay_nodejs(t *testing.T) {
+func Test_replay_nodejs(t *testing.T) {
 	arg := "../data/nodejs_replay.log"
 
 	ok := shared.Replay(arg)

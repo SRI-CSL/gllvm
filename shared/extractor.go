@@ -152,9 +152,9 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 
 func parseSwitches() (ea extractionArgs) {
 	ea = extractionArgs{
-		LinkerName:   "llvm-link",
+		LinkerName:       "llvm-link",
 		LlvmArchiverName: "llvm-ar",
-		ArchiverName: "ar",
+		ArchiverName:     "ar",
 	}
 
 	verbosePtr := flag.Bool("v", false, "verbose mode")
@@ -185,7 +185,7 @@ func parseSwitches() (ea extractionArgs) {
 	ea.BuildBitcodeModule = *buildBitcodeModule
 	ea.LinkArgSize = *linkArgSizePtr
 	ea.KeepTemp = *keepTempPtr
-	
+
 	if len(*archiverNamePtr) > 0 {
 		ea.ArchiverName = *archiverNamePtr
 	}

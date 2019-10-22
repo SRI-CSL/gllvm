@@ -2,8 +2,8 @@ package shared
 
 import (
 	"bufio"
-	"os"
 	"fmt"
+	"os"
 )
 
 const (
@@ -117,7 +117,7 @@ func Replay(path string) (ok bool) {
 
 farewell:
 	os.Chdir(cwd)
-	
+
 	return
 }
 

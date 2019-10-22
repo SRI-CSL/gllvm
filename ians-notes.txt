@@ -9,7 +9,7 @@ go install github.com/SRI-CSL/gllvm/cmd/...
 
 To format for the badge:
 
-gofmt -s -w shared/*.go cmd/*/*.go
+gofmt -s -w shared/*.go tests/*.go cmd/*/*.go
 
 
 For linting:
