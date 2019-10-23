@@ -83,17 +83,17 @@ var LLVMObjcopy string
 var LLVMLd string
 
 const (
-	envpath = "LLVM_COMPILER_PATH"
-	envcc   = "LLVM_CC_NAME"
-	envcxx  = "LLVM_CXX_NAME"
-	envar   = "LLVM_AR_NAME"
-	envlnk  = "LLVM_LINK_NAME"
-	envcfg  = "WLLVM_CONFIGURE_ONLY"
-	envbc   = "WLLVM_BC_STORE"
-	envlvl  = "WLLVM_OUTPUT_LEVEL"
-	envfile = "WLLVM_OUTPUT_FILE"
-	envld = "GLLVM_LD"  //iam: we are deviating from wllvm here.
-	envobjcopy = "GLLVM_OBJCOPY"  //iam: we are deviating from wllvm here.
+	envpath    = "LLVM_COMPILER_PATH"
+	envcc      = "LLVM_CC_NAME"
+	envcxx     = "LLVM_CXX_NAME"
+	envar      = "LLVM_AR_NAME"
+	envlnk     = "LLVM_LINK_NAME"
+	envcfg     = "WLLVM_CONFIGURE_ONLY"
+	envbc      = "WLLVM_BC_STORE"
+	envlvl     = "WLLVM_OUTPUT_LEVEL"
+	envfile    = "WLLVM_OUTPUT_FILE"
+	envld      = "GLLVM_LD"      //iam: we are deviating from wllvm here.
+	envobjcopy = "GLLVM_OBJCOPY" //iam: we are deviating from wllvm here.
 	//wllvm uses a BINUTILS_TARGET_PREFIX, which seems less general.
 )
 

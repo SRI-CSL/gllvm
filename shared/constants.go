@@ -33,7 +33,7 @@
 
 package shared
 
-//  Remember to tag the repo, and publish a release on GitHub.
+//  IAN! Remember to tag the repo, and publish a release on GitHub.
 //
 //  version history:
 //
@@ -47,8 +47,10 @@ package shared
 //                        a few ittle fixes from building tor and it's dependencies.
 //  1.2.4 June  21 2019   Random fixes (basically the same as wllvm 1.2.7)
 //
-const gllvmVersion = "1.2.4"
-const gllvmReleaseDate = "June  21 2019"
+//  1.2.5 October 23 2019  Fixes for issues #30 and #31. Plus a new branch where I can futz hygenically.
+
+const gllvmVersion = "1.2.5"
+const gllvmReleaseDate = "October 23 2019"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
