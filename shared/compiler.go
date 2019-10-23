@@ -172,10 +172,18 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		var attachCmd string
 		var attachCmdArgs []string
 		if runtime.GOOS == osDARWIN {
-			attachCmd = "ld"
+			if len(LLVMLd) > 0 {
+				attachCmd = LLVMLd
+			} else {
+				attachCmd = "ld"
+			}
 			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
 		} else {
-			attachCmd = "objcopy"
+			if len(LLVMObjcopy) > 0 {
+				attachCmd = LLVMObjcopy
+			} else {
+				attachCmd = "objcopy"
+			}
 			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name(), objFile}
 		}
 

@@ -76,6 +76,12 @@ var LLVMLoggingLevel string
 //LLVMLoggingFile is the path to the optional logfile (useful when configuring)
 var LLVMLoggingFile string
 
+//LLVMObjcopy is the path to the objcopy executable used to attach the bitcode on *nix.
+var LLVMObjcopy string
+
+//LLVMLd is the path to the ld executable used to attach the bitcode on OSX.
+var LLVMLd string
+
 const (
 	envpath = "LLVM_COMPILER_PATH"
 	envcc   = "LLVM_CC_NAME"
@@ -86,6 +92,9 @@ const (
 	envbc   = "WLLVM_BC_STORE"
 	envlvl  = "WLLVM_OUTPUT_LEVEL"
 	envfile = "WLLVM_OUTPUT_FILE"
+	envld = "GLLVM_LD"  //iam: we are deviating from wllvm here.
+	envobjcopy = "GLLVM_OBJCOPY"  //iam: we are deviating from wllvm here.
+	//wllvm uses a BINUTILS_TARGET_PREFIX, which seems less general.
 )
 
 func init() {
@@ -102,10 +111,12 @@ func init() {
 	LLVMLoggingLevel = os.Getenv(envlvl)
 	LLVMLoggingFile = os.Getenv(envfile)
 
+	LLVMObjcopy = os.Getenv(envobjcopy)
+	LLVMLd = os.Getenv(envld)
 }
 
 func printEnvironment() {
-	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile}
+	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld}
 
 	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {

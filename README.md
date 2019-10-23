@@ -138,6 +138,11 @@ uses `objdump` on `*nix`, and `otool` on OS X.
 Both tools then use `llvm-link` or `llvm-ar` to combine the bitcode
 files into the desired form.
 
+## Customization under the hood.
+
+You can specify the exact version of `objcopy` and `ld` that `gllvm` uses
+to manipulate tha artifacts by setting the `GLLVM_OBJCOPY` and `GLLVM_LD`
+environment variables.
 
 ## License
 
