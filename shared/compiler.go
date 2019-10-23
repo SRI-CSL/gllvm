@@ -182,7 +182,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		// Run the attach command and ignore errors
 		_, nerr := execCmd(attachCmd, attachCmdArgs, "")
 		if nerr != nil {
-			LogDebug("%v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
+			LogWarning("attachBitcodePathToObject: %v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
 		}
 
 		// Copy bitcode file to store, if necessary
