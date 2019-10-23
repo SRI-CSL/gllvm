@@ -141,7 +141,7 @@ files into the desired form.
 ## Customization under the hood.
 
 You can specify the exact version of `objcopy` and `ld` that `gllvm` uses
-to manipulate tha artifacts by setting the `GLLVM_OBJCOPY` and `GLLVM_LD`
+to manipulate the artifacts by setting the `GLLVM_OBJCOPY` and `GLLVM_LD`
 environment variables.
 
 ## License
