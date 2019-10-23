@@ -45,7 +45,7 @@ import (
 )
 
 const (
-	REPLAY_MODE = true
+	REPLAY_MODE = false
 )
 
 type bitcodeToObjectLink struct {
