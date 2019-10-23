@@ -142,7 +142,10 @@ files into the desired form.
 
 You can specify the exact version of `objcopy` and `ld` that `gllvm` uses
 to manipulate the artifacts by setting the `GLLVM_OBJCOPY` and `GLLVM_LD`
-environment variables.
+environment variables. For more details of what's under the `gllvm` hood, try
+```
+gsanity-check -e
+```
 
 ## License
 
