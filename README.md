@@ -59,12 +59,12 @@ tools such as `objcopy` and `ld`.
 
 ## Installation
 
-To install, simply do
+To install, simply do (making sure to include those `...`)
 ```
 go get github.com/SRI-CSL/gllvm/cmd/...
 ```
 This should install four binaries: `gclang`, `gclang++`, `get-bc`, and `gsanity-check`
-in the `$GOPATH/bin` directory.
+in the `$GOPATH/bin` directory.  
 
 ## Usage
 
