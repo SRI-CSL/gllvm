@@ -16,4 +16,16 @@ func Test_basic(t *testing.T) {
 	} else {
 		fmt.Println("Compiled OK")
 	}
+
+	args = []string{"get-bc", "-v", "../data/hello"}
+
+	exitCode = shared.Extract(args)
+
+	if exitCode != 0 {
+		t.Errorf("Extraction of %v returned %v\n", args, exitCode)
+	} else {
+		fmt.Println("Extraction OK")
+	}
+	
+	
 }

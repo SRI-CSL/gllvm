@@ -10,4 +10,4 @@ format:
 
 
 clean:
-	rm -f data/hello tests/.helloworld.c.o tests/.helloworld.c.o.bc
+	rm -f data/hello data/hello.bc [td]*/.helloworld.c.o [td]*/.helloworld.c.o.bc

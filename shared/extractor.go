@@ -68,8 +68,8 @@ type extractionArgs struct {
 }
 
 //Extract extracts the LLVM bitcode according to the arguments it is passed.
-func Extract(args []string) {
-	ea := parseSwitches()
+func Extract(args []string)(exitCode int) {
+	ea := parseSwitches(args)
 
 	// Set arguments according to runtime OS
 	switch platform := runtime.GOOS; platform {
@@ -123,6 +123,8 @@ func Extract(args []string) {
 		LogFatal("Incorrect input file type %v.", ea.InputType)
 	}
 
+	//need to actually get an exitCode eventually.
+	return 
 }
 
 func resolveTool(defaultPath string, envPath string, usrPath string) (path string) {
@@ -150,42 +152,26 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 	return
 }
 
-func parseSwitches() (ea extractionArgs) {
-
-	flag.BoolVar(&ea.Verbose, "v", false, "verbose mode")
-
-	flag.BoolVar(&ea.WriteManifest, "m", false, "write the manifest")
-
-	flag.BoolVar(&ea.SortBitcodeFiles, "s", false, "sort the bitcode files")
-
-	flag.BoolVar(&ea.BuildBitcodeModule, "b", false, "build a bitcode module")
-
-	flag.StringVar(&ea.OutputFile, "o", "", "the output file")
-
-	flag.StringVar(&ea.LlvmArchiverName, "a", "llvm-ar", "the llvm archiver (i.e. llvm-ar)")
-
-	flag.StringVar(&ea.ArchiverName, "r", "ar", "the system archiver (i.e. ar)")
-
-	flag.StringVar(&ea.LlvmLinkerName, "l", "llvm-link", "the llvm linker (i.e. llvm-link)")
-
-	flag.IntVar(&ea.LinkArgSize, "n", 0, "maximum llvm-link command line size (in bytes)")
-
-	flag.BoolVar(&ea.KeepTemp, "t", false, "keep temporary linking folder")
-
-	flag.Parse()
-
+func parseSwitches(args []string) (ea extractionArgs) {
+	var flagSet *flag.FlagSet = flag.NewFlagSet(args[0], flag.ExitOnError)
+	flagSet.BoolVar(&ea.Verbose, "v", false, "verbose mode")
+	flagSet.BoolVar(&ea.WriteManifest, "m", false, "write the manifest")
+	flagSet.BoolVar(&ea.SortBitcodeFiles, "s", false, "sort the bitcode files")
+	flagSet.BoolVar(&ea.BuildBitcodeModule, "b", false, "build a bitcode module")
+	flagSet.StringVar(&ea.OutputFile, "o", "", "the output file")
+	flagSet.StringVar(&ea.LlvmArchiverName, "a", "llvm-ar", "the llvm archiver (i.e. llvm-ar)")
+	flagSet.StringVar(&ea.ArchiverName, "r", "ar", "the system archiver (i.e. ar)")
+	flagSet.StringVar(&ea.LlvmLinkerName, "l", "llvm-link", "the llvm linker (i.e. llvm-link)")
+	flagSet.IntVar(&ea.LinkArgSize, "n", 0, "maximum llvm-link command line size (in bytes)")
+	flagSet.BoolVar(&ea.KeepTemp, "t", false, "keep temporary linking folder")
+	flagSet.Parse(args[1:])
 	ea.LlvmArchiverName = resolveTool("llvm-ar", LLVMARName, ea.LlvmArchiverName)
-
 	ea.LlvmLinkerName = resolveTool("llvm-link", LLVMLINKName, ea.LlvmLinkerName)
-
-	inputFiles := flag.Args()
-
+	inputFiles := flagSet.Args()
 	if len(inputFiles) != 1 {
 		LogFatal("Can currently only deal with exactly one input file, sorry. You gave me %v input files.\n", len(inputFiles))
 	}
-
 	ea.InputFile = inputFiles[0]
-
 	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
 		LogFatal("The input file %s  does not exist.", ea.InputFile)
 	}
@@ -195,7 +181,7 @@ func parseSwitches() (ea extractionArgs) {
 	}
 	ea.InputFile = realPath
 	ea.InputType = getFileType(realPath)
-
+	//<this should be a method of extractionArgs>
 	LogInfo("ea.Verbose: %v\n", ea.Verbose)
 	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
 	LogInfo("ea.BuildBitcodeModule: %v\n", ea.BuildBitcodeModule)
@@ -207,7 +193,7 @@ func parseSwitches() (ea extractionArgs) {
 	LogInfo("ea.InputFile real path: %v\n", ea.InputFile)
 	LogInfo("ea.LinkArgSize %d", ea.LinkArgSize)
 	LogInfo("ea.KeepTemp %v", ea.KeepTemp)
-
+	//</this should be a method of extractionArgs>
 	return
 }
 
@@ -348,7 +334,7 @@ func fetchTOC(ea extractionArgs, inputFile string) map[string]int {
 	return toc
 }
 
-//handleArchive processes a archive, and creates either a bitcode archive, or a module, depending on the flags used.
+//handleArchive processes an archive, and creates either a bitcode archive, or a module, depending on the flags used.
 //
 //    Archives are strange beasts. handleArchive processes the archive by:
 //
