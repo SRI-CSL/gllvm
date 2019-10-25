@@ -1,4 +1,4 @@
-# A Concurrent WLLVM in Go
+![GLLVM](data/dragon128x128.png?raw_true)A Concurrent Whole Program LLVM in Go
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Build Status](https://travis-ci.org/SRI-CSL/gllvm.svg?branch=master)](https://travis-ci.org/SRI-CSL/gllvm)
