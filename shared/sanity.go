@@ -289,4 +289,6 @@ func checkLogging() {
 	} else {
 		informUser("Logging level not set, using default of WARNING.\n\n")
 	}
+
+	informUser("Logging configuration uses the environment variables:\n\n\tWLLVM_OUTPUT_LEVEL and WLLVM_OUTPUT_FILE.\n\n")
 }
