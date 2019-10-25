@@ -60,7 +60,7 @@ type extractionArgs struct {
 	ObjectTypeInArchive int // Type of file that can be put into an archive
 	InputFile           string
 	OutputFile          string
-	LinkerName          string
+	LlvmLinkerName      string
 	LlvmArchiverName    string
 	ArchiverName        string
 	ArArgs              []string
@@ -126,7 +126,7 @@ func Extract(args []string) {
 }
 
 func resolveTool(defaultPath string, envPath string, usrPath string) (path string) {
-	if usrPath != "" {
+	if usrPath != defaultPath {
 		path = usrPath
 	} else {
 		if LLVMToolChainBinDir != "" {
@@ -151,71 +151,40 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 }
 
 func parseSwitches() (ea extractionArgs) {
-	ea = extractionArgs{
-		LinkerName:       "llvm-link",
-		LlvmArchiverName: "llvm-ar",
-		ArchiverName:     "ar",
-	}
 
-	verbosePtr := flag.Bool("v", false, "verbose mode")
+	flag.BoolVar(&ea.Verbose, "v", false, "verbose mode")
 
-	writeManifestPtr := flag.Bool("m", false, "write the manifest")
+	flag.BoolVar(&ea.WriteManifest, "m", false, "write the manifest")
 
-	sortBitcodeFilesPtr := flag.Bool("s", false, "sort the bitcode files")
+	flag.BoolVar(&ea.SortBitcodeFiles, "s", false, "sort the bitcode files")
 
-	buildBitcodeModule := flag.Bool("b", false, "build a bitcode module")
+	flag.BoolVar(&ea.BuildBitcodeModule, "b", false, "build a bitcode module")
 
-	outputFilePtr := flag.String("o", "", "the output file")
+	flag.StringVar(&ea.OutputFile, "o", "", "the output file")
 
-	llvmArchiverNamePtr := flag.String("a", "", "the llvm archiver (i.e. llvm-ar)")
+	flag.StringVar(&ea.LlvmArchiverName, "a", "llvm-ar", "the llvm archiver (i.e. llvm-ar)")
 
-	archiverNamePtr := flag.String("r", "", "the system archiver (i.e. ar)")
+	flag.StringVar(&ea.ArchiverName, "r", "ar", "the system archiver (i.e. ar)")
 
-	linkerNamePtr := flag.String("l", "", "the llvm linker (i.e. llvm-link)")
+	flag.StringVar(&ea.LlvmLinkerName, "l", "llvm-link", "the llvm linker (i.e. llvm-link)")
 
-	linkArgSizePtr := flag.Int("n", 0, "maximum llvm-link command line size (in bytes)")
+	flag.IntVar(&ea.LinkArgSize, "n", 0, "maximum llvm-link command line size (in bytes)")
 
-	keepTempPtr := flag.Bool("t", false, "keep temporary linking folder")
+	flag.BoolVar(&ea.KeepTemp, "t", false, "keep temporary linking folder")
 
 	flag.Parse()
 
-	ea.Verbose = *verbosePtr
-	ea.WriteManifest = *writeManifestPtr
-	ea.SortBitcodeFiles = *sortBitcodeFilesPtr
-	ea.BuildBitcodeModule = *buildBitcodeModule
-	ea.LinkArgSize = *linkArgSizePtr
-	ea.KeepTemp = *keepTempPtr
+	ea.LlvmArchiverName = resolveTool("llvm-ar", LLVMARName, ea.LlvmArchiverName)
 
-	if len(*archiverNamePtr) > 0 {
-		ea.ArchiverName = *archiverNamePtr
-	}
-
-	if len(*archiverNamePtr) > 0 {
-		ea.ArchiverName = *archiverNamePtr
-	}
-
-	ea.LlvmArchiverName = resolveTool(ea.LlvmArchiverName, LLVMARName, *llvmArchiverNamePtr)
-
-	ea.LinkerName = resolveTool(ea.LinkerName, LLVMLINKName, *linkerNamePtr)
-
-	ea.OutputFile = *outputFilePtr
+	ea.LlvmLinkerName = resolveTool("llvm-link", LLVMLINKName, ea.LlvmLinkerName)
 
 	inputFiles := flag.Args()
 
-	LogInfo("ea.Verbose: %v\n", ea.Verbose)
-	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
-	LogInfo("ea.BuildBitcodeModule: %v\n", ea.BuildBitcodeModule)
-	LogInfo("ea.LlvmArchiverName: %v\n", ea.LlvmArchiverName)
-	LogInfo("ea.LinkerName: %v\n", ea.LinkerName)
-	LogInfo("ea.OutputFile: %v\n", ea.OutputFile)
-
 	if len(inputFiles) != 1 {
-		LogFatal("Can currently only deal with exactly one input file, sorry. You gave me %v\n.", len(inputFiles))
+		LogFatal("Can currently only deal with exactly one input file, sorry. You gave me %v input files.\n", len(inputFiles))
 	}
 
 	ea.InputFile = inputFiles[0]
-
-	LogInfo("ea.InputFile: %v\n", ea.InputFile)
 
 	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
 		LogFatal("The input file %s  does not exist.", ea.InputFile)
@@ -227,9 +196,18 @@ func parseSwitches() (ea extractionArgs) {
 	ea.InputFile = realPath
 	ea.InputType = getFileType(realPath)
 
+	LogInfo("ea.Verbose: %v\n", ea.Verbose)
+	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
+	LogInfo("ea.BuildBitcodeModule: %v\n", ea.BuildBitcodeModule)
+	LogInfo("ea.LlvmArchiverName: %v\n", ea.LlvmArchiverName)
+	LogInfo("ea.LlvmLinkerName: %v\n", ea.LlvmLinkerName)
+	LogInfo("ea.ArchiverName: %v\n", ea.ArchiverName)
+	LogInfo("ea.OutputFile: %v\n", ea.OutputFile)
+	LogInfo("ea.InputFile: %v\n", ea.InputFile)
 	LogInfo("ea.InputFile real path: %v\n", ea.InputFile)
 	LogInfo("ea.LinkArgSize %d", ea.LinkArgSize)
 	LogInfo("ea.KeepTemp %v", ea.KeepTemp)
+
 	return
 }
 
@@ -552,7 +530,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 		if getsize(linkArgs) > argMax {
 			LogInfo("Linking command size exceeding system capacity : splitting the command")
 			var success bool
-			success, err = execCmd(ea.LinkerName, linkArgs, "")
+			success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
 			if !success || err != nil {
 				LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
 			}
@@ -570,7 +548,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 		}
 
 	}
-	success, err := execCmd(ea.LinkerName, linkArgs, "")
+	success, err := execCmd(ea.LlvmLinkerName, linkArgs, "")
 	if !success {
 		LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
 	}
@@ -582,7 +560,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 
 	linkArgs = append(linkArgs, "-o", ea.OutputFile)
 
-	success, err = execCmd(ea.LinkerName, linkArgs, "")
+	success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
 	if !success {
 		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 	}
@@ -601,7 +579,7 @@ func linkBitcodeFiles(ea extractionArgs, filesToLink []string) {
 	} else {
 		linkArgs = append(linkArgs, "-o", ea.OutputFile)
 		linkArgs = append(linkArgs, filesToLink...)
-		success, err := execCmd(ea.LinkerName, linkArgs, "")
+		success, err := execCmd(ea.LlvmLinkerName, linkArgs, "")
 		if !success {
 			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
 		}
