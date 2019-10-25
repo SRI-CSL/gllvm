@@ -68,6 +68,7 @@ func runCmd(cmdExecName string, args []string) (output string, err error) {
 	cmd.Stderr = &errb
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
+	LogDebug("runCmd: %v %v\n", cmdExecName, args)
 	if err != nil {
 		LogDebug("runCmd: error was %v\n", err)
 	}
