@@ -49,6 +49,8 @@ const (
 	fileTypeMACHSHARED
 	fileTypeARCHIVE
 	fileTypeTHINARCHIVE
+
+	fileTypeERROR
 )
 
 func getFileType(realPath string) (fileType int) {
@@ -56,7 +58,9 @@ func getFileType(realPath string) (fileType int) {
 	cmd := exec.Command("file", realPath)
 	out, err := cmd.Output()
 	if err != nil {
-		LogFatal("There was an error getting the type of %s. Make sure that the 'file' command is installed.", realPath)
+		LogError("There was an error getting the type of %s. Make sure that the 'file' command is installed.", realPath)
+		fileType = fileTypeERROR
+		return
 	}
 
 	fo := string(out)

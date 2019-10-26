@@ -130,7 +130,7 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 	}
 }
 
-func attachBitcodePathToObject(bcFile, objFile string) {
+func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 	// We can only attach a bitcode path to certain file types
 	switch filepath.Ext(objFile) {
 	case
@@ -145,18 +145,15 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		tmpFile, err := ioutil.TempFile("", "gllvm")
 		if err != nil {
 			LogError("attachBitcodePathToObject: %v\n", err)
-			// was LogFatal
 			return
 		}
 		defer CheckDefer(func() error { return os.Remove(tmpFile.Name()) })
 		if _, err := tmpFile.Write(tmpContent); err != nil {
 			LogError("attachBitcodePathToObject: %v\n", err)
-			// was LogFatal
 			return
 		}
 		if err := tmpFile.Close(); err != nil {
 			LogError("attachBitcodePathToObject: %v\n", err)
-			// was LogFatal
 			return
 		}
 
@@ -183,6 +180,7 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 		_, nerr := execCmd(attachCmd, attachCmdArgs, "")
 		if nerr != nil {
 			LogWarning("attachBitcodePathToObject: %v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
+			return
 		}
 
 		// Copy bitcode file to store, if necessary
@@ -195,14 +193,18 @@ func attachBitcodePathToObject(bcFile, objFile string) {
 			_, err := io.Copy(out, in)
 			if err != nil {
 				LogWarning("Copying bc to bitcode archive %v failed because %v\n", destFilePath, err)
+				return
 			}
 			err = out.Sync()
 			if err != nil {
 				LogWarning("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
+				return 
 			}
 
 		}
 	}
+	success = true
+	return
 }
 
 func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []string) {
@@ -224,27 +226,29 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 }
 
 // Tries to build the specified source file to object
-func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, objFile string) {
+func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, objFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	args = append(args, srcFile, "-c", "-o", objFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
 		LogError("Failed to build object file for %s because: %v\n", srcFile, err)
-		//was LogFatal
 		return
 	}
+	success = true
+	return
 }
 
 // Tries to build the specified source file to bitcode
-func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, bcFile string) {
+func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, bcFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
 		LogError("Failed to build bitcode file for %s because: %v\n", srcFile, err)
-		//was LogFatal
 		return
 	}
+	success = true
+	return
 }
 
 // Tries to build object file
@@ -295,7 +299,6 @@ func GetCompilerExecName(compiler string) string {
 		return filepath.Join(LLVMToolChainBinDir, compiler)
 	default:
 		LogError("The compiler %s is not supported by this tool.", compiler)
-		// was LogFatal
 		return ""
 	}
 }

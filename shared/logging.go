@@ -117,12 +117,6 @@ var LogWarning = makeLogger(warningV)
 //LogError logs to the configured stream if the logging level is ERROR or lower.
 var LogError = makeLogger(errorV)
 
-//LogFatal logs to the configured stream and then exits.
-func LogFatal(format string, a ...interface{}) {
-	LogError(format, a...)
-	os.Exit(1)
-}
-
 //LogWrite writes to the logging stream, irregardless of levels.
 var LogWrite = makeLogger(-1)
 
