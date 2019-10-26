@@ -38,6 +38,7 @@ import (
 	"debug/elf"
 	"debug/macho"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -67,11 +68,28 @@ type extractionArgs struct {
 	Extractor           func(string) []string
 }
 
-//Extract extracts the LLVM bitcode according to the arguments it is passed.
-func Extract(args []string)(exitCode int) {
-	ea := parseSwitches(args)
+func (ea extractionArgs) String() string {
+	format :=
+		`
+ea.Verbose:            %v
+ea.WriteManifest:      %v
+ea.SortBitcodeFiles:   %v
+ea.BuildBitcodeModule: %v
+ea.KeepTemp:           %v
+ea.LinkArgSize:        %v
+ea.InputFile:          %v
+ea.OutputFile:         %v
+ea.LlvmArchiverName:   %v
+ea.LlvmLinkerName:     %v
+ea.ArchiverName:       %v
+`
+	return fmt.Sprintf(format, ea.Verbose, ea.WriteManifest, ea.SortBitcodeFiles, ea.BuildBitcodeModule,
+		ea.KeepTemp, ea.LinkArgSize, ea.InputFile, ea.OutputFile, ea.LlvmArchiverName,
+		ea.LlvmLinkerName, ea.ArchiverName)
+}
 
-	// Set arguments according to runtime OS
+// Set arguments according to runtime OS
+func setPlatform(ea *extractionArgs) {
 	switch platform := runtime.GOOS; platform {
 	case osFREEBSD, osLINUX:
 		ea.Extractor = extractSectionUnix
@@ -91,8 +109,10 @@ func Extract(args []string)(exitCode int) {
 	default:
 		LogFatal("Unsupported platform: %s.", platform)
 	}
+}
 
-	// Create output filename if not given
+// Create output filename if not given
+func setOutputFile(ea *extractionArgs) {
 	if ea.OutputFile == "" {
 		if ea.InputType == fileTypeARCHIVE || ea.InputType == fileTypeTHINARCHIVE {
 			var ext string
@@ -106,6 +126,18 @@ func Extract(args []string)(exitCode int) {
 			ea.OutputFile = ea.InputFile + ".bc"
 		}
 	}
+}
+
+//Extract extracts the LLVM bitcode according to the arguments it is passed.
+func Extract(args []string) (exitCode int) {
+
+	ea := parseSwitches(args)
+
+	// Set arguments according to runtime OS
+	setPlatform(&ea)
+
+	// Create output filename if not given
+	setOutputFile(&ea)
 
 	switch ea.InputType {
 	case fileTypeELFEXECUTABLE,
@@ -124,7 +156,7 @@ func Extract(args []string)(exitCode int) {
 	}
 
 	//need to actually get an exitCode eventually.
-	return 
+	return
 }
 
 func resolveTool(defaultPath string, envPath string, usrPath string) (path string) {
@@ -181,23 +213,13 @@ func parseSwitches(args []string) (ea extractionArgs) {
 	}
 	ea.InputFile = realPath
 	ea.InputType = getFileType(realPath)
-	//<this should be a method of extractionArgs>
-	LogInfo("ea.Verbose: %v\n", ea.Verbose)
-	LogInfo("ea.WriteManifest: %v\n", ea.WriteManifest)
-	LogInfo("ea.BuildBitcodeModule: %v\n", ea.BuildBitcodeModule)
-	LogInfo("ea.LlvmArchiverName: %v\n", ea.LlvmArchiverName)
-	LogInfo("ea.LlvmLinkerName: %v\n", ea.LlvmLinkerName)
-	LogInfo("ea.ArchiverName: %v\n", ea.ArchiverName)
-	LogInfo("ea.OutputFile: %v\n", ea.OutputFile)
-	LogInfo("ea.InputFile: %v\n", ea.InputFile)
-	LogInfo("ea.InputFile real path: %v\n", ea.InputFile)
-	LogInfo("ea.LinkArgSize %d", ea.LinkArgSize)
-	LogInfo("ea.KeepTemp %v", ea.KeepTemp)
-	//</this should be a method of extractionArgs>
+
+	LogInfo("%v", ea)
+
 	return
 }
 
-func handleExecutable(ea extractionArgs) {
+func handleExecutable(ea extractionArgs) (exitCode int) {
 	artifactPaths := ea.Extractor(ea.InputFile)
 
 	if len(artifactPaths) < 20 {
@@ -226,9 +248,10 @@ func handleExecutable(ea extractionArgs) {
 	}
 
 	linkBitcodeFiles(ea, filesToLink)
+	return
 }
 
-func handleThinArchive(ea extractionArgs) {
+func handleThinArchive(ea extractionArgs) (exitCode int) {
 	// List bitcode files to link
 	var artifactFiles []string
 
@@ -282,7 +305,7 @@ func handleThinArchive(ea extractionArgs) {
 	} else {
 		LogError("No bitcode files found\n")
 	}
-
+	return
 }
 
 func listArchiveFiles(ea extractionArgs, inputFile string) (contents []string) {
@@ -348,7 +371,7 @@ func fetchTOC(ea extractionArgs, inputFile string) map[string]int {
 //    archive using llvm-ar
 //
 //iam: 5/1/2018
-func handleArchive(ea extractionArgs) {
+func handleArchive(ea extractionArgs) (exitCode int) {
 	// List bitcode files to link
 	var bcFiles []string
 	var artifactFiles []string
@@ -427,6 +450,7 @@ func handleArchive(ea extractionArgs) {
 	} else {
 		LogError("No bitcode files found\n")
 	}
+	return
 }
 
 func archiveBcFiles(ea extractionArgs, bcFiles []string) {

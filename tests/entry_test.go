@@ -26,6 +26,5 @@ func Test_basic(t *testing.T) {
 	} else {
 		fmt.Println("Extraction OK")
 	}
-	
-	
+
 }
