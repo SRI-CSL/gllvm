@@ -146,13 +146,14 @@ func Extract(args []string) (exitCode int) {
 		fileTypeMACHEXECUTABLE,
 		fileTypeMACHSHARED,
 		fileTypeMACHOBJECT:
-		handleExecutable(ea)
+		exitCode = handleExecutable(ea)
 	case fileTypeARCHIVE:
-		handleArchive(ea)
+		exitCode = handleArchive(ea)
 	case fileTypeTHINARCHIVE:
-		handleThinArchive(ea)
+		exitCode = handleThinArchive(ea)
 	default:
-		LogFatal("Incorrect input file type %v.", ea.InputType)
+		LogError("Incorrect input file type %v.", ea.InputType)
+		return 1
 	}
 
 	//need to actually get an exitCode eventually.
@@ -228,7 +229,7 @@ func handleExecutable(ea extractionArgs) (exitCode int) {
 	}
 
 	if len(artifactPaths) == 0 {
-		return
+		return 0
 	}
 	filesToLink := make([]string, len(artifactPaths))
 	for i, artPath := range artifactPaths {
@@ -247,7 +248,7 @@ func handleExecutable(ea extractionArgs) (exitCode int) {
 		writeManifest(ea, filesToLink, artifactPaths)
 	}
 
-	linkBitcodeFiles(ea, filesToLink)
+	exitCode = linkBitcodeFiles(ea, filesToLink)
 	return
 }
 
@@ -383,18 +384,21 @@ func handleArchive(ea extractionArgs) (exitCode int) {
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
 	if err != nil {
-		LogFatal("The temporary directory in which to extract object files could not be created.")
+		LogError("The temporary directory in which to extract object files could not be created.")
+		return 1
 	}
 	defer CheckDefer(func() error { return os.RemoveAll(tmpDirName) })
 
 	homeDir, err := os.Getwd()
 	if err != nil {
-		LogFatal("Could not ascertain our whereabouts: %v", err)
+		LogError("Could not ascertain our whereabouts: %v", err)
+		return 1
 	}
 
 	err = os.Chdir(tmpDirName)
 	if err != nil {
-		LogFatal("Could not cd to %v because: %v", tmpDirName, err)
+		LogError("Could not cd to %v because: %v", tmpDirName, err)
+		return 1
 	}
 
 	//1. fetch the Table of Contents
@@ -422,7 +426,8 @@ func handleArchive(ea extractionArgs) (exitCode int) {
 
 	err = os.Chdir(homeDir)
 	if err != nil {
-		LogFatal("Could not cd to %v because: %v", homeDir, err)
+		LogError("Could not cd to %v because: %v", homeDir, err)
+		return 1
 	}
 
 	LogDebug("handleArchive: walked %v\nartifactFiles:\n%v\nbcFiles:\n%v\n", tmpDirName, artifactFiles, bcFiles)
@@ -438,9 +443,9 @@ func handleArchive(ea extractionArgs) (exitCode int) {
 
 		// Build archive
 		if ea.BuildBitcodeModule {
-			linkBitcodeFiles(ea, bcFiles)
+			exitCode = linkBitcodeFiles(ea, bcFiles)
 		} else {
-			archiveBcFiles(ea, bcFiles)
+			exitCode = archiveBcFiles(ea, bcFiles)
 		}
 
 		// Write manifest
@@ -449,11 +454,12 @@ func handleArchive(ea extractionArgs) (exitCode int) {
 		}
 	} else {
 		LogError("No bitcode files found\n")
+		return 1
 	}
 	return
 }
 
-func archiveBcFiles(ea extractionArgs, bcFiles []string) {
+func archiveBcFiles(ea extractionArgs, bcFiles []string) (exitCode int) {
 	// We do not want full paths in the archive, so we need to chdir into each
 	// bitcode's folder. Handle this by calling llvm-ar once for all bitcode
 	// files in the same directory
@@ -472,10 +478,12 @@ func archiveBcFiles(ea extractionArgs, bcFiles []string) {
 		success, err := execCmd(ea.LlvmArchiverName, args, dir)
 		LogInfo("ea.LlvmArchiverName = %s, args = %v, dir = %s\n", ea.LlvmArchiverName, args, dir)
 		if !success {
-			LogFatal("There was an error creating the bitcode archive: %v.\n", err)
+			LogError("There was an error creating the bitcode archive: %v.\n", err)
+			return 1
 		}
 	}
 	informUser("Built bitcode archive: %s.\n", ea.OutputFile)
+	return
 }
 
 func getsize(stringslice []string) (totalLength int) {
@@ -513,12 +521,13 @@ func fetchArgMax(ea extractionArgs) (argMax int) {
 	return
 }
 
-func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argMax int, linkArgs []string) {
+func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argMax int, linkArgs []string) (exitCode int) {
 	var tmpFileList []string
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir(".", "glinking")
 	if err != nil {
-		LogFatal("The temporary directory in which to put temporary linking files could not be created.")
+		LogError("The temporary directory in which to put temporary linking files could not be created.")
+		return 1
 	}
 	if !ea.KeepTemp { // delete temporary folder after used unless told otherwise
 		LogInfo("Temporary folder will be deleted")
@@ -529,7 +538,8 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 
 	tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
 	if err != nil {
-		LogFatal("The temporary linking file could not be created.")
+		LogError("The temporary linking file could not be created.")
+		return 1
 	}
 	tmpFileList = append(tmpFileList, tmpFile.Name())
 	linkArgs = append(linkArgs, "-o", tmpFile.Name())
@@ -542,7 +552,8 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 			var success bool
 			success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
 			if !success || err != nil {
-				LogFatal("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
+				LogError("There was an error linking input files into %s because %v, on file %s.\n", ea.OutputFile, err, file)
+				return 1
 			}
 			linkArgs = nil
 
@@ -551,7 +562,8 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 			}
 			tmpFile, err = ioutil.TempFile(tmpDirName, "tmp")
 			if err != nil {
-				LogFatal("Could not generate a temp file in %s because %v.\n", tmpDirName, err)
+				LogError("Could not generate a temp file in %s because %v.\n", tmpDirName, err)
+				return 1
 			}
 			tmpFileList = append(tmpFileList, tmpFile.Name())
 			linkArgs = append(linkArgs, "-o", tmpFile.Name())
@@ -560,7 +572,8 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 	}
 	success, err := execCmd(ea.LlvmLinkerName, linkArgs, "")
 	if !success {
-		LogFatal("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
+		LogError("There was an error linking input files into %s because %v.\n", tmpFile.Name(), err)
+		return 1
 	}
 	linkArgs = nil
 	if ea.Verbose {
@@ -572,12 +585,14 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 
 	success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
 	if !success {
-		LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		LogError("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		return 1
 	}
 	LogInfo("Bitcode file extracted to: %s, from files %v \n", ea.OutputFile, tmpFileList)
+	return
 }
 
-func linkBitcodeFiles(ea extractionArgs, filesToLink []string) {
+func linkBitcodeFiles(ea extractionArgs, filesToLink []string) (exitCode int) {
 	var linkArgs []string
 	// Extracting the command line max size from the environment if it is not specified
 	argMax := fetchArgMax(ea)
@@ -585,16 +600,18 @@ func linkBitcodeFiles(ea extractionArgs, filesToLink []string) {
 		linkArgs = append(linkArgs, "-v")
 	}
 	if getsize(filesToLink) > argMax { //command line size too large for the OS (necessitated by chromium)
-		linkBitcodeFilesIncrementally(ea, filesToLink, argMax, linkArgs)
+		return linkBitcodeFilesIncrementally(ea, filesToLink, argMax, linkArgs)
 	} else {
 		linkArgs = append(linkArgs, "-o", ea.OutputFile)
 		linkArgs = append(linkArgs, filesToLink...)
 		success, err := execCmd(ea.LlvmLinkerName, linkArgs, "")
 		if !success {
-			LogFatal("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+			LogError("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+			return 1
 		}
 		informUser("Bitcode file extracted to: %s.\n", ea.OutputFile)
 	}
+	return
 }
 
 func extractSectionDarwin(inputFile string) (contents []string) {
