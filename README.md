@@ -131,7 +131,7 @@ This will produce the desired bitcode file. The situation is similar for an obje
 For an archive or library, there is a choice as to whether you produce a bitcode module
 or a bitcode archive. This choice is made by using the `-b` switch.
 
-Another useful switch is the `-m` switch wich will, in addition to producing the
+Another useful switch is the `-m` switch which will, in addition to producing the
 bitcode, will also produce a manifest of the bitcode files
 that made up the final product. As is typical
 
