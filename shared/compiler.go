@@ -198,7 +198,7 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 			err = out.Sync()
 			if err != nil {
 				LogWarning("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
-				return 
+				return
 			}
 
 		}

@@ -92,9 +92,9 @@ ea.ArchiverName:       %v
 }
 
 func ParseSwitches(args []string) (ea ExtractionArgs) {
-	
+
 	var flagSet *flag.FlagSet = flag.NewFlagSet(args[0], flag.ContinueOnError)
-	
+
 	flagSet.BoolVar(&ea.Verbose, "v", false, "verbose mode")
 	flagSet.BoolVar(&ea.WriteManifest, "m", false, "write the manifest")
 	flagSet.BoolVar(&ea.SortBitcodeFiles, "s", false, "sort the bitcode files")
@@ -119,19 +119,19 @@ func ParseSwitches(args []string) (ea ExtractionArgs) {
 	if len(inputFiles) != 1 {
 		LogError("Can currently only deal with exactly one input file, sorry. You gave me %v input files.\n", len(inputFiles))
 		ea.Failure = true
-		return 
+		return
 	}
 	ea.InputFile = inputFiles[0]
 	if _, err := os.Stat(ea.InputFile); os.IsNotExist(err) {
 		LogError("The input file %s  does not exist.", ea.InputFile)
 		ea.Failure = true
-		return 
+		return
 	}
 	realPath, err := filepath.EvalSymlinks(ea.InputFile)
 	if err != nil {
 		LogError("There was an error getting the real path of %s.", ea.InputFile)
 		ea.Failure = true
-		return 
+		return
 	}
 	ea.InputFile = realPath
 	ea.InputType = getFileType(realPath)
@@ -143,9 +143,9 @@ func ParseSwitches(args []string) (ea ExtractionArgs) {
 
 //Extract extracts the LLVM bitcode according to the arguments it is passed.
 func Extract(args []string) (exitCode int) {
-	
+
 	exitCode = 1
-	
+
 	ea := ParseSwitches(args)
 
 	if ea.Failure {
@@ -229,7 +229,6 @@ func setOutputFile(ea *ExtractionArgs) {
 	}
 }
 
-
 func resolveTool(defaultPath string, envPath string, usrPath string) (path string) {
 	if usrPath != defaultPath {
 		path = usrPath
@@ -254,7 +253,6 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 	LogDebug("path = %s", path)
 	return
 }
-
 
 func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
@@ -339,7 +337,7 @@ func handleThinArchive(ea ExtractionArgs) (success bool) {
 		}
 
 		if !success {
-			return 
+			return
 		}
 
 		// Write manifest
@@ -361,7 +359,7 @@ func listArchiveFiles(ea ExtractionArgs, inputFile string) (contents []string) {
 	if err != nil {
 		LogWarning("ar command: %v %v", ea.ArchiverName, arArgs)
 		LogError("Failed to extract contents from archive %s because: %v.\n", inputFile, err)
-		return 
+		return
 	}
 	contents = strings.Split(output, "\n")
 	return
@@ -497,7 +495,7 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 
 		if !success {
 			//hopefully the failure has alreadu been reported...
-			return 
+			return
 		}
 
 		// Write manifest
