@@ -1,3 +1,7 @@
+# The latest is 0.29.2 as of 10/29/2019
+#
+# https://www.freedesktop.org/wiki/Software/pkg-config/
+#
 VERSION=0.29.2
 SRC=pkg-config-${VERSION}
 TARBALL=${SRC}.tar.gz

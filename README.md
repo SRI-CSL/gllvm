@@ -106,7 +106,7 @@ environment variables.
     environment variables `LLVM_LINK_NAME` and `LLVM_AR_NAME` in an
     analogous way.
 
-Another useful environment variable is `WLLVM_CONFIGURE_ONLY`.
+Another useful, and sometimes necessary, environment variable is `WLLVM_CONFIGURE_ONLY`.
 
 * `WLLVM_CONFIGURE_ONLY` can be set to anything. If it is set, `gclang`
    and `gclang++` behave like a normal C or C++ compiler. They do not
@@ -119,12 +119,82 @@ Another useful environment variable is `WLLVM_CONFIGURE_ONLY`.
    make
    ```
 
-All other features of `wllvm`, such as logging, and the bitcode store,
-are supported in exactly the same fashion as documented [here](https://github.com/SRI-CSL/whole-program-llvm).
+## Extracting the Bitcode
+
+The `get-bc` tool is used to extract the bitcode from a build artifact, such as an executable, object file, thin archive, archive, or library. In the simplest use case, as seen above,
+one simply does:
+
+```
+get-bc -o <name of bitcode file> <path to executable>
+```
+This will produce the desired bitcode file. The situation is similar for an object file.
+For an archive or library, there is a choice as to whether you produce a bitcode module
+or a bitcode archive. This choice is made by using the `-b` switch.
+
+Another useful switch is the `-m` switch wich will, in addition to producing the
+bitcode, will also produce a manifest of the bitcode files
+that made up the final product. As is typical
+
+```
+get-bc -h
+```
+will list all the commandline switches. Since we use the `golang` `flag` module,
+the switches must precede the artifact path.
+
+
+
+## Preserving bitcode files in a store
+
+Sometimes, because of pathological build systems, it can be useful
+to preserve the bitcode files produced in a
+build, either to prevent deletion or to retrieve it later. If the
+environment variable `WLLVM_BC_STORE` is set to the absolute path of
+an existing directory,
+then WLLVM will copy the produced bitcode file into that directory.
+The name of the copied bitcode file is the hash of the path to the
+original bitcode file.  For convenience, when using both the manifest
+feature of `get-bc` and the store, the manifest will contain both
+the original path, and the store path.
+
+## Debugging
+
+
+The gllvm tools can show various levels of output to aid with debugging.
+To show this output set the `WLLVM_OUTPUT_LEVEL` environment
+variable to one of the following levels:
+
+ * `ERROR`
+ * `WARNING`
+ * `INFO`
+ * `DEBUG`
+
+For example:
+```
+    export WLLVM_OUTPUT_LEVEL=DEBUG
+```
+Output will be directed to the standard error stream, unless you specify the
+path of a logfile via the `WLLVM_OUTPUT_FILE` environment variable.
+
+For example:
+```
+    export WLLVM_OUTPUT_FILE=/tmp/gllvm.log
+```
 
 ## Dragons Begone
 
 `gllvm` does not support the dragonegg plugin.
+
+
+## Sanity Checking
+
+Too many environment variables? Try doing a sanity check:
+
+```
+gsanity-check
+```
+it might point out what is wrong.
+
+
 
 ## Under the hoods
 
