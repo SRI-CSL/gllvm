@@ -51,7 +51,7 @@ import (
 )
 
 //for distilling the desired commandline options
-type extractionArgs struct {
+type ExtractionArgs struct {
 	Failure             bool // indicates failure in parsing the cmd line args
 	Verbose             bool // inform the user of what is going on
 	WriteManifest       bool // write a manifest of bitcode files used
@@ -71,7 +71,7 @@ type extractionArgs struct {
 }
 
 //for printing out the parsed arguments, some have been skipped.
-func (ea extractionArgs) String() string {
+func (ea ExtractionArgs) String() string {
 	format :=
 		`
 ea.Verbose:            %v
@@ -91,7 +91,7 @@ ea.ArchiverName:       %v
 		ea.LlvmLinkerName, ea.ArchiverName)
 }
 
-func parseSwitches(args []string) (ea extractionArgs) {
+func ParseSwitches(args []string) (ea ExtractionArgs) {
 	
 	var flagSet *flag.FlagSet = flag.NewFlagSet(args[0], flag.ContinueOnError)
 	
@@ -146,7 +146,7 @@ func Extract(args []string) (exitCode int) {
 	
 	exitCode = 1
 	
-	ea := parseSwitches(args)
+	ea := ParseSwitches(args)
 
 	if ea.Failure {
 		return
@@ -187,7 +187,7 @@ func Extract(args []string) (exitCode int) {
 }
 
 // Set arguments according to runtime OS
-func setPlatform(ea *extractionArgs) (success bool) {
+func setPlatform(ea *ExtractionArgs) (success bool) {
 	switch platform := runtime.GOOS; platform {
 	case osFREEBSD, osLINUX:
 		ea.Extractor = extractSectionUnix
@@ -213,7 +213,7 @@ func setPlatform(ea *extractionArgs) (success bool) {
 }
 
 // Create output filename if not given
-func setOutputFile(ea *extractionArgs) {
+func setOutputFile(ea *ExtractionArgs) {
 	if ea.OutputFile == "" {
 		if ea.InputType == fileTypeARCHIVE || ea.InputType == fileTypeTHINARCHIVE {
 			var ext string
@@ -256,7 +256,7 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 }
 
 
-func handleExecutable(ea extractionArgs) (success bool) {
+func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
 	artifactPaths := ea.Extractor(ea.InputFile)
 
@@ -291,7 +291,7 @@ func handleExecutable(ea extractionArgs) (success bool) {
 	return
 }
 
-func handleThinArchive(ea extractionArgs) (success bool) {
+func handleThinArchive(ea ExtractionArgs) (success bool) {
 	// List bitcode files to link
 	var artifactFiles []string
 
@@ -300,7 +300,7 @@ func handleThinArchive(ea extractionArgs) (success bool) {
 
 	objectFiles = listArchiveFiles(ea, ea.InputFile)
 
-	LogInfo("handleThinArchive: extractionArgs = %v\nobjectFiles = %v\n", ea, objectFiles)
+	LogInfo("handleThinArchive: ExtractionArgs = %v\nobjectFiles = %v\n", ea, objectFiles)
 
 	for index, obj := range objectFiles {
 		LogInfo("obj = '%v'\n", obj)
@@ -353,7 +353,7 @@ func handleThinArchive(ea extractionArgs) (success bool) {
 	return
 }
 
-func listArchiveFiles(ea extractionArgs, inputFile string) (contents []string) {
+func listArchiveFiles(ea ExtractionArgs, inputFile string) (contents []string) {
 	var arArgs []string
 	arArgs = append(arArgs, "-t")
 	arArgs = append(arArgs, inputFile)
@@ -367,7 +367,7 @@ func listArchiveFiles(ea extractionArgs, inputFile string) (contents []string) {
 	return
 }
 
-func extractFile(ea extractionArgs, archive string, filename string, instance int) (success bool) {
+func extractFile(ea ExtractionArgs, archive string, filename string, instance int) (success bool) {
 	var arArgs []string
 	if runtime.GOOS != osDARWIN {
 		arArgs = append(arArgs, "xN")
@@ -390,7 +390,7 @@ func extractFile(ea extractionArgs, archive string, filename string, instance in
 	return
 }
 
-func fetchTOC(ea extractionArgs, inputFile string) map[string]int {
+func fetchTOC(ea ExtractionArgs, inputFile string) map[string]int {
 	toc := make(map[string]int)
 
 	contents := listArchiveFiles(ea, inputFile)
@@ -418,14 +418,14 @@ func fetchTOC(ea extractionArgs, inputFile string) map[string]int {
 //    archive using llvm-ar
 //
 //iam: 5/1/2018
-func handleArchive(ea extractionArgs) (success bool) {
+func handleArchive(ea ExtractionArgs) (success bool) {
 	// List bitcode files to link
 	var bcFiles []string
 	var artifactFiles []string
 
 	inputFile, _ := filepath.Abs(ea.InputFile)
 
-	LogInfo("handleArchive: extractionArgs = %v\n", ea)
+	LogInfo("handleArchive: ExtractionArgs = %v\n", ea)
 
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir("", "gllvm")
@@ -511,7 +511,7 @@ func handleArchive(ea extractionArgs) (success bool) {
 	return
 }
 
-func archiveBcFiles(ea extractionArgs, bcFiles []string) (success bool) {
+func archiveBcFiles(ea ExtractionArgs, bcFiles []string) (success bool) {
 	// We do not want full paths in the archive, so we need to chdir into each
 	// bitcode's folder. Handle this by calling llvm-ar once for all bitcode
 	// files in the same directory
@@ -554,7 +554,7 @@ func formatStdOut(stdout bytes.Buffer, usefulIndex int) string {
 	return ret[0]
 }
 
-func fetchArgMax(ea extractionArgs) (argMax int) {
+func fetchArgMax(ea ExtractionArgs) (argMax int) {
 	if ea.LinkArgSize == 0 {
 		getArgMax := exec.Command("getconf", "ARG_MAX")
 		var argMaxStr bytes.Buffer
@@ -575,7 +575,7 @@ func fetchArgMax(ea extractionArgs) (argMax int) {
 	return
 }
 
-func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argMax int, linkArgs []string) (success bool) {
+func linkBitcodeFilesIncrementally(ea ExtractionArgs, filesToLink []string, argMax int, linkArgs []string) (success bool) {
 	var tmpFileList []string
 	// Create tmp dir
 	tmpDirName, err := ioutil.TempDir(".", "glinking")
@@ -649,7 +649,7 @@ func linkBitcodeFilesIncrementally(ea extractionArgs, filesToLink []string, argM
 	return
 }
 
-func linkBitcodeFiles(ea extractionArgs, filesToLink []string) (success bool) {
+func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	var linkArgs []string
 	// Extracting the command line max size from the environment if it is not specified
 	argMax := fetchArgMax(ea)
@@ -732,7 +732,7 @@ func resolveBitcodePath(bcPath string) string {
 	return bcPath
 }
 
-func writeManifest(ea extractionArgs, bcFiles []string, artifactFiles []string) (success bool) {
+func writeManifest(ea ExtractionArgs, bcFiles []string, artifactFiles []string) (success bool) {
 	manifestFilename := ea.OutputFile + ".llvm.manifest"
 	//only go into the gory details if we have a store around.
 	if LLVMBitcodeStorePath != "" {

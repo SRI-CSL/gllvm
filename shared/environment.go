@@ -98,21 +98,7 @@ const (
 )
 
 func init() {
-
-	LLVMToolChainBinDir = os.Getenv(envpath)
-	LLVMCCName = os.Getenv(envcc)
-	LLVMCXXName = os.Getenv(envcxx)
-	LLVMARName = os.Getenv(envar)
-	LLVMLINKName = os.Getenv(envlnk)
-
-	LLVMConfigureOnly = os.Getenv(envcfg)
-	LLVMBitcodeStorePath = os.Getenv(envbc)
-
-	LLVMLoggingLevel = os.Getenv(envlvl)
-	LLVMLoggingFile = os.Getenv(envfile)
-
-	LLVMObjcopy = os.Getenv(envobjcopy)
-	LLVMLd = os.Getenv(envld)
+	FetchEnvironment()
 }
 
 func printEnvironment() {
@@ -128,4 +114,22 @@ func printEnvironment() {
 		}
 	}
 
+}
+
+// used in testing
+func FetchEnvironment() {
+	LLVMToolChainBinDir = os.Getenv(envpath)
+	LLVMCCName = os.Getenv(envcc)
+	LLVMCXXName = os.Getenv(envcxx)
+	LLVMARName = os.Getenv(envar)
+	LLVMLINKName = os.Getenv(envlnk)
+
+	LLVMConfigureOnly = os.Getenv(envcfg)
+	LLVMBitcodeStorePath = os.Getenv(envbc)
+
+	LLVMLoggingLevel = os.Getenv(envlvl)
+	LLVMLoggingFile = os.Getenv(envfile)
+
+	LLVMObjcopy = os.Getenv(envobjcopy)
+	LLVMLd = os.Getenv(envld)
 }

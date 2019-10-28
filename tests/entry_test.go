@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_basic(t *testing.T) {
+func Test_basic_functionality(t *testing.T) {
 	args := []string{"../data/helloworld.c", "-o", "../data/hello"}
 
 	exitCode := shared.Compile(args, "clang")
