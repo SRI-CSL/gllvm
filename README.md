@@ -88,8 +88,10 @@ This should produce the executable `pkg-config`. To extract the bitcode:
 get-bc pkg-config
 ```
 
-which will produce the bitcode module `pkg-config.bc`.
+which will produce the bitcode module `pkg-config.bc`. For more on this example
+see [here](https://github.com/SRI-CSL/gllvm/tree/master/examples/pkg-config).
 
+## Advanced Configuration
 
 If clang and the llvm tools are not in your `PATH`, you will need to set some
 environment variables.
@@ -104,12 +106,25 @@ environment variables.
     environment variables `LLVM_LINK_NAME` and `LLVM_AR_NAME` in an
     analogous way.
 
-Another useful environment variable is `WLLVM_CONFIGURE_ONLY`. Its use is explained in the
-README of  [wllvm](https://github.com/SRI-CSL/whole-program-llvm).
+Another useful environment variable is `WLLVM_CONFIGURE_ONLY`.
 
-`gllvm` does not support the dragonegg plugin. All other features of `wllvm`, such as logging, and the bitcode store,
+* `WLLVM_CONFIGURE_ONLY` can be set to anything. If it is set, `gclang`
+   and `gclang++` behave like a normal C or C++ compiler. They do not
+   produce bitcode.  Setting `WLLVM_CONFIGURE_ONLY` may prevent
+   configuration errors caused by the unexpected production of hidden
+   bitcode files. It is sometimes required when configuring a build.
+   For example:
+   ```
+   WLLVM_CONFIGURE_ONLY=1 CC=gclang ./configure
+   make
+   ```
+
+All other features of `wllvm`, such as logging, and the bitcode store,
 are supported in exactly the same fashion as documented [here](https://github.com/SRI-CSL/whole-program-llvm).
 
+## Dragons Begone
+
+`gllvm` does not support the dragonegg plugin.
 
 ## Under the hoods
 
