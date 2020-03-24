@@ -50,7 +50,7 @@ import (
 	"strings"
 )
 
-//for distilling the desired commandline options
+//ExtractionArgs encapsulate the results of parsing the commandline options
 type ExtractionArgs struct {
 	Failure             bool // indicates failure in parsing the cmd line args
 	Verbose             bool // inform the user of what is going on
@@ -91,6 +91,7 @@ ea.ArchiverName:       %v
 		ea.LlvmLinkerName, ea.ArchiverName)
 }
 
+//ParseSwitches parses the command line into an ExtractionArgs object.
 func ParseSwitches(args []string) (ea ExtractionArgs) {
 
 	var flagSet *flag.FlagSet = flag.NewFlagSet(args[0], flag.ContinueOnError)
@@ -656,17 +657,16 @@ func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	}
 	if getsize(filesToLink) > argMax { //command line size too large for the OS (necessitated by chromium)
 		return linkBitcodeFilesIncrementally(ea, filesToLink, argMax, linkArgs)
-	} else {
-		var err error
-		linkArgs = append(linkArgs, "-o", ea.OutputFile)
-		linkArgs = append(linkArgs, filesToLink...)
-		success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
-		if !success {
-			LogError("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
-			return
-		}
-		informUser("Bitcode file extracted to: %s.\n", ea.OutputFile)
 	}
+	var err error
+	linkArgs = append(linkArgs, "-o", ea.OutputFile)
+	linkArgs = append(linkArgs, filesToLink...)
+	success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
+	if !success {
+		LogError("There was an error linking input files into %s because %v.\n", ea.OutputFile, err)
+		return
+	}
+	informUser("Bitcode file extracted to: %s.\n", ea.OutputFile)
 	success = true
 	return
 }

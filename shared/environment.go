@@ -108,6 +108,7 @@ func init() {
 	FetchEnvironment()
 }
 
+// PrintEnvironment is used for printing the aspects of the environment that concern us
 func PrintEnvironment() {
 	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen}
 
@@ -123,7 +124,7 @@ func PrintEnvironment() {
 
 }
 
-// also used in testing
+// ResetEnvironment resets the globals, it is only used in testing
 func ResetEnvironment() {
 	LLVMToolChainBinDir = ""
 	LLVMCCName = ""
@@ -139,7 +140,7 @@ func ResetEnvironment() {
 	LLVMbcGen = []string{}
 }
 
-// also used in testing
+// FetchEnvironment is used in initializing our globals, it is also used in testing
 func FetchEnvironment() {
 	LLVMToolChainBinDir = os.Getenv(envpath)
 	LLVMCCName = os.Getenv(envcc)
