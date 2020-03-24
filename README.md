@@ -64,7 +64,7 @@ To install, simply do (making sure to include those `...`)
 go get github.com/SRI-CSL/gllvm/cmd/...
 ```
 This should install four binaries: `gclang`, `gclang++`, `get-bc`, and `gsanity-check`
-in the `$GOPATH/bin` directory.  
+in the `$GOPATH/bin` directory.
 
 ## Usage
 
@@ -235,6 +235,14 @@ environment variables. For more details of what's under the `gllvm` hood, try
 ```
 gsanity-check -e
 ```
+
+## Customizing the BitCode Generation (e.g. LTO)
+
+In some situations it is desirable to pass certain flags to `clang` in the step that
+produces the bitcode. This can be fulfilled by setting the
+`LLVM_BITCODE_GENERATION_FLAGS` environment variable to the desired
+flags, for example `"-flto -fwhole-program-vtables"`.
+
 
 ## License
 

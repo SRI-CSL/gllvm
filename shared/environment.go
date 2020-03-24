@@ -35,6 +35,7 @@ package shared
 
 import (
 	"os"
+	"strings"
 )
 
 const (
@@ -82,6 +83,9 @@ var LLVMObjcopy string
 //LLVMLd is the path to the ld executable used to attach the bitcode on OSX.
 var LLVMLd string
 
+//LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
+var LLVMbcGen []string
+
 const (
 	envpath    = "LLVM_COMPILER_PATH"
 	envcc      = "LLVM_CC_NAME"
@@ -95,14 +99,17 @@ const (
 	envld      = "GLLVM_LD"      //iam: we are deviating from wllvm here.
 	envobjcopy = "GLLVM_OBJCOPY" //iam: we are deviating from wllvm here.
 	//wllvm uses a BINUTILS_TARGET_PREFIX, which seems less general.
+	//iam: 03/24/2020 new feature to pass things like "-flto -fwhole-program-vtables"
+	// to clang during the bitcode generation step
+	envbcgen   = "LLVM_BITCODE_GENERATION_FLAGS"
 )
 
 func init() {
 	FetchEnvironment()
 }
 
-func printEnvironment() {
-	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld}
+func PrintEnvironment() {
+	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen}
 
 	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {
@@ -116,7 +123,23 @@ func printEnvironment() {
 
 }
 
-// used in testing
+// also used in testing
+func ResetEnvironment() {
+	LLVMToolChainBinDir = ""
+	LLVMCCName =  ""
+	LLVMCXXName =  ""
+	LLVMARName =  ""
+	LLVMLINKName =  ""
+	LLVMConfigureOnly =  ""
+	LLVMBitcodeStorePath = ""
+	LLVMLoggingLevel = ""
+	LLVMLoggingFile = ""
+	LLVMObjcopy = ""
+	LLVMLd =  ""
+	LLVMbcGen = []string{}
+}
+
+// also used in testing
 func FetchEnvironment() {
 	LLVMToolChainBinDir = os.Getenv(envpath)
 	LLVMCCName = os.Getenv(envcc)
@@ -132,4 +155,7 @@ func FetchEnvironment() {
 
 	LLVMObjcopy = os.Getenv(envobjcopy)
 	LLVMLd = os.Getenv(envld)
+
+	LLVMbcGen = strings.Fields(os.Getenv(envbcgen))
+
 }

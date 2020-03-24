@@ -41,6 +41,13 @@ func Test_env_and_args(t *testing.T) {
 
 	args := []string{"get-bc", "-v", "../data/hello"}
 
+	if verbose {
+		shared.PrintEnvironment()
+	}
+
+
+	shared.ResetEnvironment()
+
 	ea := shared.ParseSwitches(args)
 	if !ea.Verbose {
 		t.Errorf("ParseSwitches: -v flag not working\n")
@@ -52,6 +59,7 @@ func Test_env_and_args(t *testing.T) {
 		t.Errorf("ParseSwitches: InputFile incorrect: %v\n", ea.InputFile)
 	}
 
+	//iam: this test assumes LLVMToolChainBinDir = ""
 	checkExecutables(t, ea, "llvm-link", "llvm-ar", "ar", "clang", "clang++")
 
 	os.Setenv("LLVM_COMPILER_PATH", "/the_future_is_here")
@@ -81,5 +89,4 @@ func Test_env_and_args(t *testing.T) {
 		"ar",
 		"/the_future_is_here/clang-666",
 		"/the_future_is_here/clang++-666")
-
 }

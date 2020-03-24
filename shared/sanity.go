@@ -108,7 +108,7 @@ func SanityCheck() {
 	informUser("\nVersion info: gsanity-check version %v\nReleased: %v\n", gllvmVersion, gllvmReleaseDate)
 
 	if sa.Environment {
-		printEnvironment()
+		PrintEnvironment()
 	}
 
 	checkLogging()

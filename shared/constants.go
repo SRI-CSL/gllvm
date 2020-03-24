@@ -48,9 +48,13 @@ package shared
 //  1.2.4 June  21 2019   Random fixes (basically the same as wllvm 1.2.7)
 //
 //  1.2.5 October 23 2019  Fixes for issues #30 and #31. Plus a new branch where I can futz hygenically.
+//
+//  1.2.6 March 24 2020 Added the support for the LLVM_BITCODE_GENERATION_FLAGS environment variable.
+//                      See https://github.com/travitch/whole-program-llvm/issues/96 for details.
+//
 
-const gllvmVersion = "1.2.5"
-const gllvmReleaseDate = "October 23 2019"
+const gllvmVersion = "1.2.6"
+const gllvmReleaseDate = "March 24 2020"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"

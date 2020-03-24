@@ -241,6 +241,8 @@ func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, o
 // Tries to build the specified source file to bitcode
 func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, bcFile string) (success bool) {
 	args := pr.CompileArgs[:]
+	//iam: 03/24/2020 extend with the LLVM_BITCODE_GENERATION_FLAGS if any.
+	args = append(args, LLVMbcGen...)
 	args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
