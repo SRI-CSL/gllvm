@@ -101,7 +101,7 @@ const (
 	//wllvm uses a BINUTILS_TARGET_PREFIX, which seems less general.
 	//iam: 03/24/2020 new feature to pass things like "-flto -fwhole-program-vtables"
 	// to clang during the bitcode generation step
-	envbcgen   = "LLVM_BITCODE_GENERATION_FLAGS"
+	envbcgen = "LLVM_BITCODE_GENERATION_FLAGS"
 )
 
 func init() {
@@ -126,16 +126,16 @@ func PrintEnvironment() {
 // also used in testing
 func ResetEnvironment() {
 	LLVMToolChainBinDir = ""
-	LLVMCCName =  ""
-	LLVMCXXName =  ""
-	LLVMARName =  ""
-	LLVMLINKName =  ""
-	LLVMConfigureOnly =  ""
+	LLVMCCName = ""
+	LLVMCXXName = ""
+	LLVMARName = ""
+	LLVMLINKName = ""
+	LLVMConfigureOnly = ""
 	LLVMBitcodeStorePath = ""
 	LLVMLoggingLevel = ""
 	LLVMLoggingFile = ""
 	LLVMObjcopy = ""
-	LLVMLd =  ""
+	LLVMLd = ""
 	LLVMbcGen = []string{}
 }
 

@@ -45,7 +45,6 @@ func Test_env_and_args(t *testing.T) {
 		shared.PrintEnvironment()
 	}
 
-
 	shared.ResetEnvironment()
 
 	ea := shared.ParseSwitches(args)
