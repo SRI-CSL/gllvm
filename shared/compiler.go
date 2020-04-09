@@ -130,6 +130,10 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 	}
 }
 
+func buildFlagFile(compilerExecName string, pr parserResult) []byte {
+	return []byte("")
+}
+
 func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, pr parserResult) (success bool) {
 	// We can only attach a bitcode path to certain file types
 	switch filepath.Ext(objFile) {
@@ -157,7 +161,7 @@ func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, 
 			return
 		}
 
-		// Let's write the bitcode section
+		// Let's write the bitcode section, and the flags section if requested
 		var attachCmd string
 		var attachCmdArgs []string
 		if runtime.GOOS == osDARWIN {
@@ -169,7 +173,23 @@ func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, 
 			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name()}
 
 			if LLVMAttachArgs {
-				attachCmdArgs = append(attachCmdArgs, "-sectcreate", DarwinSegmentName, DarwinFrontendFlagsSectionName, "")
+				tmpFlagFile, err := ioutil.TempFile("", "gllvm_flags")
+				if err != nil {
+					LogError("attachBitcodePathToObject: %v\n", err)
+				}
+				defer CheckDefer(func() error { return os.Remove(tmpFlagFile.Name()) })
+
+				tmpFlagContent := buildFlagFile(compilerExecName, pr)
+				if _, err := tmpFlagFile.Write(tmpFlagContent); err != nil {
+					LogError("attachBitcodePathToObject: %v\n", err)
+					return
+				}
+				if err := tmpFlagFile.Close(); err != nil {
+					LogError("attachBitcodePathToObject: %v\n", err)
+					return
+				}
+
+				attachCmdArgs = append(attachCmdArgs, "-sectcreate", DarwinSegmentName, DarwinFrontendFlagsSectionName, tmpFlagFile.Name())
 				LogInfo("attachCmdArgs")
 			}
 
@@ -183,7 +203,23 @@ func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, 
 			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name()}
 
 			if LLVMAttachArgs {
-				attachCmdArgs = append(attachCmdArgs, "--add-section", ELFFrontendFlagsSectionName + "=" + "")
+				tmpFlagFile, err := ioutil.TempFile("", "gllvm_flags")
+				if err != nil {
+					LogError("attachBitcodePathToObject: %v\n", err)
+				}
+				defer CheckDefer(func() error { return os.Remove(tmpFlagFile.Name()) })
+
+				tmpFlagContent := buildFlagFile(compilerExecName, pr)
+				if _, err := tmpFlagFile.Write(tmpFlagContent); err != nil {
+					LogError("attachBitcodePathToObject: %v\n", err)
+					return
+				}
+				if err := tmpFlagFile.Close(); err != nil {
+					LogError("attachBitcodePathToObject: %v\n", err)
+					return
+				}
+
+				attachCmdArgs = append(attachCmdArgs, "--add-section", ELFFrontendFlagsSectionName+"="+tmpFlagFile.Name())
 				LogInfo("attachCmdArgs")
 			}
 
