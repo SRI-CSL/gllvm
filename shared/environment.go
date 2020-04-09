@@ -35,6 +35,7 @@ package shared
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -43,11 +44,17 @@ const (
 	//ELFSectionName is the name of our ELF section of "bitcode paths".
 	ELFSectionName = ".llvm_bc"
 
+	// ELFFrontendFlagsSectionName is the name of our ELF section of frontend flags for each translation unit
+	ELFFrontendFlagsSectionName = ".gllvm_flags"
+
 	//DarwinSegmentName is the name of our MACH-O segment of "bitcode paths".
 	DarwinSegmentName = "__WLLVM"
 
 	//DarwinSectionName is the name of our MACH-O section of "bitcode paths".
 	DarwinSectionName = "__llvm_bc"
+
+	// DarwinFrontendFlagsSectionName is the name of our MACH-O section of frontend flags for each translation unit
+	DarwinFrontendFlagsSectionName = "__gllvm_flags"
 )
 
 //LLVMToolChainBinDir is the user configured directory holding the LLVM binary tools.
@@ -86,6 +93,9 @@ var LLVMLd string
 //LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
 var LLVMbcGen []string
 
+//LLVMAttachArgs flags whether or not we embed frontend arguments in each compiled object.
+var LLVMAttachArgs bool
+
 const (
 	envpath    = "LLVM_COMPILER_PATH"
 	envcc      = "LLVM_CC_NAME"
@@ -102,6 +112,10 @@ const (
 	//iam: 03/24/2020 new feature to pass things like "-flto -fwhole-program-vtables"
 	// to clang during the bitcode generation step
 	envbcgen = "LLVM_BITCODE_GENERATION_FLAGS"
+
+	// 4/9/2020 new feature to embed the frontend compiler and linker flags
+	// passed to clang within each object
+	envattachargs = "GLLVM_ATTACH_FRONTEND_ARGS"
 )
 
 func init() {
@@ -110,7 +124,7 @@ func init() {
 
 // PrintEnvironment is used for printing the aspects of the environment that concern us
 func PrintEnvironment() {
-	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen}
+	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen, envattachargs}
 
 	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {
@@ -138,6 +152,7 @@ func ResetEnvironment() {
 	LLVMObjcopy = ""
 	LLVMLd = ""
 	LLVMbcGen = []string{}
+	LLVMAttachArgs = false
 }
 
 // FetchEnvironment is used in initializing our globals, it is also used in testing
@@ -159,4 +174,9 @@ func FetchEnvironment() {
 
 	LLVMbcGen = strings.Fields(os.Getenv(envbcgen))
 
+	var err error
+	LLVMAttachArgs, err = strconv.ParseBool(os.Getenv(envattachargs))
+	if err != nil {
+		LLVMAttachArgs = false
+	}
 }

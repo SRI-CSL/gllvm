@@ -91,7 +91,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 			// When objects and bitcode are built we can attach bitcode paths
 			// to object files and link
 			for _, link := range bcObjLinks {
-				attachBitcodePathToObject(link.bcPath, link.objPath)
+				attachBitcodePathToObject(link.bcPath, link.objPath, compilerExecName, pr)
 			}
 			if !pr.IsCompileOnly {
 				compileTimeLinkFiles(compilerExecName, pr, newObjectFiles)
@@ -130,7 +130,7 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 	}
 }
 
-func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
+func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, pr parserResult) (success bool) {
 	// We can only attach a bitcode path to certain file types
 	switch filepath.Ext(objFile) {
 	case
@@ -166,14 +166,28 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 			} else {
 				attachCmd = "ld"
 			}
-			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
+			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name()}
+
+			if LLVMAttachArgs {
+				attachCmdArgs = append(attachCmdArgs, "-sectcreate", DarwinSegmentName, DarwinFrontendFlagsSectionName, "")
+				LogInfo("attachCmdArgs")
+			}
+
+			attachCmdArgs = append(attachCmdArgs, "-o", objFile)
 		} else {
 			if len(LLVMObjcopy) > 0 {
 				attachCmd = LLVMObjcopy
 			} else {
 				attachCmd = "objcopy"
 			}
-			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name(), objFile}
+			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name()}
+
+			if LLVMAttachArgs {
+				attachCmdArgs = append(attachCmdArgs, "--add-section", ELFFrontendFlagsSectionName + "=" + "")
+				LogInfo("attachCmdArgs")
+			}
+
+			attachCmdArgs = append(attachCmdArgs, objFile)
 		}
 
 		// Run the attach command and ignore errors
