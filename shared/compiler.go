@@ -172,7 +172,7 @@ func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, 
 			}
 			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name()}
 
-			if LLVMAttachArgs {
+			if LLVMEmbedFrontendArgs {
 				tmpFlagFile, err := ioutil.TempFile("", "gllvm_flags")
 				if err != nil {
 					LogError("attachBitcodePathToObject: %v\n", err)
@@ -202,7 +202,7 @@ func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, 
 			}
 			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name()}
 
-			if LLVMAttachArgs {
+			if LLVMEmbedFrontendArgs {
 				tmpFlagFile, err := ioutil.TempFile("", "gllvm_flags")
 				if err != nil {
 					LogError("attachBitcodePathToObject: %v\n", err)

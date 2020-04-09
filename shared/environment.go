@@ -93,8 +93,8 @@ var LLVMLd string
 //LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
 var LLVMbcGen []string
 
-//LLVMAttachArgs flags whether or not we embed frontend arguments in each compiled object.
-var LLVMAttachArgs bool
+//LLVMEmbedFrontendArgs flags whether or not we embed frontend arguments in each compiled object.
+var LLVMEmbedFrontendArgs bool
 
 const (
 	envpath    = "LLVM_COMPILER_PATH"
@@ -115,7 +115,7 @@ const (
 
 	// 4/9/2020 new feature to embed the frontend compiler and linker flags
 	// passed to clang within each object
-	envattachargs = "GLLVM_ATTACH_FRONTEND_ARGS"
+	envembedargs = "GLLVM_EMBED_FRONTEND_ARGS"
 )
 
 func init() {
@@ -124,7 +124,7 @@ func init() {
 
 // PrintEnvironment is used for printing the aspects of the environment that concern us
 func PrintEnvironment() {
-	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen, envattachargs}
+	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen, envembedargs}
 
 	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {
@@ -152,7 +152,7 @@ func ResetEnvironment() {
 	LLVMObjcopy = ""
 	LLVMLd = ""
 	LLVMbcGen = []string{}
-	LLVMAttachArgs = false
+	LLVMEmbedFrontendArgs = false
 }
 
 // FetchEnvironment is used in initializing our globals, it is also used in testing
@@ -175,8 +175,8 @@ func FetchEnvironment() {
 	LLVMbcGen = strings.Fields(os.Getenv(envbcgen))
 
 	var err error
-	LLVMAttachArgs, err = strconv.ParseBool(os.Getenv(envattachargs))
+	LLVMEmbedFrontendArgs, err = strconv.ParseBool(os.Getenv(envembedargs))
 	if err != nil {
-		LLVMAttachArgs = false
+		LLVMEmbedFrontendArgs = false
 	}
 }
