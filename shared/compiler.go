@@ -42,11 +42,22 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"encoding/json"
 )
 
 type bitcodeToObjectLink struct {
 	bcPath  string
 	objPath string
+}
+
+type buildFlags struct {
+	CompilerExecName string
+	Arguments        []string
+	Files            []string
+	ObjectFiles      []string
+	OutputFilename   string
+	CompileArgs      []string
+	LinkArgs         []string
 }
 
 //Compile wraps a call to the compiler with the given args.
@@ -131,7 +142,22 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 }
 
 func buildFlagFile(compilerExecName string, pr parserResult) []byte {
-	return []byte("")
+	flags := &buildFlags {
+		CompilerExecName: compilerExecName,
+		Arguments: pr.InputList,
+		Files: pr.InputFiles,
+		ObjectFiles: pr.ObjectFiles,
+		OutputFilename: pr.OutputFilename,
+		CompileArgs: pr.CompileArgs,
+		LinkArgs: pr.LinkArgs,
+	}
+
+	flagsBytes, err := json.Marshal(flags)
+	if err!=nil {
+		LogError("buildFlagFile(): Unable to JSON encode parserResults")
+		return []byte("ERROR")
+	}
+	return []byte(flagsBytes)
 }
 
 func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, pr parserResult) (success bool) {

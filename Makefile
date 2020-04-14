@@ -2,7 +2,11 @@ develop:
 	go install github.com/SRI-CSL/gllvm/cmd/...
 
 
-check: develop
+deps:
+	sudo apt install clang llvm
+	touch $@
+
+check: develop deps
 	 go test -v ./tests
 
 format:
