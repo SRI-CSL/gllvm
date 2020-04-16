@@ -35,8 +35,6 @@ package shared
 
 import (
 	"bytes"
-	"debug/elf"
-	"debug/macho"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -67,7 +65,7 @@ type ExtractionArgs struct {
 	LlvmArchiverName    string
 	ArchiverName        string
 	ArArgs              []string
-	Extractor           func(string) []string
+	// Extractor           func(string) []string
 }
 
 //for printing out the parsed arguments, some have been skipped.
@@ -191,7 +189,6 @@ func Extract(args []string) (exitCode int) {
 func setPlatform(ea *ExtractionArgs) (success bool) {
 	switch platform := runtime.GOOS; platform {
 	case osFREEBSD, osLINUX:
-		ea.Extractor = extractSectionUnix
 		if ea.Verbose {
 			ea.ArArgs = append(ea.ArArgs, "xv")
 		} else {
@@ -200,7 +197,6 @@ func setPlatform(ea *ExtractionArgs) (success bool) {
 		ea.ObjectTypeInArchive = fileTypeELFOBJECT
 		success = true
 	case osDARWIN:
-		ea.Extractor = extractSectionDarwin
 		ea.ArArgs = append(ea.ArArgs, "-x")
 		if ea.Verbose {
 			ea.ArArgs = append(ea.ArArgs, "-v")
@@ -257,7 +253,14 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 
 func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
-	artifactPaths := ea.Extractor(ea.InputFile)
+	sectionator := NewSectionator(ea.InputFile)
+	sectionData, err := sectionator.ReadSection(SectionNameBitCode)
+
+	if err != nil {
+		LogError("Unable to read section %s in %s.", SectionNameBitCode, ea.InputFile)
+		return false
+	}
+	artifactPaths := strings.Split(strings.TrimSuffix(string(sectionData), "\n"), "\n")
 
 	if len(artifactPaths) < 20 {
 		// naert: to avoid saturating the log when dealing with big file lists
@@ -304,7 +307,7 @@ func handleThinArchive(ea ExtractionArgs) (success bool) {
 	for index, obj := range objectFiles {
 		LogInfo("obj = '%v'\n", obj)
 		if len(obj) > 0 {
-			artifacts := ea.Extractor(obj)
+			artifacts := extractBitCodePaths(obj)
 			LogInfo("\t%v\n", artifacts)
 			artifactFiles = append(artifactFiles, artifacts...)
 			for _, bc := range artifacts {
@@ -457,7 +460,7 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 
 			if obj != "" && extractFile(ea, inputFile, obj, i) {
 
-				artifacts := ea.Extractor(obj)
+				artifacts := extractBitCodePaths(obj)
 				LogInfo("\t%v\n", artifacts)
 				artifactFiles = append(artifactFiles, artifacts...)
 				for _, bc := range artifacts {
@@ -671,44 +674,60 @@ func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	return
 }
 
-func extractSectionDarwin(inputFile string) (contents []string) {
-	machoFile, err := macho.Open(inputFile)
-	if err != nil {
-		LogError("Mach-O file %s could not be read.", inputFile)
-		return
-	}
-	section := machoFile.Section(DarwinSectionName)
-	if section == nil {
-		LogWarning("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
-		return
-	}
-	sectionContents, errContents := section.Data()
-	if errContents != nil {
-		LogWarning("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
-		return
-	}
-	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
-	return
-}
+// func extractSectionDarwin(inputFile string) (contents []string) {
+// 	machoFile, err := macho.Open(inputFile)
+// 	if err != nil {
+// 		LogError("Mach-O file %s could not be read.", inputFile)
+// 		return
+// 	}
+// 	sectionName := platformizeSectionName(SectionNameBitCode)
+// 	section := machoFile.Section(sectionName)
+// 	if section == nil {
+// 		LogWarning("The %s section of %s is missing!\n", sectionName, inputFile)
+// 		return
+// 	}
+// 	sectionContents, errContents := section.Data()
+// 	if errContents != nil {
+// 		LogWarning("Error reading the %s section of Mach-O file %s.", sectionName, inputFile)
+// 		return
+// 	}
+// 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
+// 	return
+// }
 
-func extractSectionUnix(inputFile string) (contents []string) {
-	elfFile, err := elf.Open(inputFile)
+// func extractSectionUnix(inputFile string) (contents []string) {
+// 	elfFile, err := elf.Open(inputFile)
+// 	if err != nil {
+// 		LogError("ELF file %s could not be read.", inputFile)
+// 		return
+// 	}
+// 	sectionName := platformizeSectionName(SectionNameBitCode)
+
+// 	section := elfFile.Section(sectionName)
+// 	if section == nil {
+// 		LogWarning("Error reading the %s section of ELF file %s.", sectionName, inputFile)
+// 		return
+// 	}
+// 	sectionContents, errContents := section.Data()
+// 	if errContents != nil {
+// 		LogWarning("Error reading the %s section of ELF file %s.", sectionName, inputFile)
+// 		return
+// 	}
+// 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
+// 	return
+// }
+
+func extractBitCodePaths(inputFile string) (contents []string) {
+	sectionator := NewSectionator(inputFile)
+	data, err := sectionator.ReadSection(SectionNameBitCode)
+
 	if err != nil {
-		LogError("ELF file %s could not be read.", inputFile)
-		return
+		LogError("Unable to read section %s in %s.", SectionNameBitCode, inputFile)
+		return nil
 	}
-	section := elfFile.Section(ELFSectionName)
-	if section == nil {
-		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
-		return
-	}
-	sectionContents, errContents := section.Data()
-	if errContents != nil {
-		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
-		return
-	}
-	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
-	return
+	contents = strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+	fmt.Printf("ZZZ extractBitCodePaths(): %v\n", contents)
+	return contents
 }
 
 // Return the actual path to the bitcode file, or an empty string if it does not exist

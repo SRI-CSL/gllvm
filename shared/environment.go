@@ -41,20 +41,20 @@ import (
 
 const (
 
-	//ELFSectionName is the name of our ELF section of "bitcode paths".
-	ELFSectionName = ".llvm_bc"
+	// SectionNameBitCode section of "bitcode paths"
+	SectionNameBitCode = "llvm_bc"
 
-	// ELFFrontendFlagsSectionName is the name of our ELF section of frontend flags for each translation unit
-	ELFFrontendFlagsSectionName = ".gllvm_flags"
+	// SectionNameFlags is the name of our ELF section of frontend flags for each translation unit
+	SectionNameFlags = "gllvm_flags"
 
 	//DarwinSegmentName is the name of our MACH-O segment of "bitcode paths".
 	DarwinSegmentName = "__WLLVM"
 
-	//DarwinSectionName is the name of our MACH-O section of "bitcode paths".
-	DarwinSectionName = "__llvm_bc"
+	// //DarwinSectionName is the name of our MACH-O section of "bitcode paths".
+	// DarwinSectionName = "__llvm_bc"
 
-	// DarwinFrontendFlagsSectionName is the name of our MACH-O section of frontend flags for each translation unit
-	DarwinFrontendFlagsSectionName = "__gllvm_flags"
+	// // DarwinFrontendFlagsSectionName is the name of our MACH-O section of frontend flags for each translation unit
+	// DarwinFrontendFlagsSectionName = "__gllvm_flags"
 )
 
 //LLVMToolChainBinDir is the user configured directory holding the LLVM binary tools.

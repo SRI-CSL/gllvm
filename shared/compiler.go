@@ -34,6 +34,10 @@
 package shared
 
 import (
+	"debug/elf"
+	"debug/macho"
+	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -42,7 +46,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"encoding/json"
 )
 
 type bitcodeToObjectLink struct {
@@ -50,7 +53,7 @@ type bitcodeToObjectLink struct {
 	objPath string
 }
 
-type buildFlags struct {
+type BuildFlags struct {
 	CompilerExecName string
 	Arguments        []string
 	Files            []string
@@ -141,146 +144,195 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 	}
 }
 
-func buildFlagFile(compilerExecName string, pr parserResult) []byte {
-	flags := &buildFlags {
+func jsonEncodeFlags(compilerExecName string, pr parserResult) []byte {
+	flags := &BuildFlags{
 		CompilerExecName: compilerExecName,
-		Arguments: pr.InputList,
-		Files: pr.InputFiles,
-		ObjectFiles: pr.ObjectFiles,
-		OutputFilename: pr.OutputFilename,
-		CompileArgs: pr.CompileArgs,
-		LinkArgs: pr.LinkArgs,
+		Arguments:        pr.InputList,
+		Files:            pr.InputFiles,
+		ObjectFiles:      pr.ObjectFiles,
+		OutputFilename:   pr.OutputFilename,
+		CompileArgs:      pr.CompileArgs,
+		LinkArgs:         pr.LinkArgs,
 	}
 
 	flagsBytes, err := json.Marshal(flags)
-	if err!=nil {
-		LogError("buildFlagFile(): Unable to JSON encode parserResults")
+	if err != nil {
+		LogError("jsonEncodeFlags(): Unable to JSON encode parserResults")
 		return []byte("ERROR")
 	}
 	return []byte(flagsBytes)
 }
 
-func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, pr parserResult) (success bool) {
+type Sectionator struct {
+	Filename string
+}
+
+func data2file(data []byte) (filepath *os.File, err error) {
+
+	tmpFile, err := ioutil.TempFile("", "data2file")
+	if err != nil {
+		return nil, fmt.Errorf("data2file(): Unable to create temp file.")
+	}
+	defer tmpFile.Close()
+
+	_, err = tmpFile.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to write data to %s", tmpFile.Name())
+	}
+	return tmpFile, nil
+}
+
+func NewSectionator(filename string) *Sectionator {
+	this := &Sectionator{
+		Filename: filename,
+	}
+	return this
+}
+
+// func attachBitcodePathToObject2(bcFile, this.Filename string, compilerExecName string, pr parserResult) (success bool) {
+func (this *Sectionator) WriteSection(data []byte, segmentName string, sectionName string) (err error) {
 	// We can only attach a bitcode path to certain file types
-	switch filepath.Ext(objFile) {
+	extension := filepath.Ext(this.Filename)
+	switch extension {
 	case
 		".o",
 		".lo",
 		".os",
 		".So",
 		".po":
-		// Store bitcode path to temp file
-		var absBcPath, _ = filepath.Abs(bcFile)
-		tmpContent := []byte(absBcPath + "\n")
-		tmpFile, err := ioutil.TempFile("", "gllvm")
-		if err != nil {
-			LogError("attachBitcodePathToObject: %v\n", err)
-			return
-		}
-		defer CheckDefer(func() error { return os.Remove(tmpFile.Name()) })
-		if _, err := tmpFile.Write(tmpContent); err != nil {
-			LogError("attachBitcodePathToObject: %v\n", err)
-			return
-		}
-		if err := tmpFile.Close(); err != nil {
-			LogError("attachBitcodePathToObject: %v\n", err)
-			return
-		}
+	default:
+		return fmt.Errorf("Extension %s not supported.", extension)
+	}
 
-		// Let's write the bitcode section, and the flags section if requested
-		var attachCmd string
-		var attachCmdArgs []string
-		if runtime.GOOS == osDARWIN {
-			if len(LLVMLd) > 0 {
-				attachCmd = LLVMLd
-			} else {
-				attachCmd = "ld"
-			}
-			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name()}
+	// Sanity checks
+	if len(segmentName) > 0 && runtime.GOOS != osDARWIN {
+		return fmt.Errorf("Segment name requires Mac OS")
+	}
 
-			if LLVMEmbedFrontendArgs {
-				tmpFlagFile, err := ioutil.TempFile("", "gllvm_flags")
-				if err != nil {
-					LogError("attachBitcodePathToObject: %v\n", err)
-				}
-				defer CheckDefer(func() error { return os.Remove(tmpFlagFile.Name()) })
+	if len(segmentName) == 0 && runtime.GOOS != osLINUX {
+		return fmt.Errorf("Empty segment is only compatible with Liux")
+	}
 
-				tmpFlagContent := buildFlagFile(compilerExecName, pr)
-				if _, err := tmpFlagFile.Write(tmpFlagContent); err != nil {
-					LogError("attachBitcodePathToObject: %v\n", err)
-					return
-				}
-				if err := tmpFlagFile.Close(); err != nil {
-					LogError("attachBitcodePathToObject: %v\n", err)
-					return
-				}
+	tmpFile, err := data2file(data)
+	if err != nil {
+		return fmt.Errorf("Unable to create temp file")
+	}
+	defer os.Remove(tmpFile.Name())
 
-				attachCmdArgs = append(attachCmdArgs, "-sectcreate", DarwinSegmentName, DarwinFrontendFlagsSectionName, tmpFlagFile.Name())
-				LogInfo("attachCmdArgs")
-			}
-
-			attachCmdArgs = append(attachCmdArgs, "-o", objFile)
+	var attachCmd string
+	var attachCmdArgs []string
+	if runtime.GOOS == osDARWIN {
+		if len(LLVMLd) > 0 {
+			attachCmd = LLVMLd
 		} else {
-			if len(LLVMObjcopy) > 0 {
-				attachCmd = LLVMObjcopy
-			} else {
-				attachCmd = "objcopy"
-			}
-			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name()}
-
-			if LLVMEmbedFrontendArgs {
-				tmpFlagFile, err := ioutil.TempFile("", "gllvm_flags")
-				if err != nil {
-					LogError("attachBitcodePathToObject: %v\n", err)
-				}
-				defer CheckDefer(func() error { return os.Remove(tmpFlagFile.Name()) })
-
-				tmpFlagContent := buildFlagFile(compilerExecName, pr)
-				if _, err := tmpFlagFile.Write(tmpFlagContent); err != nil {
-					LogError("attachBitcodePathToObject: %v\n", err)
-					return
-				}
-				if err := tmpFlagFile.Close(); err != nil {
-					LogError("attachBitcodePathToObject: %v\n", err)
-					return
-				}
-
-				attachCmdArgs = append(attachCmdArgs, "--add-section", ELFFrontendFlagsSectionName+"="+tmpFlagFile.Name())
-				LogInfo("attachCmdArgs")
-			}
-
-			attachCmdArgs = append(attachCmdArgs, objFile)
+			attachCmd = "ld"
 		}
+		attachCmdArgs = []string{"-r", "-keep_private_externs", this.Filename, "-sectcreate", segmentName, sectionName, tmpFile.Name()}
+		attachCmdArgs = append(attachCmdArgs, "-o", this.Filename)
 
-		// Run the attach command and ignore errors
-		_, nerr := execCmd(attachCmd, attachCmdArgs, "")
-		if nerr != nil {
-			LogWarning("attachBitcodePathToObject: %v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
-			return
+	} else {
+		if len(LLVMObjcopy) > 0 {
+			attachCmd = LLVMObjcopy
+		} else {
+			attachCmd = "objcopy"
 		}
+		attachCmdArgs = []string{"--add-section", sectionName + "=" + tmpFile.Name()}
+		attachCmdArgs = append(attachCmdArgs, this.Filename)
+	}
 
-		// Copy bitcode file to store, if necessary
-		if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
-			destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
-			in, _ := os.Open(absBcPath)
-			defer CheckDefer(func() error { return in.Close() })
-			out, _ := os.Create(destFilePath)
-			defer CheckDefer(func() error { return out.Close() })
-			_, err := io.Copy(out, in)
-			if err != nil {
-				LogWarning("Copying bc to bitcode archive %v failed because %v\n", destFilePath, err)
-				return
-			}
-			err = out.Sync()
-			if err != nil {
-				LogWarning("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
-				return
-			}
+	// Run the attach command and ignore errors
+	_, nerr := execCmd(attachCmd, attachCmdArgs, "")
+	if nerr != nil {
+		return fmt.Errorf("WriteSection: %v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
+	}
 
+	return nil
+}
+
+func (this *Sectionator) ReadSection(sectionName string) (data []byte, err error) {
+	sectionName = platformizeSectionName(sectionName)
+
+	switch platform := runtime.GOOS; platform {
+	case osFREEBSD, osLINUX:
+		objFile, err := elf.Open(this.Filename)
+		if err != nil {
+			LogError("%v\n", err)
+			return nil, err
+		}
+		section := objFile.Section(sectionName)
+		if section == nil {
+			LogError("%v\n", err)
+			return nil, err
+		}
+		data, err = section.Data()
+		if err != nil {
+			LogError("%v\n", err)
+			return nil, err
+		}
+	case osDARWIN:
+		objFile, err := macho.Open(this.Filename)
+		if err != nil {
+			return nil, err
+		}
+		section := objFile.Section(sectionName)
+		if section != nil {
+			return nil, err
+		}
+		data, err = section.Data()
+		if err != nil {
+			return nil, err
 		}
 	}
-	success = true
-	return
+
+	err = nil
+	return data, err
+}
+
+func platformizeSectionName(name string) string {
+	switch runtime.GOOS {
+	case osDARWIN:
+		return "__" + name
+	case osLINUX, osFREEBSD:
+		return "." + name
+	default:
+		return "<ERROR>"
+	}
+}
+
+func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, pr parserResult) (err error) {
+	var absBcPath, _ = filepath.Abs(bcFile)
+	bitcodeData := []byte(absBcPath + "\n")
+
+	var segmentName = ""
+
+	if runtime.GOOS == osDARWIN {
+		segmentName = DarwinSegmentName
+	}
+	sectionator := NewSectionator(objFile)
+	sectionator.WriteSection(bitcodeData, segmentName, platformizeSectionName(SectionNameBitCode))
+
+	flagContents := jsonEncodeFlags(compilerExecName, pr)
+	sectionator.WriteSection(flagContents, segmentName, platformizeSectionName(SectionNameFlags))
+
+	// Copy bitcode file to store, if necessary
+	if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
+		destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
+		in, _ := os.Open(absBcPath)
+		defer CheckDefer(func() error { return in.Close() })
+		out, _ := os.Create(destFilePath)
+		defer CheckDefer(func() error { return out.Close() })
+		_, err := io.Copy(out, in)
+		if err != nil {
+			return fmt.Errorf("Copying bc to bitcode archive %v failed because %v\n", destFilePath, err)
+		}
+		err = out.Sync()
+		if err != nil {
+			return fmt.Errorf("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
+		}
+	}
+
+	return nil
+
 }
 
 func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []string) {
