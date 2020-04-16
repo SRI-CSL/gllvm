@@ -2,12 +2,13 @@ package test
 
 import (
 	"fmt"
-	"github.com/SRI-CSL/gllvm/shared"
 	"testing"
+
+	"github.com/SRI-CSL/gllvm/shared"
 )
 
 func Test_basic_functionality(t *testing.T) {
-	args := []string{"../data/helloworld.c", "-o", "../data/hello"}
+	args := []string{"../data/helloworld.c", "../data/testobj.c", "-o", "../data/hello"}
 
 	exitCode := shared.Compile(args, "clang")
 

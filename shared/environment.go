@@ -47,8 +47,8 @@ const (
 	// SectionNameFlags is the name of our ELF section of frontend flags for each translation unit
 	SectionNameFlags = "gllvm_flags"
 
-	//DarwinSegmentName is the name of our MACH-O segment of "bitcode paths".
-	DarwinSegmentName = "__WLLVM"
+	//SegmentNameDarwin is the name of our MACH-O segment of "bitcode paths".
+	SegmentNameDarwin = "__WLLVM"
 
 	// //DarwinSectionName is the name of our MACH-O section of "bitcode paths".
 	// DarwinSectionName = "__llvm_bc"

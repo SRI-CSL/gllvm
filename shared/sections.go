@@ -25,9 +25,9 @@ import (
 // }
 
 // data2file takes byte contents and writes them to a file
-func data2file(data []byte) (filepath *os.File, err error) {
+func data2file(data []byte, tag string) (filepath *os.File, err error) {
 
-	tmpFile, err := ioutil.TempFile("", "data2file")
+	tmpFile, err := ioutil.TempFile("", "data2file-"+tag+"-")
 	if err != nil {
 		return nil, fmt.Errorf("data2file(): Unable to create temp file")
 	}
@@ -41,7 +41,7 @@ func data2file(data []byte) (filepath *os.File, err error) {
 }
 
 // SectionWrite writes data to sectionName of an elf or mach file
-func SectionWrite(filename string, data []byte, segmentName string, sectionName string) (err error) {
+func SectionWrite(filename string, data []byte, sectionName string) (err error) {
 	// We can only attach a bitcode path to certain file types
 	extension := filepath.Ext(filename)
 	switch extension {
@@ -50,21 +50,16 @@ func SectionWrite(filename string, data []byte, segmentName string, sectionName 
 		".lo",
 		".os",
 		".So",
-		".po":
+		".po",
+		"":
 	default:
 		return fmt.Errorf("Extension %s not supported", extension)
 	}
 
-	// Sanity checks
-	if len(segmentName) > 0 && runtime.GOOS != osDARWIN {
-		return fmt.Errorf("Segment name requires Mac OS")
-	}
+	segmentName := SegmentNameDarwin
+	sectionName = PlatformizeSectionName(sectionName)
 
-	if len(segmentName) == 0 && runtime.GOOS != osLINUX {
-		return fmt.Errorf("Empty segment is only compatible with Liux")
-	}
-
-	tmpFile, err := data2file(data)
+	tmpFile, err := data2file(data, filepath.Base(filename))
 	if err != nil {
 		return fmt.Errorf("Unable to create temp file")
 	}
@@ -102,7 +97,7 @@ func SectionWrite(filename string, data []byte, segmentName string, sectionName 
 
 // SectionRead reads elf or mach sectionName from filename
 func SectionRead(filename string, sectionName string) (data []byte, err error) {
-	sectionName = platformizeSectionName(sectionName)
+	sectionName = PlatformizeSectionName(sectionName)
 
 	switch platform := runtime.GOOS; platform {
 	case osFREEBSD, osLINUX:
@@ -137,7 +132,8 @@ func SectionRead(filename string, sectionName string) (data []byte, err error) {
 	return data, err
 }
 
-func platformizeSectionName(name string) string {
+// PlatformizeSectionName appends a "." to section names for linux and "__" for Mac
+func PlatformizeSectionName(name string) string {
 	switch runtime.GOOS {
 	case osDARWIN:
 		return "__" + name

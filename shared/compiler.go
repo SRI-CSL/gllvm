@@ -40,7 +40,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 )
@@ -52,13 +51,10 @@ type bitcodeToObjectLink struct {
 
 // BuildFlags is the container for info about command line arguments and build flags
 type BuildFlags struct {
+	Target           string
 	CompilerExecName string
-	Arguments        []string
-	Files            []string
-	ObjectFiles      []string
-	OutputFilename   string
-	CompileArgs      []string
-	LinkArgs         []string
+	Args             []string
+	ParserResult     parserResult
 }
 
 //Compile wraps a call to the compiler with the given args.
@@ -142,15 +138,12 @@ func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks 
 	}
 }
 
-func jsonEncodeFlags(compilerExecName string, pr parserResult) []byte {
+func jsonEncodeFlags(target string, compilerExecName string, args []string, pr parserResult) []byte {
 	flags := &BuildFlags{
+		Target:           target,
 		CompilerExecName: compilerExecName,
-		Arguments:        pr.InputList,
-		Files:            pr.InputFiles,
-		ObjectFiles:      pr.ObjectFiles,
-		OutputFilename:   pr.OutputFilename,
-		CompileArgs:      pr.CompileArgs,
-		LinkArgs:         pr.LinkArgs,
+		Args:             args,
+		ParserResult:     pr,
 	}
 
 	flagsBytes, err := json.Marshal(flags)
@@ -158,22 +151,15 @@ func jsonEncodeFlags(compilerExecName string, pr parserResult) []byte {
 		LogError("jsonEncodeFlags(): Unable to JSON encode parserResults")
 		return []byte("ERROR")
 	}
-	return []byte(flagsBytes)
+	flagsBytes = append(flagsBytes, 0xa)
+	return flagsBytes
 }
 
 func attachBitcodePathToObject(bcFile, objFile string, compilerExecName string, pr parserResult) (err error) {
 	var absBcPath, _ = filepath.Abs(bcFile)
 	bitcodeData := []byte(absBcPath + "\n")
 
-	var segmentName = ""
-
-	if runtime.GOOS == osDARWIN {
-		segmentName = DarwinSegmentName
-	}
-	SectionWrite(objFile, bitcodeData, segmentName, platformizeSectionName(SectionNameBitCode))
-
-	flagContents := jsonEncodeFlags(compilerExecName, pr)
-	SectionWrite(objFile, flagContents, segmentName, platformizeSectionName(SectionNameFlags))
+	SectionWrite(objFile, bitcodeData, SectionNameBitCode)
 
 	// Copy bitcode file to store, if necessary
 	if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
@@ -212,6 +198,7 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 	} else {
 		LogInfo("LINKING: %v %v", compilerExecName, args)
 	}
+
 }
 
 // Tries to build the specified source file to object
@@ -223,6 +210,14 @@ func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, o
 		LogError("Failed to build object file for %s because: %v\n", srcFile, err)
 		return
 	}
+
+	flagContents := jsonEncodeFlags(objFile, compilerExecName, args, pr)
+	err = SectionWrite(objFile, flagContents, SectionNameFlags)
+	if err != nil {
+		LogError("buildObjectFile(): Unable to write section")
+		return false
+	}
+
 	success = true
 	return
 }
@@ -238,6 +233,7 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 		LogError("Failed to build bitcode file for %s because: %v\n", srcFile, err)
 		return
 	}
+
 	success = true
 	return
 }

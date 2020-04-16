@@ -2,6 +2,10 @@ develop:
 	go install github.com/SRI-CSL/gllvm/cmd/...
 
 
+
+dumpsections: check
+	readelf -x .gllvm_flags data/hello
+
 deps:
 	sudo apt install clang llvm
 	touch $@
