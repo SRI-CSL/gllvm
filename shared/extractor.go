@@ -253,8 +253,7 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 
 func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
-	sectionator := NewSectionator(ea.InputFile)
-	sectionData, err := sectionator.ReadSection(SectionNameBitCode)
+	sectionData, err := SectionRead(ea.InputFile, SectionNameBitCode)
 
 	if err != nil {
 		LogError("Unable to read section %s in %s.", SectionNameBitCode, ea.InputFile)
@@ -674,59 +673,14 @@ func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	return
 }
 
-// func extractSectionDarwin(inputFile string) (contents []string) {
-// 	machoFile, err := macho.Open(inputFile)
-// 	if err != nil {
-// 		LogError("Mach-O file %s could not be read.", inputFile)
-// 		return
-// 	}
-// 	sectionName := platformizeSectionName(SectionNameBitCode)
-// 	section := machoFile.Section(sectionName)
-// 	if section == nil {
-// 		LogWarning("The %s section of %s is missing!\n", sectionName, inputFile)
-// 		return
-// 	}
-// 	sectionContents, errContents := section.Data()
-// 	if errContents != nil {
-// 		LogWarning("Error reading the %s section of Mach-O file %s.", sectionName, inputFile)
-// 		return
-// 	}
-// 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
-// 	return
-// }
-
-// func extractSectionUnix(inputFile string) (contents []string) {
-// 	elfFile, err := elf.Open(inputFile)
-// 	if err != nil {
-// 		LogError("ELF file %s could not be read.", inputFile)
-// 		return
-// 	}
-// 	sectionName := platformizeSectionName(SectionNameBitCode)
-
-// 	section := elfFile.Section(sectionName)
-// 	if section == nil {
-// 		LogWarning("Error reading the %s section of ELF file %s.", sectionName, inputFile)
-// 		return
-// 	}
-// 	sectionContents, errContents := section.Data()
-// 	if errContents != nil {
-// 		LogWarning("Error reading the %s section of ELF file %s.", sectionName, inputFile)
-// 		return
-// 	}
-// 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
-// 	return
-// }
-
 func extractBitCodePaths(inputFile string) (contents []string) {
-	sectionator := NewSectionator(inputFile)
-	data, err := sectionator.ReadSection(SectionNameBitCode)
+	data, err := SectionRead(inputFile, SectionNameBitCode)
 
 	if err != nil {
 		LogError("Unable to read section %s in %s.", SectionNameBitCode, inputFile)
 		return nil
 	}
 	contents = strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
-	fmt.Printf("ZZZ extractBitCodePaths(): %v\n", contents)
 	return contents
 }
 
