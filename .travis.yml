@@ -12,8 +12,8 @@ matrix:
       dist: trusty
       sudo: required
 # brew install llvm no longer works... can I be bothered fixing it?
-    - os: osx
-      osx_image: xcode9.3
+#    - os: osx
+#      osx_image: xcode9.3
 
 
 addons:
