@@ -307,7 +307,10 @@ func handleThinArchive(ea ExtractionArgs) (success bool) {
 	for index, obj := range objectFiles {
 		LogInfo("obj = '%v'\n", obj)
 		if len(obj) > 0 {
-			artifacts := ea.Extractor(obj)
+			artifacts, success := ea.Extractor(obj)
+			if !success {
+				return
+			}
 			LogInfo("\t%v\n", artifacts)
 			artifactFiles = append(artifactFiles, artifacts...)
 			for _, bc := range artifacts {
@@ -460,7 +463,10 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 
 			if obj != "" && extractFile(ea, inputFile, obj, i) {
 
-				artifacts := ea.Extractor(obj)
+				artifacts, success := ea.Extractor(obj)
+				if !success {
+					return
+				}
 				LogInfo("\t%v\n", artifacts)
 				artifactFiles = append(artifactFiles, artifacts...)
 				for _, bc := range artifacts {
