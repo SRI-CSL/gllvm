@@ -257,7 +257,10 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 
 func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
-	artifactPaths := ea.Extractor(ea.InputFile)
+	artifactPaths, success := ea.Extractor(ea.InputFile)
+	if !success {
+		return
+	}
 
 	if len(artifactPaths) < 20 {
 		// naert: to avoid saturating the log when dealing with big file lists
@@ -671,40 +674,46 @@ func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	return
 }
 
-func extractSectionDarwin(inputFile string) (contents []string) {
+func extractSectionDarwin(inputFile string) (contents []string, success bool) {
 	machoFile, err := macho.Open(inputFile)
 	if err != nil {
 		LogError("Mach-O file %s could not be read.", inputFile)
+		success = false
 		return
 	}
 	section := machoFile.Section(DarwinSectionName)
 	if section == nil {
-		LogWarning("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
+		LogError("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
+		success = false
 		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		LogWarning("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
+		LogError("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
+		success = false
 		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
 	return
 }
 
-func extractSectionUnix(inputFile string) (contents []string) {
+func extractSectionUnix(inputFile string) (contents []string, success bool) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
 		LogError("ELF file %s could not be read.", inputFile)
+		success = false
 		return
 	}
 	section := elfFile.Section(ELFSectionName)
 	if section == nil {
-		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		LogError("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		success = false
 		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		LogError("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		success = false
 		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
