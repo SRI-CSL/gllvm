@@ -67,7 +67,7 @@ type ExtractionArgs struct {
 	LlvmArchiverName    string
 	ArchiverName        string
 	ArArgs              []string
-	Extractor           func(string) []string
+	Extractor           func(string) ([]string, bool)
 }
 
 //for printing out the parsed arguments, some have been skipped.
