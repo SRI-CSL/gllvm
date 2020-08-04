@@ -257,7 +257,8 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 
 func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
-	artifactPaths, success := ea.Extractor(ea.InputFile)
+	var artifactPaths []string
+	artifactPaths, success = ea.Extractor(ea.InputFile)
 	if !success {
 		return
 	}
@@ -307,7 +308,8 @@ func handleThinArchive(ea ExtractionArgs) (success bool) {
 	for index, obj := range objectFiles {
 		LogInfo("obj = '%v'\n", obj)
 		if len(obj) > 0 {
-			artifacts, success := ea.Extractor(obj)
+			var artifacts []string
+			artifacts, success = ea.Extractor(obj)
 			if !success {
 				return
 			}
@@ -462,8 +464,8 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 		for i := 1; i <= instance; i++ {
 
 			if obj != "" && extractFile(ea, inputFile, obj, i) {
-
-				artifacts, success := ea.Extractor(obj)
+				var artifacts []string
+				artifacts, success = ea.Extractor(obj)
 				if !success {
 					return
 				}
