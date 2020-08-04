@@ -58,6 +58,7 @@ type ExtractionArgs struct {
 	SortBitcodeFiles    bool // sort the arguments to linking and archiving (debugging too)
 	BuildBitcodeModule  bool // buld an archive rather than a module
 	KeepTemp            bool // keep temporary linking folder
+	StrictExtract       bool // turn extraction failures into errors
 	LinkArgSize         int  // maximum size of a llvm-link command line
 	InputType           int
 	ObjectTypeInArchive int // Type of file that can be put into an archive
@@ -67,7 +68,7 @@ type ExtractionArgs struct {
 	LlvmArchiverName    string
 	ArchiverName        string
 	ArArgs              []string
-	Extractor           func(string) []string
+	Extractor           func(string) ([]string, bool)
 }
 
 //for printing out the parsed arguments, some have been skipped.
@@ -85,10 +86,11 @@ ea.OutputFile:         %v
 ea.LlvmArchiverName:   %v
 ea.LlvmLinkerName:     %v
 ea.ArchiverName:       %v
+ea.StrictExtract:      %v
 `
 	return fmt.Sprintf(format, ea.Verbose, ea.WriteManifest, ea.SortBitcodeFiles, ea.BuildBitcodeModule,
 		ea.KeepTemp, ea.LinkArgSize, ea.InputFile, ea.OutputFile, ea.LlvmArchiverName,
-		ea.LlvmLinkerName, ea.ArchiverName)
+		ea.LlvmLinkerName, ea.ArchiverName, ea.StrictExtract)
 }
 
 //ParseSwitches parses the command line into an ExtractionArgs object.
@@ -106,6 +108,7 @@ func ParseSwitches(args []string) (ea ExtractionArgs) {
 	flagSet.StringVar(&ea.LlvmLinkerName, "l", "llvm-link", "the llvm linker (i.e. llvm-link)")
 	flagSet.IntVar(&ea.LinkArgSize, "n", 0, "maximum llvm-link command line size (in bytes)")
 	flagSet.BoolVar(&ea.KeepTemp, "t", false, "keep temporary linking folder")
+	flagSet.BoolVar(&ea.StrictExtract, "S", false, "exit with an error if extraction fails")
 
 	err := flagSet.Parse(args[1:])
 
@@ -257,7 +260,11 @@ func resolveTool(defaultPath string, envPath string, usrPath string) (path strin
 
 func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
-	artifactPaths := ea.Extractor(ea.InputFile)
+	var artifactPaths []string
+	artifactPaths, success = ea.Extractor(ea.InputFile)
+	if !success && ea.StrictExtract {
+		return
+	}
 
 	if len(artifactPaths) < 20 {
 		// naert: to avoid saturating the log when dealing with big file lists
@@ -304,7 +311,11 @@ func handleThinArchive(ea ExtractionArgs) (success bool) {
 	for index, obj := range objectFiles {
 		LogInfo("obj = '%v'\n", obj)
 		if len(obj) > 0 {
-			artifacts := ea.Extractor(obj)
+			var artifacts []string
+			artifacts, success = ea.Extractor(obj)
+			if !success && ea.StrictExtract {
+				return
+			}
 			LogInfo("\t%v\n", artifacts)
 			artifactFiles = append(artifactFiles, artifacts...)
 			for _, bc := range artifacts {
@@ -456,8 +467,11 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 		for i := 1; i <= instance; i++ {
 
 			if obj != "" && extractFile(ea, inputFile, obj, i) {
-
-				artifacts := ea.Extractor(obj)
+				var artifacts []string
+				artifacts, success = ea.Extractor(obj)
+				if !success && ea.StrictExtract {
+					return
+				}
 				LogInfo("\t%v\n", artifacts)
 				artifactFiles = append(artifactFiles, artifacts...)
 				for _, bc := range artifacts {
@@ -671,7 +685,7 @@ func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	return
 }
 
-func extractSectionDarwin(inputFile string) (contents []string) {
+func extractSectionDarwin(inputFile string) (contents []string, success bool) {
 	machoFile, err := macho.Open(inputFile)
 	if err != nil {
 		LogError("Mach-O file %s could not be read.", inputFile)
@@ -679,19 +693,20 @@ func extractSectionDarwin(inputFile string) (contents []string) {
 	}
 	section := machoFile.Section(DarwinSectionName)
 	if section == nil {
-		LogWarning("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
+		LogError("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
 		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		LogWarning("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
+		LogError("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
 		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
+	success = true
 	return
 }
 
-func extractSectionUnix(inputFile string) (contents []string) {
+func extractSectionUnix(inputFile string) (contents []string, success bool) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
 		LogError("ELF file %s could not be read.", inputFile)
@@ -699,15 +714,16 @@ func extractSectionUnix(inputFile string) (contents []string) {
 	}
 	section := elfFile.Section(ELFSectionName)
 	if section == nil {
-		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		LogError("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
 		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
-		LogWarning("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
+		LogError("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
 		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
+	success = true
 	return
 }
 
