@@ -52,9 +52,10 @@ package shared
 //  1.2.6 March 24 2020 Added the support for the LLVM_BITCODE_GENERATION_FLAGS environment variable.
 //                      See https://github.com/travitch/whole-program-llvm/issues/96 for details.
 //
+//  1.2.7 August 4 2020 William Woodruff's (@woodruffw) tweaks to the get-bc command (a strict mode).
 
-const gllvmVersion = "1.2.6"
-const gllvmReleaseDate = "March 24 2020"
+const gllvmVersion = "1.2.7"
+const gllvmReleaseDate = "August 4 2020"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
