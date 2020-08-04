@@ -686,22 +686,20 @@ func extractSectionDarwin(inputFile string) (contents []string, success bool) {
 	machoFile, err := macho.Open(inputFile)
 	if err != nil {
 		LogError("Mach-O file %s could not be read.", inputFile)
-		success = false
 		return
 	}
 	section := machoFile.Section(DarwinSectionName)
 	if section == nil {
 		LogError("The %s section of %s is missing!\n", DarwinSectionName, inputFile)
-		success = false
 		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
 		LogError("Error reading the %s section of Mach-O file %s.", DarwinSectionName, inputFile)
-		success = false
 		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
+	success = true
 	return
 }
 
@@ -709,22 +707,20 @@ func extractSectionUnix(inputFile string) (contents []string, success bool) {
 	elfFile, err := elf.Open(inputFile)
 	if err != nil {
 		LogError("ELF file %s could not be read.", inputFile)
-		success = false
 		return
 	}
 	section := elfFile.Section(ELFSectionName)
 	if section == nil {
 		LogError("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
-		success = false
 		return
 	}
 	sectionContents, errContents := section.Data()
 	if errContents != nil {
 		LogError("Error reading the %s section of ELF file %s.", ELFSectionName, inputFile)
-		success = false
 		return
 	}
 	contents = strings.Split(strings.TrimSuffix(string(sectionContents), "\n"), "\n")
+	success = true
 	return
 }
 
