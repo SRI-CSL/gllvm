@@ -58,6 +58,7 @@ type ExtractionArgs struct {
 	SortBitcodeFiles    bool // sort the arguments to linking and archiving (debugging too)
 	BuildBitcodeModule  bool // buld an archive rather than a module
 	KeepTemp            bool // keep temporary linking folder
+	StrictExtract       bool // turn extraction failures into errors
 	LinkArgSize         int  // maximum size of a llvm-link command line
 	InputType           int
 	ObjectTypeInArchive int // Type of file that can be put into an archive
@@ -85,10 +86,11 @@ ea.OutputFile:         %v
 ea.LlvmArchiverName:   %v
 ea.LlvmLinkerName:     %v
 ea.ArchiverName:       %v
+ea.StrictExtract:      %v
 `
 	return fmt.Sprintf(format, ea.Verbose, ea.WriteManifest, ea.SortBitcodeFiles, ea.BuildBitcodeModule,
 		ea.KeepTemp, ea.LinkArgSize, ea.InputFile, ea.OutputFile, ea.LlvmArchiverName,
-		ea.LlvmLinkerName, ea.ArchiverName)
+		ea.LlvmLinkerName, ea.ArchiverName, ea.StrictExtract)
 }
 
 //ParseSwitches parses the command line into an ExtractionArgs object.
@@ -106,6 +108,7 @@ func ParseSwitches(args []string) (ea ExtractionArgs) {
 	flagSet.StringVar(&ea.LlvmLinkerName, "l", "llvm-link", "the llvm linker (i.e. llvm-link)")
 	flagSet.IntVar(&ea.LinkArgSize, "n", 0, "maximum llvm-link command line size (in bytes)")
 	flagSet.BoolVar(&ea.KeepTemp, "t", false, "keep temporary linking folder")
+	flagSet.BoolVar(&ea.StrictExtract, "S", false, "exit with an error if extraction fails")
 
 	err := flagSet.Parse(args[1:])
 
@@ -259,7 +262,7 @@ func handleExecutable(ea ExtractionArgs) (success bool) {
 	// get the list of bitcode paths
 	var artifactPaths []string
 	artifactPaths, success = ea.Extractor(ea.InputFile)
-	if !success {
+	if !success && ea.StrictExtract {
 		return
 	}
 
@@ -310,7 +313,7 @@ func handleThinArchive(ea ExtractionArgs) (success bool) {
 		if len(obj) > 0 {
 			var artifacts []string
 			artifacts, success = ea.Extractor(obj)
-			if !success {
+			if !success && ea.StrictExtract {
 				return
 			}
 			LogInfo("\t%v\n", artifacts)
@@ -466,7 +469,7 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 			if obj != "" && extractFile(ea, inputFile, obj, i) {
 				var artifacts []string
 				artifacts, success = ea.Extractor(obj)
-				if !success {
+				if !success && ea.StrictExtract {
 					return
 				}
 				LogInfo("\t%v\n", artifacts)
