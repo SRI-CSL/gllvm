@@ -7,21 +7,6 @@ Then do:
 go install github.com/SRI-CSL/gllvm/cmd/...
 
 
-To format for the badge:
-
-gofmt -s -w shared/*.go tests/*.go cmd/*/*.go
-
-
-For linting:
-
-https://github.com/alecthomas/gometalinter
-
-brew tap alecthomas/homebrew-tap
-brew install gometalinter
-
-gometalinter ./...
-
-
 For keeping up with the Jones:
 
 clang -cc1 --help
