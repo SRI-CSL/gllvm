@@ -119,7 +119,7 @@ func parse(argList []string) parserResult {
 		"-W": {0, pr.compileOnlyCallback},
 
 		"-emit-llvm": {0, pr.emitLLVMCallback},
-		"-flto":      {0, pr.emitLLVMCallback},
+		"-flto":      {0, pr.linkTimeOptimizationCallback},
 
 		"-pipe":                  {0, pr.compileUnaryCallback},
 		"-undef":                 {0, pr.compileUnaryCallback},
@@ -429,6 +429,10 @@ func (pr *parserResult) compileOnlyCallback(_ string, _ []string) {
 
 func (pr *parserResult) emitLLVMCallback(_ string, _ []string) {
 	pr.IsCompileOnly = true
+	pr.IsEmitLLVM = true
+}
+
+func (pr *parserResult) linkTimeOptimizationCallback(_ string, _ []string) {
 	pr.IsEmitLLVM = true
 }
 
