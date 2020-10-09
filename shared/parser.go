@@ -82,6 +82,12 @@ func skipBitcodeGeneration(pr parserResult) bool {
 		(pr.IsDependencyOnly && !pr.IsCompileOnly) ||
 		pr.IsPreprocessOnly ||
 		pr.IsPrintOnly {
+		// Lots of reasons why we don't produce bitcode. But IsEmitLLVM is the most unusual.
+		if pr.IsEmitLLVM {
+			// Either we are being called with -emit-llvm or -flto. Either way all bets are off.
+			LogWarning("The compiler is producing bitcode instead of object code. get-bc is unlikely to work: %v\n", pr.OutputFilename)
+		}
+
 		return true
 	}
 	return false
@@ -113,6 +119,7 @@ func parse(argList []string) parserResult {
 		"-W": {0, pr.compileOnlyCallback},
 
 		"-emit-llvm": {0, pr.emitLLVMCallback},
+		"-flto":      {0, pr.emitLLVMCallback},
 
 		"-pipe":                  {0, pr.compileUnaryCallback},
 		"-undef":                 {0, pr.compileUnaryCallback},
