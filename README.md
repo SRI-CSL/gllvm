@@ -243,6 +243,14 @@ produces the bitcode. This can be fulfilled by setting the
 `LLVM_BITCODE_GENERATION_FLAGS` environment variable to the desired
 flags, for example `"-flto -fwhole-program-vtables"`.
 
+## Beware of link time optimization.
+
+If the package you are building happens to take advantage of recent `clang` developments 
+such as *link time optimization* (indicated by the presence of compiler flag `-flto`), then
+your build is unlikely to produce anything that `get-bc` will work on. This is to be
+expected.
+
+
 
 ## License
 
