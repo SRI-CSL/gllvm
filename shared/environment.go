@@ -86,7 +86,7 @@ var LLVMLd string
 //LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
 var LLVMbcGen []string
 
-//LLVMLtoLDFLAGS is the list of extra flags to pass to the linking steps, when unde -flto
+//LLVMLtoLDFLAGS is the list of extra flags to pass to the linking steps, when under -flto
 var LLVMLtoLDFLAGS []string
 
 const (
@@ -116,7 +116,7 @@ func init() {
 
 // PrintEnvironment is used for printing the aspects of the environment that concern us
 func PrintEnvironment() {
-	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen}
+	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen, envltolink}
 
 	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {
