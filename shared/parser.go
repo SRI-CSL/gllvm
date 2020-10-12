@@ -237,6 +237,8 @@ func Parse(argList []string) ParserResult {
 		"-mskip-rax-setup":             {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		"-mindirect-branch-register":   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 
+		"-mllvm": {1, pr.compileUnaryCallback}, //iam: chromium
+
 		"-A": {1, pr.compileBinaryCallback},
 		"-D": {1, pr.compileBinaryCallback},
 		"-U": {1, pr.compileBinaryCallback},
@@ -275,7 +277,12 @@ func Parse(argList []string) ParserResult {
 		"-g":                    {0, pr.compileUnaryCallback},
 		"-g0":                   {0, pr.compileUnaryCallback},
 		"-g1":                   {0, pr.compileUnaryCallback},
+		"-g2":                   {0, pr.compileUnaryCallback},
+		"-g3":                   {0, pr.compileUnaryCallback},
 		"-ggdb":                 {0, pr.compileUnaryCallback},
+		"-ggdb0":                {0, pr.compileUnaryCallback},
+		"-ggdb1":                {0, pr.compileUnaryCallback},
+		"-ggdb2":                {0, pr.compileUnaryCallback},
 		"-ggdb3":                {0, pr.compileUnaryCallback},
 		"-gdwarf":               {0, pr.compileUnaryCallback},
 		"-gdwarf-2":             {0, pr.compileUnaryCallback},
@@ -358,6 +365,7 @@ func Parse(argList []string) ParserResult {
 		{`^-W[l][^,].*$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: tor has a few -Wl...
 		{`^-fsanitize=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-fuse-ld=.+$`, flagInfo{0, pr.linkUnaryCallback}}, //iam:  musl stuff
+		{`^-flto=.+$`, flagInfo{0, pr.clinkTimeOptimizationCallback}},
 		{`^-f.+$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^-rtlib=.+$`, flagInfo{0, pr.linkUnaryCallback}},
 		{`^-std=.+$`, flagInfo{0, pr.compileUnaryCallback}},
