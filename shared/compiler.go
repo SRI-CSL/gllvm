@@ -53,19 +53,21 @@ type bitcodeToObjectLink struct {
 func Compile(args []string, compiler string) (exitCode int) {
 
 	exitCode = 0
-	//in the configureOnly case we have to know the exit code of the compile
-	//because that is how configure figures out what it can and cannot do.
+	// in the configureOnly case we have to know the exit code of the compile
+	// because that is how configure figures out what it can and cannot do.
 
 	ok := true
 
 	compilerExecName := GetCompilerExecName(compiler)
 
-	pr := parse(args)
+	pr := Parse(args)
 
 	var wg sync.WaitGroup
 
-	// If configure only or print only are set, just execute the compiler
-	if skipBitcodeGeneration(pr) {
+	LogDebug("Compile using parsed arguments:%v\n", &pr)
+
+	// If configure only, emit-llvm, flto, or print only are set, just execute the compiler
+	if pr.skipBitcodeGeneration() {
 		wg.Add(1)
 		go execCompile(compilerExecName, pr, &wg, &ok)
 		wg.Wait()
@@ -103,7 +105,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
 // new object files to link
-func buildAndAttachBitcode(compilerExecName string, pr parserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
+func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
 	defer (*wg).Done()
 
 	var hidden = !pr.IsCompileOnly
@@ -207,15 +209,18 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 	return
 }
 
-func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []string) {
+func compileTimeLinkFiles(compilerExecName string, pr ParserResult, objFiles []string) {
 	var outputFile = pr.OutputFilename
 	if outputFile == "" {
 		outputFile = "a.out"
 	}
-	args := objFiles
-	for _, larg := range pr.LinkArgs {
-		args = append(args, larg)
+	args := []string{}
+	//iam: unclear if this is necessary here
+	if pr.IsLTO {
+		args = append(args, LLVMLtoLDFLAGS...)
 	}
+	args = append(args, objFiles...)
+	args = append(args, pr.LinkArgs...)
 	args = append(args, "-o", outputFile)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
@@ -226,7 +231,7 @@ func compileTimeLinkFiles(compilerExecName string, pr parserResult, objFiles []s
 }
 
 // Tries to build the specified source file to object
-func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, objFile string) (success bool) {
+func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, objFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	args = append(args, srcFile, "-c", "-o", objFile)
 	success, err := execCmd(compilerExecName, args, "")
@@ -239,7 +244,7 @@ func buildObjectFile(compilerExecName string, pr parserResult, srcFile string, o
 }
 
 // Tries to build the specified source file to bitcode
-func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, bcFile string) (success bool) {
+func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, bcFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	//iam: 03/24/2020 extend with the LLVM_BITCODE_GENERATION_FLAGS if any.
 	args = append(args, LLVMbcGen...)
@@ -253,14 +258,57 @@ func buildBitcodeFile(compilerExecName string, pr parserResult, srcFile string, 
 	return
 }
 
-// Tries to build object file
-func execCompile(compilerExecName string, pr parserResult, wg *sync.WaitGroup, ok *bool) {
+// Tries to build object file or link...
+func execCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, ok *bool) {
 	defer (*wg).Done()
 	//iam: strickly speaking we should do more work here depending on whether this is
 	//     a compile only, a link only, or ...
 	//     But for the now, we just remove forbidden arguments
 	var success bool
 	var err error
+	// start afresh
+	arguments := []string{}
+	// we are linking rather than compiling
+	if len(pr.InputFiles) == 0 && len(pr.LinkArgs) > 0 {
+		if pr.IsLTO {
+			arguments = append(arguments, LLVMLtoLDFLAGS...)
+		}
+	}
+	//iam: this is clunky. is there a better way?
+	if len(pr.ForbiddenFlags) > 0 {
+		for _, arg := range pr.InputList {
+			found := false
+			for _, bad := range pr.ForbiddenFlags {
+				if bad == arg {
+					found = true
+					break
+				}
+			}
+			if !found {
+				arguments = append(arguments, arg)
+			}
+		}
+	} else {
+		arguments = append(arguments, pr.InputList...)
+	}
+	LogDebug("Calling execCmd(%v, %v)", compilerExecName, arguments)
+	success, err = execCmd(compilerExecName, arguments, "")
+	if !success {
+		LogError("Failed to compile using given arguments:\n%v %v\nexit status: %v\n", compilerExecName, arguments, err)
+		*ok = false
+	}
+}
+
+// Tries to build object file
+
+func oldExecCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, ok *bool) {
+	defer (*wg).Done()
+	//iam: strickly speaking we should do more work here depending on whether this is
+	//     a compile only, a link only, or ...
+	//     But for the now, we just remove forbidden arguments
+	var success bool
+	var err error
+
 	if len(pr.ForbiddenFlags) > 0 {
 		filteredArgs := pr.InputList[:0]
 		for _, arg := range pr.InputList {

@@ -86,6 +86,9 @@ var LLVMLd string
 //LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
 var LLVMbcGen []string
 
+//LLVMLtoLDFLAGS is the list of extra flags to pass to the linking steps, when unde -flto
+var LLVMLtoLDFLAGS []string
+
 const (
 	envpath    = "LLVM_COMPILER_PATH"
 	envcc      = "LLVM_CC_NAME"
@@ -102,6 +105,9 @@ const (
 	//iam: 03/24/2020 new feature to pass things like "-flto -fwhole-program-vtables"
 	// to clang during the bitcode generation step
 	envbcgen = "LLVM_BITCODE_GENERATION_FLAGS"
+	//iam: 10/11/2020 extra linking arguments to add to the linking step when we are doing
+	// link time optimization.
+	envltolink = "LTO_LINKING_FLAGS"
 )
 
 func init() {
@@ -138,6 +144,7 @@ func ResetEnvironment() {
 	LLVMObjcopy = ""
 	LLVMLd = ""
 	LLVMbcGen = []string{}
+	LLVMLtoLDFLAGS = []string{}
 }
 
 // FetchEnvironment is used in initializing our globals, it is also used in testing
@@ -158,5 +165,5 @@ func FetchEnvironment() {
 	LLVMLd = os.Getenv(envld)
 
 	LLVMbcGen = strings.Fields(os.Getenv(envbcgen))
-
+	LLVMLtoLDFLAGS = strings.Fields(os.Getenv(envltolink))
 }

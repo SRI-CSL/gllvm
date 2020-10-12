@@ -31,34 +31,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package shared
+package main
 
-//  IAN! Remember to tag the repo, and publish a release on GitHub.
-//
-//  version history:
-//
-//  1.0.0
-//  1.0.1                 various bug fixes
-//  1.2.0 April 28 2018   linux kernel work, sorting bitcode files, etc.
-//        May 2 2018      handleArchives rewritten to handle multiple occurrences of files with the same name.
-//                        corresponds with wllvm 1.2.0. Gonna try and keep them in synch.
-//  1.2.1 May 13th 2018   -fsanitize= needs to be compile AND link.
-//  1.2.2 June 1st 2018   Fix extracting from archives on darwin, plus travis build for both linux and darwin,
-//                        a few ittle fixes from building tor and it's dependencies.
-//  1.2.4 June  21 2019   Random fixes (basically the same as wllvm 1.2.7)
-//
-//  1.2.5 October 23 2019  Fixes for issues #30 and #31. Plus a new branch where I can futz hygenically.
-//
-//  1.2.6 March 24 2020 Added the support for the LLVM_BITCODE_GENERATION_FLAGS environment variable.
-//                      See https://github.com/travitch/whole-program-llvm/issues/96 for details.
-//
-//  1.2.7 August 4 2020 William Woodruff's (@woodruffw) tweaks to the get-bc command (a strict mode).
-//
-//  1.2.8 October 11 2020 Wensheng Tang's (@legendtang) requests and fixes to the -flto issues.
+import (
+	"fmt"
+	"github.com/SRI-CSL/gllvm/shared"
+	"os"
+)
 
-const gllvmVersion = "1.2.8"
-const gllvmReleaseDate = "October 11 2020"
-
-const osDARWIN = "darwin"
-const osLINUX = "linux"
-const osFREEBSD = "freebsd"
+func main() {
+	// Parse command line
+	args := os.Args
+	args = args[1:]
+	parsed := shared.Parse(args)
+	// Print out the result
+	fmt.Printf("Parsed: %v", &parsed)
+}

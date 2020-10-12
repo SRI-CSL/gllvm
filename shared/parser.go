@@ -43,7 +43,8 @@ import (
 	"strings"
 )
 
-type parserResult struct {
+//ParserResult is the result of parsing and partioning the command line arguments.
+type ParserResult struct {
 	InputList        []string
 	InputFiles       []string
 	ObjectFiles      []string
@@ -58,7 +59,47 @@ type parserResult struct {
 	IsAssembly       bool
 	IsCompileOnly    bool
 	IsEmitLLVM       bool
+	IsLTO            bool
 	IsPrintOnly      bool
+}
+
+const parserResultFormat = `
+InputList:         %v
+InputFiles:        %v
+ObjectFiles:       %v
+OutputFilename:    %v
+CompileArgs:       %v
+LinkArgs:          %v
+ForbiddenFlags:    %v
+IsVerbose:         %v
+IsDependencyOnly:  %v
+IsPreprocessOnly:  %v
+IsAssembleOnly:    %v
+IsAssembly:        %v
+IsCompileOnly:     %v
+IsEmitLLVM:        %v
+IsLTO:             %v
+IsPrintOnly:       %v
+`
+
+func (pr *ParserResult) String() string {
+	return fmt.Sprintf(parserResultFormat,
+		pr.InputList,
+		pr.InputFiles,
+		pr.ObjectFiles,
+		pr.OutputFilename,
+		pr.CompileArgs,
+		pr.LinkArgs,
+		pr.ForbiddenFlags,
+		pr.IsVerbose,
+		pr.IsDependencyOnly,
+		pr.IsPreprocessOnly,
+		pr.IsAssembleOnly,
+		pr.IsAssembly,
+		pr.IsCompileOnly,
+		pr.IsEmitLLVM,
+		pr.IsLTO,
+		pr.IsPrintOnly)
 }
 
 type flagInfo struct {
@@ -71,31 +112,50 @@ type argPattern struct {
 	finfo   flagInfo
 }
 
-func skipBitcodeGeneration(pr parserResult) bool {
+func (pr *ParserResult) skipBitcodeGeneration() bool {
+	reason := "No particular reason"
+	retval := false
+	squark := LogDebug
 	if LLVMConfigureOnly != "" {
-		return true
+		reason = "are in configure only mode"
+		retval = true
+	} else if len(pr.InputFiles) == 0 {
+		reason = "did not see any input files"
+		retval = true
+	} else if pr.IsEmitLLVM {
+		squark = LogWarning
+		reason = "are in emit-llvm mode, and so the compiler is doing the job for us"
+		retval = true
+	} else if pr.IsLTO {
+		squark = LogWarning
+		reason = "are doing link time optimization, and so the compiler is doing the job for us"
+		retval = true
+	} else if pr.IsAssembly {
+		reason = "the input file(s) are written in assembly"
+		squark = LogWarning
+		retval = true
+	} else if pr.IsAssembleOnly {
+		reason = "are assembling only, and so have nowhere to embed the path of the bitcode"
+		retval = true
+	} else if pr.IsDependencyOnly && !pr.IsCompileOnly {
+		reason = "are only computing dependencies at this stage"
+		retval = true
+	} else if pr.IsPreprocessOnly {
+		reason = "are in preprocess only mode"
+		retval = true
+	} else if pr.IsPrintOnly {
+		reason = "are in print only mode, and so have nowhere to embed the path of the bitcode"
+		retval = true
 	}
-	if len(pr.InputFiles) == 0 ||
-		pr.IsEmitLLVM ||
-		pr.IsAssembly ||
-		pr.IsAssembleOnly ||
-		(pr.IsDependencyOnly && !pr.IsCompileOnly) ||
-		pr.IsPreprocessOnly ||
-		pr.IsPrintOnly {
-		// Lots of reasons why we don't produce bitcode. But IsEmitLLVM is the most unusual.
-		if pr.IsEmitLLVM {
-			// Either we are being called with -emit-llvm or -flto. Either way all bets are off.
-			LogWarning("The compiler is producing bitcode instead of object code. get-bc is unlikely to work: %v\n", pr.OutputFilename)
-		}
-
-		return true
+	if retval {
+		squark(" We are skipping bitcode generation because we %v.\n", reason)
 	}
-	return false
-
+	return retval
 }
 
-func parse(argList []string) parserResult {
-	var pr = parserResult{}
+//Parse analyzes the command line aruguments and returns the result of that analysis.
+func Parse(argList []string) ParserResult {
+	var pr = ParserResult{}
 	pr.InputList = argList
 
 	var argsExactMatches = map[string]flagInfo{
@@ -350,7 +410,7 @@ func parse(argList []string) parserResult {
 }
 
 // Return the object and bc filenames that correspond to the i-th source file
-func getArtifactNames(pr parserResult, srcFileIndex int, hidden bool) (objBase string, bcBase string) {
+func getArtifactNames(pr ParserResult, srcFileIndex int, hidden bool) (objBase string, bcBase string) {
 	if len(pr.InputFiles) == 1 && pr.IsCompileOnly && len(pr.OutputFilename) > 0 {
 		objBase = pr.OutputFilename
 		dir, baseName := path.Split(objBase)
@@ -381,7 +441,7 @@ func getHashedPath(path string) string {
 	return hash
 }
 
-func (pr *parserResult) inputFileCallback(flag string, _ []string) {
+func (pr *ParserResult) inputFileCallback(flag string, _ []string) {
 	var regExp = regexp.MustCompile(`\.(s|S)$`)
 	pr.InputFiles = append(pr.InputFiles, flag)
 	if regExp.MatchString(flag) {
@@ -389,11 +449,11 @@ func (pr *parserResult) inputFileCallback(flag string, _ []string) {
 	}
 }
 
-func (pr *parserResult) outputFileCallback(_ string, args []string) {
+func (pr *ParserResult) outputFileCallback(_ string, args []string) {
 	pr.OutputFilename = args[0]
 }
 
-func (pr *parserResult) objectFileCallback(flag string, _ []string) {
+func (pr *ParserResult) objectFileCallback(flag string, _ []string) {
 	// FIXME: the object file is appended to ObjectFiles that
 	// is used nowhere else in the code
 	pr.ObjectFiles = append(pr.ObjectFiles, flag)
@@ -402,76 +462,76 @@ func (pr *parserResult) objectFileCallback(flag string, _ []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag)
 }
 
-func (pr *parserResult) preprocessOnlyCallback(_ string, _ []string) {
+func (pr *ParserResult) preprocessOnlyCallback(_ string, _ []string) {
 	pr.IsPreprocessOnly = true
 }
 
-func (pr *parserResult) dependencyOnlyCallback(flag string, _ []string) {
+func (pr *ParserResult) dependencyOnlyCallback(flag string, _ []string) {
 	pr.IsDependencyOnly = true
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }
 
-func (pr *parserResult) printOnlyCallback(flag string, _ []string) {
+func (pr *ParserResult) printOnlyCallback(flag string, _ []string) {
 	pr.IsPrintOnly = true
 }
 
-func (pr *parserResult) assembleOnlyCallback(_ string, _ []string) {
+func (pr *ParserResult) assembleOnlyCallback(_ string, _ []string) {
 	pr.IsAssembleOnly = true
 }
 
-func (pr *parserResult) verboseFlagCallback(_ string, _ []string) {
+func (pr *ParserResult) verboseFlagCallback(_ string, _ []string) {
 	pr.IsVerbose = true
 }
 
-func (pr *parserResult) compileOnlyCallback(_ string, _ []string) {
+func (pr *ParserResult) compileOnlyCallback(_ string, _ []string) {
 	pr.IsCompileOnly = true
 }
 
-func (pr *parserResult) emitLLVMCallback(_ string, _ []string) {
+func (pr *ParserResult) emitLLVMCallback(_ string, _ []string) {
 	pr.IsCompileOnly = true
 	pr.IsEmitLLVM = true
 }
 
-func (pr *parserResult) linkTimeOptimizationCallback(_ string, _ []string) {
-	pr.IsEmitLLVM = true
+func (pr *ParserResult) linkTimeOptimizationCallback(_ string, _ []string) {
+	pr.IsLTO = true
 }
 
-func (pr *parserResult) linkUnaryCallback(flag string, _ []string) {
+func (pr *ParserResult) linkUnaryCallback(flag string, _ []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag)
 }
 
-func (pr *parserResult) compileUnaryCallback(flag string, _ []string) {
+func (pr *ParserResult) compileUnaryCallback(flag string, _ []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }
 
-func (pr *parserResult) warningLinkUnaryCallback(flag string, _ []string) {
+func (pr *ParserResult) warningLinkUnaryCallback(flag string, _ []string) {
 	LogWarning("The flag %v cannot be used with this tool, we ignore it, else we lose the bitcode section.\n", flag)
 	pr.ForbiddenFlags = append(pr.ForbiddenFlags, flag)
 }
 
-func (pr *parserResult) defaultBinaryCallback(_ string, _ []string) {
+func (pr *ParserResult) defaultBinaryCallback(_ string, _ []string) {
 	// Do nothing
 }
 
-func (pr *parserResult) dependencyBinaryCallback(flag string, args []string) {
+func (pr *ParserResult) dependencyBinaryCallback(flag string, args []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag, args[0])
 	pr.IsDependencyOnly = true
 }
 
-func (pr *parserResult) compileBinaryCallback(flag string, args []string) {
+func (pr *ParserResult) compileBinaryCallback(flag string, args []string) {
 	pr.CompileArgs = append(pr.CompileArgs, flag, args[0])
 }
 
-func (pr *parserResult) linkBinaryCallback(flag string, args []string) {
+func (pr *ParserResult) linkBinaryCallback(flag string, args []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag, args[0])
 }
 
-func (pr *parserResult) compileLinkUnaryCallback(flag string, _ []string) {
+func (pr *ParserResult) compileLinkUnaryCallback(flag string, _ []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag)
 	pr.CompileArgs = append(pr.CompileArgs, flag)
 }
 
-func (pr *parserResult) compileLinkBinaryCallback(flag string, args []string) {
+func (pr *ParserResult) compileLinkBinaryCallback(flag string, args []string) {
 	pr.LinkArgs = append(pr.LinkArgs, flag, args[0])
 	pr.CompileArgs = append(pr.CompileArgs, flag, args[0])
 }
