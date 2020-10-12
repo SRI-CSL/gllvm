@@ -365,7 +365,7 @@ func Parse(argList []string) ParserResult {
 		{`^-W[l][^,].*$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: tor has a few -Wl...
 		{`^-fsanitize=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-fuse-ld=.+$`, flagInfo{0, pr.linkUnaryCallback}}, //iam:  musl stuff
-		{`^-flto=.+$`, flagInfo{0, pr.clinkTimeOptimizationCallback}},
+		{`^-flto=.+$`, flagInfo{0, pr.linkTimeOptimizationCallback}}, //iam: new lto stuff
 		{`^-f.+$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^-rtlib=.+$`, flagInfo{0, pr.linkUnaryCallback}},
 		{`^-std=.+$`, flagInfo{0, pr.compileUnaryCallback}},
