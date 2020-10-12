@@ -208,6 +208,10 @@ func Parse(argList []string) ParserResult {
 		"-mno-avx2":                    {0, pr.compileUnaryCallback},
 		"-mno-red-zone":                {0, pr.compileUnaryCallback},
 		"-mmmx":                        {0, pr.compileUnaryCallback},
+		"-mbmi":                        {0, pr.compileUnaryCallback},
+		"-mbmi2":                       {0, pr.compileUnaryCallback},
+		"-mf161c":                      {0, pr.compileUnaryCallback},
+		"-mfma":                        {0, pr.compileUnaryCallback},
 		"-mno-mmx":                     {0, pr.compileUnaryCallback},
 		"-mno-global-merge":            {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		"-mno-80387":                   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
@@ -290,6 +294,7 @@ func Parse(argList []string) ParserResult {
 		"-gdwarf-4":             {0, pr.compileUnaryCallback},
 		"-gline-tables-only":    {0, pr.compileUnaryCallback},
 		"-grecord-gcc-switches": {0, pr.compileUnaryCallback},
+		"-ggnu-pubnames":        {0, pr.compileUnaryCallback},
 
 		"-p":  {0, pr.compileUnaryCallback},
 		"-pg": {0, pr.compileUnaryCallback},
@@ -364,7 +369,7 @@ func Parse(argList []string) ParserResult {
 		{`^-W[^l].*$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^-W[l][^,].*$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: tor has a few -Wl...
 		{`^-fsanitize=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
-		{`^-fuse-ld=.+$`, flagInfo{0, pr.linkUnaryCallback}}, //iam:  musl stuff
+		{`^-fuse-ld=.+$`, flagInfo{0, pr.linkUnaryCallback}},         //iam:  musl stuff
 		{`^-flto=.+$`, flagInfo{0, pr.linkTimeOptimizationCallback}}, //iam: new lto stuff
 		{`^-f.+$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^-rtlib=.+$`, flagInfo{0, pr.linkUnaryCallback}},
@@ -391,30 +396,51 @@ func Parse(argList []string) ParserResult {
 		if fi, ok := argsExactMatches[elem]; ok {
 			fi.handler(elem, argList[1:1+fi.arity])
 			argList = argList[1+fi.arity:]
-			// Else try to match a pattern
+			// else it is more complicated, either a pattern or a group
 		} else {
 			var listShift = 0
-			var matched = false
-
-			for _, argPat := range argPatterns {
-				pattern := argPat.pattern
-				fi := argPat.finfo
-				var regExp = regexp.MustCompile(pattern)
-				if regExp.MatchString(elem) {
-					fi.handler(elem, argList[1:1+fi.arity])
-					listShift = fi.arity
-					matched = true
-					break
+			//need to handle the N-ary grouping flag
+			if elem == "-Wl,--start-group" {
+				endgroup := indexOf("-Wl,--end-group", argList)
+				if endgroup > 0 {
+					pr.linkerGroupCallback(elem, endgroup+1, argList)
+					listShift = endgroup
+				} else {
+					LogWarning("Failed to find '-Wl,--end-group' matching '-Wl,--start-group'\n")
+					pr.compileUnaryCallback(elem, argList[1:1])
 				}
-			}
-			if !matched {
-				LogWarning("Did not recognize the compiler flag: %v\n", elem)
-				pr.compileUnaryCallback(elem, argList[1:1])
+				//else try to match a pattern
+			} else {
+				var matched = false
+				for _, argPat := range argPatterns {
+					pattern := argPat.pattern
+					fi := argPat.finfo
+					var regExp = regexp.MustCompile(pattern)
+					if regExp.MatchString(elem) {
+						fi.handler(elem, argList[1:1+fi.arity])
+						listShift = fi.arity
+						matched = true
+						break
+					}
+				}
+				if !matched {
+					LogWarning("Did not recognize the compiler flag: %v\n", elem)
+					pr.compileUnaryCallback(elem, argList[1:1])
+				}
 			}
 			argList = argList[1+listShift:]
 		}
 	}
 	return pr
+}
+
+func indexOf(value string, slice []string) int {
+	for p, v := range slice {
+		if v == value {
+			return p
+		}
+	}
+	return -1
 }
 
 // Return the object and bc filenames that correspond to the i-th source file
@@ -468,6 +494,11 @@ func (pr *ParserResult) objectFileCallback(flag string, _ []string) {
 	// We append the object files to link args to handle the
 	// -Wl,--start-group obj_1.o ... obj_n.o -Wl,--end-group case
 	pr.LinkArgs = append(pr.LinkArgs, flag)
+}
+
+func (pr *ParserResult) linkerGroupCallback(start string, count int, args []string) {
+	group := args[0:count]
+	pr.LinkArgs = append(pr.LinkArgs, group...)
 }
 
 func (pr *ParserResult) preprocessOnlyCallback(_ string, _ []string) {
