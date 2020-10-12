@@ -54,10 +54,10 @@ package shared
 //
 //  1.2.7 August 4 2020 William Woodruff's (@woodruffw) tweaks to the get-bc command (a strict mode).
 //
-//  1.2.8 October 11 2020 Wensheng Tang's (@legendtang) requests and fixes to the -flto issues.
+//  1.2.8 October 12 2020 Wensheng Tang's (@legendtang) requests and fixes to the -flto issues.
 
 const gllvmVersion = "1.2.8"
-const gllvmReleaseDate = "October 11 2020"
+const gllvmReleaseDate = "October 12 2020"
 
 const osDARWIN = "darwin"
 const osLINUX = "linux"
