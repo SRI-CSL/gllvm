@@ -112,7 +112,8 @@ type argPattern struct {
 	finfo   flagInfo
 }
 
-func (pr *ParserResult) skipBitcodeGeneration() bool {
+//SkipBitcodeGeneration indicates whether or not we should generate bitcode for these command line options.
+func (pr *ParserResult) SkipBitcodeGeneration() bool {
 	reason := "No particular reason"
 	retval := false
 	squark := LogDebug

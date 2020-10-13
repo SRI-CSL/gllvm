@@ -45,5 +45,6 @@ func main() {
 	args = args[1:]
 	parsed := shared.Parse(args)
 	// Print out the result
-	fmt.Printf("Parsed: %v", &parsed)
+	fmt.Printf("parsed: %v\n", &parsed)
+	fmt.Printf("parsed.SkipBitcodeGeneration() = %v\n", parsed.SkipBitcodeGeneration())
 }

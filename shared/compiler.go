@@ -67,7 +67,7 @@ func Compile(args []string, compiler string) (exitCode int) {
 	LogDebug("Compile using parsed arguments:%v\n", &pr)
 
 	// If configure only, emit-llvm, flto, or print only are set, just execute the compiler
-	if pr.skipBitcodeGeneration() {
+	if pr.SkipBitcodeGeneration() {
 		wg.Add(1)
 		go execCompile(compilerExecName, pr, &wg, &ok)
 		wg.Wait()

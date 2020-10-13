@@ -18,6 +18,7 @@ const input3 = `1.c 2.c 3.c 4.c 5.c -Wl,--start-group 7.o 8.o 9.o -Wl,--end-grou
 func plto(input string, t *testing.T) {
 	cmds := strings.Fields(input)
 	parsed := shared.Parse(cmds)
+	shared.LogInfo("\n<parsed>%v</parsed>", &parsed)
 	if !parsed.IsLTO {
 		t.Errorf("Parsing of  %v FAILED %v (not LTO)\n", input, parsed)
 	}
@@ -26,6 +27,7 @@ func plto(input string, t *testing.T) {
 func pl(input string, t *testing.T, expected int) {
 	cmds := strings.Fields(input)
 	parsed := shared.Parse(cmds)
+	shared.LogInfo("\n<parsed>%v</parsed>", &parsed)
 	if expected != len(parsed.LinkArgs) {
 		t.Errorf("Linking args %v of length %v NOT the expected length %v\n", parsed.LinkArgs, len(parsed.LinkArgs), expected)
 	}
