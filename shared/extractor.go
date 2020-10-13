@@ -490,28 +490,6 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 	LogDebug("Table of Contents of %v:\n%v\n", inputFile, toc)
 
 	//2. extract the files from the TOC
-	/*
-	for obj, instance := range toc {
-		for i := 1; i <= instance; i++ {
-
-			if obj != "" && extractFile(ea, inputFile, obj, i) {
-				var artifacts []string
-				artifacts, success = ea.Extractor(obj)
-				if !success && ea.StrictExtract {
-					return
-				}
-				LogInfo("\t%v\n", artifacts)
-				artifactFiles = append(artifactFiles, artifacts...)
-				for _, bc := range artifacts {
-					bcPath := resolveBitcodePath(bc)
-					if bcPath != "" {
-						bcFiles = append(bcFiles, bcPath)
-					}
-				}
-			}
-		}
-	}
-        */
 	success, artifactFiles, bcFiles = extractFiles(ea, inputFile, toc)
 	//extractFiles has already complained
 	if !success {
@@ -526,6 +504,7 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 
 	LogDebug("handleArchive: walked %v\nartifactFiles:\n%v\nbcFiles:\n%v\n", tmpDirName, artifactFiles, bcFiles)
 
+	//3. link or archive those puppies
 	if len(bcFiles) > 0 {
 
 		// Sort the bitcode files
