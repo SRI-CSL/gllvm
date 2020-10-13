@@ -421,7 +421,7 @@ func extractFiles(ea ExtractionArgs, inputFile string, toc map[string]int) (succ
 				var artifacts []string
 				artifacts, success = ea.Extractor(obj)
 				if !success && ea.StrictExtract {
-					LogError("Failed to extract obj = %v occurence = %v from %v", obj, i, inputFile)
+					LogError("Failed to extract obj = %v occurrence = %v from %v", obj, i, inputFile)
 					return
 				}
 				LogInfo("\t%v\n", artifacts)
