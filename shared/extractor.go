@@ -414,6 +414,32 @@ func fetchTOC(ea ExtractionArgs, inputFile string) map[string]int {
 	return toc
 }
 
+func extractFiles(ea ExtractionArgs, inputFile string, toc map[string]int) (success bool, artifactFiles []string, bcFiles []string) {
+	for obj, instance := range toc {
+		for i := 1; i <= instance; i++ {
+			if obj != "" && extractFile(ea, inputFile, obj, i) {
+				var artifacts []string
+				artifacts, success = ea.Extractor(obj)
+				if !success && ea.StrictExtract {
+					LogError("Failed to extract obj = %v occurence = %v from %v", obj, i, inputFile)
+					return
+				}
+				LogInfo("\t%v\n", artifacts)
+				artifactFiles = append(artifactFiles, artifacts...)
+				for _, bc := range artifacts {
+					bcPath := resolveBitcodePath(bc)
+					if bcPath != "" {
+						bcFiles = append(bcFiles, bcPath)
+					}
+				}
+			}
+		}
+	}
+	// indicate overall success (we have already failed if using strict extract)
+	success = true
+	return
+}
+
 //handleArchive processes an archive, and creates either a bitcode archive, or a module, depending on the flags used.
 //
 //    Archives are strange beasts. handleArchive processes the archive by:
@@ -458,11 +484,13 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 		return
 	}
 
-	//1. fetch the Table of Contents
+	//1. fetch the Table of Contents (TOC)
 	toc := fetchTOC(ea, inputFile)
 
 	LogDebug("Table of Contents of %v:\n%v\n", inputFile, toc)
 
+	//2. extract the files from the TOC
+	/*
 	for obj, instance := range toc {
 		for i := 1; i <= instance; i++ {
 
@@ -482,6 +510,12 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 				}
 			}
 		}
+	}
+        */
+	success, artifactFiles, bcFiles = extractFiles(ea, inputFile, toc)
+	//extractFiles has already complained
+	if !success {
+		return
 	}
 
 	err = os.Chdir(homeDir)
@@ -509,7 +543,7 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 		}
 
 		if !success {
-			//hopefully the failure has alreadu been reported...
+			//hopefully the failure has already been reported...
 			return
 		}
 
