@@ -356,7 +356,7 @@ func Parse(argList []string) ParserResult {
 	var argPatterns = [...]argPattern{
 		{`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`, flagInfo{0, pr.inputFileCallback}},
 		{`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`, flagInfo{0, pr.inputFileCallback}},
-		{`^.+\.(o|lo|So|so|po|a|dylib)$`, flagInfo{0, pr.objectFileCallback}},
+		{`^.+\.(o|lo|So|so|po|a|dylib|pico)$`, flagInfo{0, pr.objectFileCallback}},  //iam: pico is FreeBSD
 		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^-(l|L).+$`, flagInfo{0, pr.linkUnaryCallback}},
