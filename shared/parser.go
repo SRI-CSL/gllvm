@@ -118,38 +118,38 @@ func (pr *ParserResult) SkipBitcodeGeneration() bool {
 	retval := false
 	squark := LogDebug
 	if LLVMConfigureOnly != "" {
-		reason = "are in configure only mode"
+		reason = "we are in configure only mode"
 		retval = true
 	} else if len(pr.InputFiles) == 0 {
-		reason = "did not see any input files"
+		reason = "we did not see any input files"
 		retval = true
 	} else if pr.IsEmitLLVM {
 		squark = LogWarning
-		reason = "are in emit-llvm mode, and so the compiler is doing the job for us"
+		reason = "we are in emit-llvm mode, and so the compiler is doing the job for us"
 		retval = true
 	} else if pr.IsLTO {
 		squark = LogWarning
-		reason = "are doing link time optimization, and so the compiler is doing the job for us"
+		reason = "we are doing link time optimization, and so the compiler is doing the job for us"
 		retval = true
 	} else if pr.IsAssembly {
 		reason = "the input file(s) are written in assembly"
 		squark = LogWarning
 		retval = true
 	} else if pr.IsAssembleOnly {
-		reason = "are assembling only, and so have nowhere to embed the path of the bitcode"
+		reason = "we are assembling only, and so have nowhere to embed the path of the bitcode"
 		retval = true
 	} else if pr.IsDependencyOnly && !pr.IsCompileOnly {
-		reason = "are only computing dependencies at this stage"
+		reason = "we are only computing dependencies at this stage"
 		retval = true
 	} else if pr.IsPreprocessOnly {
-		reason = "are in preprocess only mode"
+		reason = "we are in preprocess only mode"
 		retval = true
 	} else if pr.IsPrintOnly {
-		reason = "are in print only mode, and so have nowhere to embed the path of the bitcode"
+		reason = "we are in print only mode, and so have nowhere to embed the path of the bitcode"
 		retval = true
 	}
 	if retval {
-		squark(" We are skipping bitcode generation because we %v.\n", reason)
+		squark(" We are skipping bitcode generation because %v.\n", reason)
 	}
 	return retval
 }
