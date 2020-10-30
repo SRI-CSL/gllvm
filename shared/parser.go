@@ -381,8 +381,7 @@ func Parse(argList []string) ParserResult {
 		{`^-stdlib=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-mtune=.+$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^--sysroot=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}}, //both compile and link time
-		{`^-print-prog-name=.*$`, flagInfo{0, pr.compileUnaryCallback}},
-		{`^-print-file-name=.*$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-print-.*$`, flagInfo{0, pr.compileUnaryCallback}},        // generic catch all for the print commands
 		{`^-mmacosx-version-min=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-mstack-alignment=.+$`, flagInfo{0, pr.compileUnaryCallback}},          //iam, linux kernel stuff
 		{`^-march=.+$`, flagInfo{0, pr.compileUnaryCallback}},                     //iam: linux kernel stuff

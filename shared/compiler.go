@@ -149,8 +149,27 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 		".po":        //iam: profiled object
 		LogDebug("attachBitcodePathToObject recognized %v as something it can inject into.\n", extension)
 		success = injectPath(extension, bcFile, objFile)
+		return
 	default:
-		LogWarning("attachBitcodePathToObject ignoring unrecognized extension: %v\n", extension)
+		//OK we have to work harder here
+		ok, err := injectableViaFileType(objFile)
+		if ok {
+			success = injectPath(extension, bcFile, objFile)
+			return
+		}
+		if err != nil {
+			// OK we have to work EVEN harder here (the file utility is not installed - probably)
+			// N.B. this will probably fail if we are cross compiling.
+			ok, err = injectableViaDebug(objFile)
+			if ok {
+				success = injectPath(extension, bcFile, objFile)
+				return
+			}
+			if err != nil {
+				LogWarning("attachBitcodePathToObject: injectableViaDebug failed %v", err)
+			}
+		}
+		LogWarning("attachBitcodePathToObject ignoring unrecognized extension %v of file %v of unknown type\n", extension, objFile)
 	}
 	return
 }

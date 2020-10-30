@@ -56,7 +56,8 @@ package shared
 //
 //  1.2.8 October 13 2020 Wensheng Tang's (@legendtang) requests and fixes to the -flto issues (issue #39).
 //                        Added support for the LTO_LINKING_FLAGS environment variable.
-//  1.2.9 October 30 2020 FreeBSD bug fixes (@arrowd) (issue #41)
+//  1.2.9 October 30 2020 Gleb Popov's FreeBSD bug fixes (@arrowd) (issue #41), plus some more improvements
+//                        to the command line parsing (a never ending saga).
 
 const gllvmVersion = "1.2.9"
 const gllvmReleaseDate = "October 30 2020"

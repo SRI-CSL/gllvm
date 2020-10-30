@@ -138,7 +138,7 @@ func ParseSwitches(args []string) (ea ExtractionArgs) {
 		return
 	}
 	ea.InputFile = realPath
-	ea.InputType = getFileType(realPath)
+	ea.InputType, _ = getFileType(realPath)
 
 	LogInfo("%v", ea)
 

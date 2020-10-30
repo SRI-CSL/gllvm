@@ -34,7 +34,11 @@
 package shared
 
 import (
+	"debug/elf"
+	"debug/macho"
+	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -56,13 +60,15 @@ const (
 //iam:
 // this is not that robust, because it depends on the file utility "file" which is
 // often  missing on docker images (the klee doker file had this problem)
-func getFileType(realPath string) (fileType int) {
+func getFileType(realPath string) (fileType int, err error) {
+
 	// We need the file command to guess the file type
+	fileType = fileTypeERROR
+	err = nil
 	cmd := exec.Command("file", realPath)
 	out, err := cmd.Output()
 	if err != nil {
 		LogError("There was an error getting the type of %s. Make sure that the 'file' command is installed.", realPath)
-		fileType = fileTypeERROR
 		return
 	}
 
@@ -98,6 +104,74 @@ func getFileType(realPath string) (fileType int) {
 		fileType = fileTypeTHINARCHIVE
 	} else {
 		fileType = fileTypeUNDEFINED
+	}
+	return
+}
+
+// isPlainFile returns true if the file is stat-able (i.e. exists etc), and is not a directory, else it returns false.
+func isPlainFile(objectFile string) (ok bool) {
+	ok = false
+	info, err := os.Stat(objectFile)
+	if os.IsNotExist(err) || info.IsDir() {
+		return
+	}
+	if err != nil {
+		return
+	}
+	ok = true
+	return
+}
+
+func injectableViaFileType(objectFile string) (ok bool, err error) {
+	ok = false
+	err = nil
+	plain := isPlainFile(objectFile)
+	if !plain {
+		return
+	}
+	fileType, err := getFileType(objectFile)
+	if err != nil {
+		return
+	}
+	ok = (fileType == fileTypeELFOBJECT) || (fileType == fileTypeELFOBJECT)
+	return
+}
+
+func injectableViaDebug(objectFile string) (ok bool, err error) {
+	ok = false
+	err = nil
+	// I guess we are not doing cross compiling. Otherwise we are fucking up here.
+	ok, err = IsObjectFileForOS(objectFile, runtime.GOOS)
+	return
+}
+
+//IsObjectFileForOS returns true if the given file is an object file for the given OS, using the debug/elf and debug/macho packages.
+func IsObjectFileForOS(objectFile string, operatingSys string) (ok bool, err error) {
+	plain := isPlainFile(objectFile)
+	if !plain {
+		return
+	}
+
+	switch operatingSys {
+	case "linux", "freebsd":
+		var lbinFile *elf.File
+		lbinFile, err = elf.Open(objectFile)
+		if err != nil {
+			return
+		}
+		dfileType := lbinFile.FileHeader.Type
+		ok = (dfileType == elf.ET_REL)
+		return
+	case "darwin":
+		var dbinFile *macho.File
+		dbinFile, err = macho.Open(objectFile)
+		if err != nil {
+			return
+		}
+		dfileType := dbinFile.FileHeader.Type
+		ok = (dfileType == macho.TypeObj)
+
+		return
 	}
 	return
 }
