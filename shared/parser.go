@@ -40,6 +40,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -436,8 +437,13 @@ func Parse(argList []string) ParserResult {
 					}
 				}
 				if !matched {
-					LogWarning("Did not recognize the compiler flag: %v\n", elem)
-					pr.compileUnaryCallback(elem, argList[1:1])
+					ok, _ := IsObjectFileForOS(elem, runtime.GOOS)
+					if ok {
+						pr.objectFileCallback(elem, argList[1:1])
+					} else {
+						LogWarning("Did not recognize the compiler flag: %v\n", elem)
+						pr.compileUnaryCallback(elem, argList[1:1])
+					}
 				}
 			}
 			argList = argList[1+listShift:]

@@ -151,7 +151,6 @@ func IsObjectFileForOS(objectFile string, operatingSys string) (ok bool, err err
 	if !plain {
 		return
 	}
-
 	switch operatingSys {
 	case "linux", "freebsd":
 		var lbinFile *elf.File
