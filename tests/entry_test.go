@@ -3,8 +3,8 @@ package test
 import (
 	"fmt"
 	"github.com/SRI-CSL/gllvm/shared"
-	"testing"
 	"runtime"
+	"testing"
 )
 
 func Test_basic_functionality(t *testing.T) {
