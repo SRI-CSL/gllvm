@@ -135,7 +135,8 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 	// We can only attach a bitcode path to certain file types
 	// this is too fragile, we need to look into a better way to do this.
-	switch filepath.Ext(objFile) {
+	extension := filepath.Ext(objFile)
+	switch extension {
 	case
 		".o",
 		".lo",
@@ -143,6 +144,7 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 		".So",
 		".pico", //iam: pico is FreeBSD
 		".po":
+		LogDebug("attachBitcodePathToObject recognized %v as something it can inject into.\n", extension)
 		// Store bitcode path to temp file
 		var absBcPath, _ = filepath.Abs(bcFile)
 		tmpContent := []byte(absBcPath + "\n")
@@ -206,6 +208,8 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 			}
 
 		}
+	default:
+		LogWarning("attachBitcodePathToObject ignoring unrecognized extension: %v\n", extension)
 	}
 	success = true
 	return

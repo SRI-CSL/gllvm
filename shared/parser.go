@@ -256,11 +256,13 @@ func Parse(argList []string) ParserResult {
 		"-M":   {0, pr.dependencyOnlyCallback},
 		"-MM":  {0, pr.dependencyOnlyCallback},
 		"-MF":  {1, pr.dependencyBinaryCallback},
+		"-MJ":  {1, pr.dependencyBinaryCallback},
 		"-MG":  {0, pr.dependencyOnlyCallback},
 		"-MP":  {0, pr.dependencyOnlyCallback},
 		"-MT":  {1, pr.dependencyBinaryCallback},
 		"-MQ":  {1, pr.dependencyBinaryCallback},
 		"-MD":  {0, pr.dependencyOnlyCallback},
+		"-MV":  {0, pr.dependencyOnlyCallback},
 		"-MMD": {0, pr.dependencyOnlyCallback},
 
 		"-I":                 {1, pr.compileBinaryCallback},
@@ -355,24 +357,21 @@ func Parse(argList []string) ParserResult {
 	// matches and has a conflicting flagInfo value. Also be careful with flags that can contain filenames, like
 	// linker info flags or dependency flags
 	var argPatterns = [...]argPattern{
-		{`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`, flagInfo{0, pr.inputFileCallback}},
-		{`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`, flagInfo{0, pr.inputFileCallback}},
-		//iam: it's a bit fragile as to what we recognize as an object file.
-		// this also shows up in the compile function attachBitcodePathToObject, so additions
-		// here, should also be additions there.
-		{`^.+\.(o|lo|So|so|po|a|dylib|pico)$`, flagInfo{0, pr.objectFileCallback}}, //iam: pico is FreeBSD
-		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
-		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
+		// dependency file generation (comes first because it can conatin file names)
+		{`^-MF.*$`, flagInfo{0, pr.compileUnaryCallback}}, //Write depfile output from -MMD, -MD, -MM, or -M to <file>
+		{`^-MJ.*$`, flagInfo{0, pr.compileUnaryCallback}}, //Write a compilation database entry per input
+		{`^-MQ.*$`, flagInfo{0, pr.compileUnaryCallback}}, //Specify name of main file output to quote in depfile
+		{`^-MT.*$`, flagInfo{0, pr.compileUnaryCallback}}, //Specify name of main file output in depfile
+		//iam, need to be careful here, not mix up linker and warning flags.
+		{`^-Wl,.+$`, flagInfo{0, pr.linkUnaryCallback}},
+		{`^-W[^l].*$`, flagInfo{0, pr.compileUnaryCallback}},
+		{`^-W[l][^,].*$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: tor has a few -Wl...
 		{`^-(l|L).+$`, flagInfo{0, pr.linkUnaryCallback}},
 		{`^-I.+$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^-D.+$`, flagInfo{0, pr.compileUnaryCallback}},
 		{`^-B.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-isystem.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-U.+$`, flagInfo{0, pr.compileUnaryCallback}},
-		//iam, need to be careful here, not mix up linker and warning flags.
-		{`^-Wl,.+$`, flagInfo{0, pr.linkUnaryCallback}},
-		{`^-W[^l].*$`, flagInfo{0, pr.compileUnaryCallback}},
-		{`^-W[l][^,].*$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: tor has a few -Wl...
 		{`^-fsanitize=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 		{`^-fuse-ld=.+$`, flagInfo{0, pr.linkUnaryCallback}},         //iam:  musl stuff
 		{`^-flto=.+$`, flagInfo{0, pr.linkTimeOptimizationCallback}}, //iam: new lto stuff
@@ -392,6 +391,15 @@ func Parse(argList []string) ParserResult {
 		{`^-mpreferred-stack-boundary=.+$`, flagInfo{0, pr.compileUnaryCallback}}, //iam: linux kernel stuff
 		{`^-mindirect-branch=.+$`, flagInfo{0, pr.compileUnaryCallback}},          //iam: linux kernel stuff
 		{`^--param=.+$`, flagInfo{0, pr.compileUnaryCallback}},                    //iam: linux kernel stuff
+		//the above come first because they are anchored at the start, and some can contain filenames.
+		{`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`, flagInfo{0, pr.inputFileCallback}},
+		{`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`, flagInfo{0, pr.inputFileCallback}},
+		//iam: it's a bit fragile as to what we recognize as an object file.
+		// this also shows up in the compile function attachBitcodePathToObject, so additions
+		// here, should also be additions there.
+		{`^.+\.(o|lo|So|so|po|a|dylib|pico)$`, flagInfo{0, pr.objectFileCallback}}, //iam: pico is FreeBSD
+		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
+		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 	}
 
 	for len(argList) > 0 {
