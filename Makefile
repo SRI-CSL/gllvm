@@ -14,6 +14,7 @@ help:
 	@echo ''
 
 
+install: develop
 
 develop:
 	go install github.com/SRI-CSL/gllvm/cmd/...

@@ -352,11 +352,15 @@ func Parse(argList []string) ParserResult {
 
 	// iam: this is a list because matching needs to be done in order.
 	// if you add a NEW pattern; make sure it is before any existing pattern that also
-	// matches and has a conflicting flagInfo value.
+	// matches and has a conflicting flagInfo value. Also be careful with flags that can contain filenames, like
+	// linker info flags or dependency flags
 	var argPatterns = [...]argPattern{
 		{`^.+\.(c|cc|cpp|C|cxx|i|s|S|bc)$`, flagInfo{0, pr.inputFileCallback}},
 		{`^.+\.([fF](|[0-9][0-9]|or|OR|pp|PP))$`, flagInfo{0, pr.inputFileCallback}},
-		{`^.+\.(o|lo|So|so|po|a|dylib|pico)$`, flagInfo{0, pr.objectFileCallback}},  //iam: pico is FreeBSD
+		//iam: it's a bit fragile as to what we recognize as an object file.
+		// this also shows up in the compile function attachBitcodePathToObject, so additions
+		// here, should also be additions there.
+		{`^.+\.(o|lo|So|so|po|a|dylib|pico)$`, flagInfo{0, pr.objectFileCallback}}, //iam: pico is FreeBSD
 		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^-(l|L).+$`, flagInfo{0, pr.linkUnaryCallback}},
