@@ -133,8 +133,10 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 }
 
 func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
+	success = false
 	// We can only attach a bitcode path to certain file types
 	// this is too fragile, we need to look into a better way to do this.
+	// We probably should be using debug/macho and debug/elf according to the OS we are atop of.
 	extension := filepath.Ext(objFile)
 	switch extension {
 	case
@@ -142,74 +144,82 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 		".lo",
 		".os",
 		".So",
-		".pico", //iam: pico is FreeBSD
-		".po":
+		".pico",      //iam: pico is FreeBSD, ".pico" denotes a position-independent relocatable object.
+		".nossppico", //iam: also FreeBSD, ".nossppico" denotes a position-independent relocatable object without stack smashing protection.
+		".po":        //iam: profiled object
 		LogDebug("attachBitcodePathToObject recognized %v as something it can inject into.\n", extension)
-		// Store bitcode path to temp file
-		var absBcPath, _ = filepath.Abs(bcFile)
-		tmpContent := []byte(absBcPath + "\n")
-		tmpFile, err := ioutil.TempFile("", "gllvm")
-		if err != nil {
-			LogError("attachBitcodePathToObject: %v\n", err)
-			return
-		}
-		defer CheckDefer(func() error { return os.Remove(tmpFile.Name()) })
-		if _, err := tmpFile.Write(tmpContent); err != nil {
-			LogError("attachBitcodePathToObject: %v\n", err)
-			return
-		}
-		if err := tmpFile.Close(); err != nil {
-			LogError("attachBitcodePathToObject: %v\n", err)
-			return
-		}
-
-		// Let's write the bitcode section
-		var attachCmd string
-		var attachCmdArgs []string
-		if runtime.GOOS == osDARWIN {
-			if len(LLVMLd) > 0 {
-				attachCmd = LLVMLd
-			} else {
-				attachCmd = "ld"
-			}
-			attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
-		} else {
-			if len(LLVMObjcopy) > 0 {
-				attachCmd = LLVMObjcopy
-			} else {
-				attachCmd = "objcopy"
-			}
-			attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name(), objFile}
-		}
-
-		// Run the attach command and ignore errors
-		_, nerr := execCmd(attachCmd, attachCmdArgs, "")
-		if nerr != nil {
-			LogWarning("attachBitcodePathToObject: %v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
-			return
-		}
-
-		// Copy bitcode file to store, if necessary
-		if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
-			destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
-			in, _ := os.Open(absBcPath)
-			defer CheckDefer(func() error { return in.Close() })
-			out, _ := os.Create(destFilePath)
-			defer CheckDefer(func() error { return out.Close() })
-			_, err := io.Copy(out, in)
-			if err != nil {
-				LogWarning("Copying bc to bitcode archive %v failed because %v\n", destFilePath, err)
-				return
-			}
-			err = out.Sync()
-			if err != nil {
-				LogWarning("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
-				return
-			}
-
-		}
+		success = injectPath(extension, bcFile, objFile)
 	default:
 		LogWarning("attachBitcodePathToObject ignoring unrecognized extension: %v\n", extension)
+	}
+	return
+}
+
+// move this out to concentrate on the object path analysis above.
+func injectPath(extension, bcFile, objFile string) (success bool) {
+	success = false
+	// Store bitcode path to temp file
+	var absBcPath, _ = filepath.Abs(bcFile)
+	tmpContent := []byte(absBcPath + "\n")
+	tmpFile, err := ioutil.TempFile("", "gllvm")
+	if err != nil {
+		LogError("attachBitcodePathToObject: %v\n", err)
+		return
+	}
+	defer CheckDefer(func() error { return os.Remove(tmpFile.Name()) })
+	if _, err := tmpFile.Write(tmpContent); err != nil {
+		LogError("attachBitcodePathToObject: %v\n", err)
+		return
+	}
+	if err := tmpFile.Close(); err != nil {
+		LogError("attachBitcodePathToObject: %v\n", err)
+		return
+	}
+
+	// Let's write the bitcode section
+	var attachCmd string
+	var attachCmdArgs []string
+	if runtime.GOOS == osDARWIN {
+		if len(LLVMLd) > 0 {
+			attachCmd = LLVMLd
+		} else {
+			attachCmd = "ld"
+		}
+		attachCmdArgs = []string{"-r", "-keep_private_externs", objFile, "-sectcreate", DarwinSegmentName, DarwinSectionName, tmpFile.Name(), "-o", objFile}
+	} else {
+		if len(LLVMObjcopy) > 0 {
+			attachCmd = LLVMObjcopy
+		} else {
+			attachCmd = "objcopy"
+		}
+		attachCmdArgs = []string{"--add-section", ELFSectionName + "=" + tmpFile.Name(), objFile}
+	}
+
+	// Run the attach command and ignore errors
+	_, nerr := execCmd(attachCmd, attachCmdArgs, "")
+	if nerr != nil {
+		LogWarning("attachBitcodePathToObject: %v %v failed because %v\n", attachCmd, attachCmdArgs, nerr)
+		return
+	}
+
+	// Copy bitcode file to store, if necessary
+	if bcStorePath := LLVMBitcodeStorePath; bcStorePath != "" {
+		destFilePath := path.Join(bcStorePath, getHashedPath(absBcPath))
+		in, _ := os.Open(absBcPath)
+		defer CheckDefer(func() error { return in.Close() })
+		out, _ := os.Create(destFilePath)
+		defer CheckDefer(func() error { return out.Close() })
+		_, err := io.Copy(out, in)
+		if err != nil {
+			LogWarning("Copying bc to bitcode archive %v failed because %v\n", destFilePath, err)
+			return
+		}
+		err = out.Sync()
+		if err != nil {
+			LogWarning("Syncing bitcode archive %v failed because %v\n", destFilePath, err)
+			return
+		}
+
 	}
 	success = true
 	return

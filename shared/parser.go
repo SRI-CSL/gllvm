@@ -397,7 +397,7 @@ func Parse(argList []string) ParserResult {
 		//iam: it's a bit fragile as to what we recognize as an object file.
 		// this also shows up in the compile function attachBitcodePathToObject, so additions
 		// here, should also be additions there.
-		{`^.+\.(o|lo|So|so|po|a|dylib|pico)$`, flagInfo{0, pr.objectFileCallback}}, //iam: pico is FreeBSD
+		{`^.+\.(o|lo|So|so|po|a|dylib|pico|nossppico)$`, flagInfo{0, pr.objectFileCallback}}, //iam: pico and nossppico are FreeBSD
 		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 	}

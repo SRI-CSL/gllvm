@@ -53,6 +53,9 @@ const (
 	fileTypeERROR
 )
 
+//iam:
+// this is not that robust, because it depends on the file utility "file" which is
+// often  missing on docker images (the klee doker file had this problem)
 func getFileType(realPath string) (fileType int) {
 	// We need the file command to guess the file type
 	cmd := exec.Command("file", realPath)
@@ -96,6 +99,5 @@ func getFileType(realPath string) (fileType int) {
 	} else {
 		fileType = fileTypeUNDEFINED
 	}
-
 	return
 }
