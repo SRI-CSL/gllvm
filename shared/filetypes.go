@@ -42,6 +42,134 @@ import (
 	"strings"
 )
 
+//BinaryType is the 'intersection' of elf.Type and macho.Type and partitions
+// the binary world into categories we are most interested in. Missing is
+// ARCHIVE but that is because it is not an elf format, so we cannot entirely
+// eliminate the use of the 'file' utility (cf getFileType below).
+type BinaryType uint32
+
+const (
+	//BinaryUnknown signals that the file does not fit into our three simple minded categories
+	BinaryUnknown BinaryType = 0
+	//BinaryObject is the type of an object file, the output unit of compilation
+	BinaryObject BinaryType = 1
+	//BinaryExecutable is the type of an executable file
+	BinaryExecutable BinaryType = 2
+	//BinaryShared is the type of a shared or dynamic library
+	BinaryShared BinaryType = 3
+)
+
+func elfType2BinaryType(et elf.Type) (bt BinaryType) {
+	bt = BinaryUnknown
+	switch et {
+	case elf.ET_NONE:
+		bt = BinaryUnknown
+	case elf.ET_REL:
+		bt = BinaryObject
+	case elf.ET_EXEC:
+		bt = BinaryExecutable
+	case elf.ET_DYN:
+		bt = BinaryShared
+	case elf.ET_CORE, elf.ET_LOOS, elf.ET_HIOS, elf.ET_LOPROC, elf.ET_HIPROC:
+		bt = BinaryUnknown
+	default:
+		bt = BinaryUnknown
+	}
+	return
+}
+
+func machoType2BinaryType(mt macho.Type) (bt BinaryType) {
+	bt = BinaryUnknown
+	switch mt {
+	case macho.TypeObj:
+		bt = BinaryObject
+	case macho.TypeExec:
+		bt = BinaryExecutable
+	case macho.TypeDylib:
+		bt = BinaryShared
+	case macho.TypeBundle:
+		bt = BinaryUnknown
+	default:
+		bt = BinaryUnknown
+	}
+	return
+}
+
+// isPlainFile returns true if the file is stat-able (i.e. exists etc), and is not a directory, else it returns false.
+func isPlainFile(objectFile string) (ok bool) {
+	info, err := os.Stat(objectFile)
+	if os.IsNotExist(err) || info.IsDir() {
+		return
+	}
+	if err != nil {
+		return
+	}
+	ok = true
+	return
+}
+
+func injectableViaFileType(objectFile string) (ok bool, err error) {
+	plain := isPlainFile(objectFile)
+	if !plain {
+		return
+	}
+	fileType, err := getFileType(objectFile)
+	if err != nil {
+		return
+	}
+	ok = (fileType == fileTypeELFOBJECT) || (fileType == fileTypeELFOBJECT)
+	return
+}
+
+func injectableViaDebug(objectFile string) (ok bool, err error) {
+	// I guess we are not doing cross compiling. Otherwise we are fucking up here.
+	ok, err = IsObjectFileForOS(objectFile, runtime.GOOS)
+	return
+}
+
+// ElfFileType returns the elf.Type of the given file name
+func ElfFileType(objectFile string) (code BinaryType, err error) {
+	var lbinFile *elf.File
+	lbinFile, err = elf.Open(objectFile)
+	if err != nil {
+		return
+	}
+	code = elfType2BinaryType(lbinFile.FileHeader.Type)
+	return
+}
+
+// MachoFileType returns the macho.Type of the given file name
+func MachoFileType(objectFile string) (code BinaryType, err error) {
+	var dbinFile *macho.File
+	dbinFile, err = macho.Open(objectFile)
+	if err != nil {
+		return
+	}
+	code = machoType2BinaryType(dbinFile.FileHeader.Type)
+	return
+}
+
+//IsObjectFileForOS returns true if the given file is an object file for the given OS, using the debug/elf and debug/macho packages.
+func IsObjectFileForOS(objectFile string, operatingSys string) (ok bool, err error) {
+	plain := isPlainFile(objectFile)
+	if !plain {
+		return
+	}
+	var binaryType BinaryType
+	switch operatingSys {
+	case "linux", "freebsd":
+		binaryType, err = ElfFileType(objectFile)
+	case "darwin":
+		binaryType, err = MachoFileType(objectFile)
+	}
+	if err != nil {
+		return
+	}
+	ok = (binaryType == BinaryObject)
+	return
+}
+
+// file types via the unix 'file' utility
 const (
 	// File types
 	fileTypeUNDEFINED = iota
@@ -57,23 +185,19 @@ const (
 	fileTypeERROR
 )
 
-//iam:
-// this is not that robust, because it depends on the file utility "file" which is
-// often  missing on docker images (the klee doker file had this problem)
+//iam: this is not that robust, because it depends on the file utility "file" which is
+// often missing on docker images (the klee docker file had this problem)
+// this is only used in extraction, not in compilation.
 func getFileType(realPath string) (fileType int, err error) {
-
 	// We need the file command to guess the file type
 	fileType = fileTypeERROR
-	err = nil
 	cmd := exec.Command("file", realPath)
 	out, err := cmd.Output()
 	if err != nil {
 		LogError("There was an error getting the type of %s. Make sure that the 'file' command is installed.", realPath)
 		return
 	}
-
 	fo := string(out)
-
 	if strings.Contains(fo, "ELF") {
 
 		if strings.Contains(fo, "executable") {
@@ -104,73 +228,6 @@ func getFileType(realPath string) (fileType int, err error) {
 		fileType = fileTypeTHINARCHIVE
 	} else {
 		fileType = fileTypeUNDEFINED
-	}
-	return
-}
-
-// isPlainFile returns true if the file is stat-able (i.e. exists etc), and is not a directory, else it returns false.
-func isPlainFile(objectFile string) (ok bool) {
-	ok = false
-	info, err := os.Stat(objectFile)
-	if os.IsNotExist(err) || info.IsDir() {
-		return
-	}
-	if err != nil {
-		return
-	}
-	ok = true
-	return
-}
-
-func injectableViaFileType(objectFile string) (ok bool, err error) {
-	ok = false
-	err = nil
-	plain := isPlainFile(objectFile)
-	if !plain {
-		return
-	}
-	fileType, err := getFileType(objectFile)
-	if err != nil {
-		return
-	}
-	ok = (fileType == fileTypeELFOBJECT) || (fileType == fileTypeELFOBJECT)
-	return
-}
-
-func injectableViaDebug(objectFile string) (ok bool, err error) {
-	ok = false
-	err = nil
-	// I guess we are not doing cross compiling. Otherwise we are fucking up here.
-	ok, err = IsObjectFileForOS(objectFile, runtime.GOOS)
-	return
-}
-
-//IsObjectFileForOS returns true if the given file is an object file for the given OS, using the debug/elf and debug/macho packages.
-func IsObjectFileForOS(objectFile string, operatingSys string) (ok bool, err error) {
-	plain := isPlainFile(objectFile)
-	if !plain {
-		return
-	}
-	switch operatingSys {
-	case "linux", "freebsd":
-		var lbinFile *elf.File
-		lbinFile, err = elf.Open(objectFile)
-		if err != nil {
-			return
-		}
-		dfileType := lbinFile.FileHeader.Type
-		ok = (dfileType == elf.ET_REL)
-		return
-	case "darwin":
-		var dbinFile *macho.File
-		dbinFile, err = macho.Open(objectFile)
-		if err != nil {
-			return
-		}
-		dfileType := dbinFile.FileHeader.Type
-		ok = (dfileType == macho.TypeObj)
-
-		return
 	}
 	return
 }
