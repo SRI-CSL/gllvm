@@ -117,7 +117,7 @@ func injectableViaFileType(objectFile string) (ok bool, err error) {
 	if err != nil {
 		return
 	}
-	ok = (fileType == fileTypeELFOBJECT) || (fileType == fileTypeELFOBJECT)
+	ok = (fileType == fileTypeELFOBJECT) || (fileType == fileTypeMACHOBJECT)
 	return
 }
 

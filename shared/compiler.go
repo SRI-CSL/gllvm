@@ -153,6 +153,7 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 	default:
 		//OK we have to work harder here
 		ok, err := injectableViaFileType(objFile)
+		LogDebug("attachBitcodePathToObject: injectableViaFileType returned  ok=%v  err=%v", ok, err)
 		if ok {
 			success = injectPath(extension, bcFile, objFile)
 			return
@@ -161,6 +162,7 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 			// OK we have to work EVEN harder here (the file utility is not installed - probably)
 			// N.B. this will probably fail if we are cross compiling.
 			ok, err = injectableViaDebug(objFile)
+			LogDebug("attachBitcodePathToObject: injectableViaDebug returned  ok=%v  err=%v", ok, err)
 			if ok {
 				success = injectPath(extension, bcFile, objFile)
 				return
