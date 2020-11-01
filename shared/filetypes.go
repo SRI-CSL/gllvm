@@ -42,7 +42,7 @@ import (
 	"strings"
 )
 
-//BinaryType is the 'intersection' of elf.Type and macho.Type and partitions
+// BinaryType is the 'intersection' of elf.Type and macho.Type and partitions
 // the binary world into categories we are most interested in. Missing is
 // ARCHIVE but that is because it is not an elf format, so we cannot entirely
 // eliminate the use of the 'file' utility (cf getFileType below).
@@ -58,6 +58,49 @@ const (
 	//BinaryShared is the type of a shared or dynamic library
 	BinaryShared BinaryType = 3
 )
+
+func (bt BinaryType) String() string {
+	switch bt {
+	case BinaryUnknown:
+		return "Unknown"
+	case BinaryObject:
+		return "Object"
+	case BinaryExecutable:
+		return "Executable"
+	case BinaryShared:
+		return "Library"
+	default:
+		return "Error"
+	}
+}
+
+// GetBinaryType gets the binary type of the given path
+func GetBinaryType(path string) (bt BinaryType) {
+	bt = BinaryUnknown
+	plain := IsPlainFile(path)
+	if !plain {
+		return
+	}
+	// try the format that suits the platform first
+	operatingSys := runtime.GOOS
+	switch operatingSys {
+	case "linux", "freebsd":
+		bt, _ = ElfFileType(path)
+	case "darwin":
+		bt, _ = MachoFileType(path)
+	}
+	if bt != BinaryUnknown {
+		return
+	}
+	// try the other format instead
+	switch operatingSys {
+	case "linux", "freebsd":
+		bt, _ = MachoFileType(path)
+	case "darwin":
+		bt, _ = ElfFileType(path)
+	}
+	return
+}
 
 func elfType2BinaryType(et elf.Type) (bt BinaryType) {
 	bt = BinaryUnknown
@@ -95,8 +138,8 @@ func machoType2BinaryType(mt macho.Type) (bt BinaryType) {
 	return
 }
 
-// isPlainFile returns true if the file is stat-able (i.e. exists etc), and is not a directory, else it returns false.
-func isPlainFile(objectFile string) (ok bool) {
+// IsPlainFile returns true if the file is stat-able (i.e. exists etc), and is not a directory, else it returns false.
+func IsPlainFile(objectFile string) (ok bool) {
 	info, err := os.Stat(objectFile)
 	if os.IsNotExist(err) || info.IsDir() {
 		return
@@ -109,7 +152,7 @@ func isPlainFile(objectFile string) (ok bool) {
 }
 
 func injectableViaFileType(objectFile string) (ok bool, err error) {
-	plain := isPlainFile(objectFile)
+	plain := IsPlainFile(objectFile)
 	if !plain {
 		return
 	}
@@ -151,7 +194,7 @@ func MachoFileType(objectFile string) (code BinaryType, err error) {
 
 //IsObjectFileForOS returns true if the given file is an object file for the given OS, using the debug/elf and debug/macho packages.
 func IsObjectFileForOS(objectFile string, operatingSys string) (ok bool, err error) {
-	plain := isPlainFile(objectFile)
+	plain := IsPlainFile(objectFile)
 	if !plain {
 		return
 	}

@@ -100,3 +100,48 @@ func Test_obscure_functionality(t *testing.T) {
 		fmt.Println("Extraction OK")
 	}
 }
+
+func Test_file_type(t *testing.T) {
+	fictionalFile := "HopefullyThereIsNotAFileCalledThisNearBy.txt"
+	dataDir := "../data"
+	sourceFile := "../data/helloworld.c"
+	objectFile := "../data/bhello.notanextensionthatwerecognize"
+	exeFile := "../data/bhello"
+	fmt.Printf("GetBinaryType(%v) = %v\n", fictionalFile, shared.GetBinaryType(fictionalFile))
+	fmt.Printf("GetBinaryType(%v) = %v\n", dataDir, shared.GetBinaryType(dataDir))
+	fmt.Printf("GetBinaryType(%v) = %v\n", sourceFile, shared.GetBinaryType(sourceFile))
+	fmt.Printf("GetBinaryType(%v) = %v\n", objectFile, shared.GetBinaryType(objectFile))
+	fmt.Printf("GetBinaryType(%v) = %v\n", exeFile, shared.GetBinaryType(exeFile))
+
+	plain := shared.IsPlainFile(fictionalFile)
+	if plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", fictionalFile, plain)
+	} else {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", fictionalFile, plain)
+	}
+	plain = shared.IsPlainFile(dataDir)
+	if plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", dataDir, plain)
+	} else {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", dataDir, plain)
+	}
+	plain = shared.IsPlainFile(sourceFile)
+	if !plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", sourceFile, plain)
+	} else {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", sourceFile, plain)
+	}
+	plain = shared.IsPlainFile(objectFile)
+	if !plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", objectFile, plain)
+	} else {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", objectFile, plain)
+	}
+	plain = shared.IsPlainFile(exeFile)
+	if !plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", exeFile, plain)
+	} else {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", exeFile, plain)
+	}
+
+}
