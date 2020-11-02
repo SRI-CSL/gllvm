@@ -141,10 +141,13 @@ func machoType2BinaryType(mt macho.Type) (bt BinaryType) {
 // IsPlainFile returns true if the file is stat-able (i.e. exists etc), and is not a directory, else it returns false.
 func IsPlainFile(objectFile string) (ok bool) {
 	info, err := os.Stat(objectFile)
-	if os.IsNotExist(err) || info.IsDir() {
+	if os.IsNotExist(err) {
 		return
 	}
 	if err != nil {
+		return
+	}
+	if info.IsDir() {
 		return
 	}
 	ok = true
