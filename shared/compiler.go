@@ -119,6 +119,7 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 		for i, srcFile := range pr.InputFiles {
 			objFile, bcFile := getArtifactNames(pr, i, hidden)
 			if hidden {
+				LogDebug("not compile only; building object files")
 				buildObjectFile(compilerExecName, pr, srcFile, objFile)
 				*newObjectFiles = append(*newObjectFiles, objFile)
 			}
@@ -271,6 +272,7 @@ func compileTimeLinkFiles(compilerExecName string, pr ParserResult, objFiles []s
 func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, objFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	args = append(args, srcFile, "-c", "-o", objFile)
+	LogDebug("buildObjectFile: %v", args)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
 		LogError("Failed to build object file for %s because: %v\n", srcFile, err)
