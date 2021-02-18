@@ -248,7 +248,11 @@ flags, for example `"-flto -fwhole-program-vtables"`.
 If the package you are building happens to take advantage of recent `clang` developments 
 such as *link time optimization* (indicated by the presence of compiler flag `-flto`), then
 your build is unlikely to produce anything that `get-bc` will work on. This is to be
-expected.
+expected. When working under these flags, the compiler actually produces object files that are bitcode,
+your only recourse here is to try and save these object files, and retrieve them yourself.
+This can be done by setting the `LTO_LINKING_FLAGS` to be something like
+`"-g -Wl,-plugin-opt=save-temps"` which will be appended to the flags at link time.
+This will at least preserve the bitcode files, even if `get-bc` will not be able to retrieve them for you.
 
 ## Developer tools
 
