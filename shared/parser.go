@@ -541,7 +541,6 @@ func (pr *ParserResult) verboseFlagCallback(_ string, _ []string) {
 }
 
 func (pr *ParserResult) compileOnlyCallback(_ string, _ []string) {
-	LogDebug("compileOnlyCallback")
 	pr.IsCompileOnly = true
 }
 

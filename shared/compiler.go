@@ -119,7 +119,6 @@ func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks 
 		for i, srcFile := range pr.InputFiles {
 			objFile, bcFile := getArtifactNames(pr, i, hidden)
 			if hidden {
-				LogDebug("not compile only; building object files")
 				buildObjectFile(compilerExecName, pr, srcFile, objFile)
 				*newObjectFiles = append(*newObjectFiles, objFile)
 			}
