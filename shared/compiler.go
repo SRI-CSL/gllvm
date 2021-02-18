@@ -271,6 +271,7 @@ func compileTimeLinkFiles(compilerExecName string, pr ParserResult, objFiles []s
 func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, objFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	args = append(args, srcFile, "-c", "-o", objFile)
+	LogDebug("buildObjectFile: %v", args)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
 		LogError("Failed to build object file for %s because: %v\n", srcFile, err)

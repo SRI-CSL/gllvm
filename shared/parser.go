@@ -177,8 +177,8 @@ func Parse(argList []string) ParserResult {
 		"--version": {0, pr.compileOnlyCallback},
 		"-v":        {0, pr.compileOnlyCallback},
 
-		"-w": {0, pr.compileOnlyCallback},
-		"-W": {0, pr.compileOnlyCallback},
+		"-w": {0, pr.compileUnaryCallback},
+		"-W": {0, pr.compileUnaryCallback},
 
 		"-emit-llvm": {0, pr.emitLLVMCallback},
 		"-flto":      {0, pr.linkTimeOptimizationCallback},
