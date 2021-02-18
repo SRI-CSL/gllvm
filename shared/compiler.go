@@ -153,6 +153,7 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 	default:
 		//OK we have to work harder here
 		ok, err := injectableViaFileType(objFile)
+		LogDebug("attachBitcodePathToObject: injectableViaFileType returned  ok=%v  err=%v", ok, err)
 		if ok {
 			success = injectPath(extension, bcFile, objFile)
 			return
@@ -161,6 +162,7 @@ func attachBitcodePathToObject(bcFile, objFile string) (success bool) {
 			// OK we have to work EVEN harder here (the file utility is not installed - probably)
 			// N.B. this will probably fail if we are cross compiling.
 			ok, err = injectableViaDebug(objFile)
+			LogDebug("attachBitcodePathToObject: injectableViaDebug returned  ok=%v  err=%v", ok, err)
 			if ok {
 				success = injectPath(extension, bcFile, objFile)
 				return
@@ -269,6 +271,7 @@ func compileTimeLinkFiles(compilerExecName string, pr ParserResult, objFiles []s
 func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, objFile string) (success bool) {
 	args := pr.CompileArgs[:]
 	args = append(args, srcFile, "-c", "-o", objFile)
+	LogDebug("buildObjectFile: %v", args)
 	success, err := execCmd(compilerExecName, args, "")
 	if !success {
 		LogError("Failed to build object file for %s because: %v\n", srcFile, err)

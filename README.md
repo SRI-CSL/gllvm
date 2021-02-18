@@ -250,7 +250,12 @@ such as *link time optimization* (indicated by the presence of compiler flag `-f
 your build is unlikely to produce anything that `get-bc` will work on. This is to be
 expected.
 
+## Developer tools
 
+Debugging usually boils down to looking in the logs, maybe adding a print statement or two.
+There is an additional executable, not mentioned above, called `gparse` that gets installed 
+along with `gclang`, `gclang++`, `get-bc` and `gsanity-check`. `gparse` takes the command line
+arguments to the compiler, and outputs how it parsed them. This can sometimes be helpful.
 
 ## License
 
