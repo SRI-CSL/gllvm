@@ -66,6 +66,11 @@ go get github.com/SRI-CSL/gllvm/cmd/...
 This should install four binaries: `gclang`, `gclang++`, `get-bc`, and `gsanity-check`
 in the `$GOPATH/bin` directory.
 
+If you are using `go 1.16` you may be forced to install it like this:
+```
+GO111MODULE=off go get github.com/SRI-CSL/gllvm/cmd/...
+```
+Hopefully we will have a better fix for this [soon](https://github.com/golang/go/issues/44776)?
 ## Usage
 
 `gclang` and
