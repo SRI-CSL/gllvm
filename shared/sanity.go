@@ -188,7 +188,7 @@ func checkCompilers() bool {
 	f := GetCompilerExecName("flang")
         fOK, fVersion, _ := checkExecutable(f, "-v")
         if !fOK {
-                informUser("The Fortran compiler %s was not found or not executable.\nBetter not try using gfortran!\n", cxx)
+                informUser("The Fortran compiler %s was not found or not executable.\nBetter not try using gfortran!\n", f)
                 informUser(explainLLVMCOMPILERPATH)
                 informUser(explainLLVMFNAME)
         } else {
