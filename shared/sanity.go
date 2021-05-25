@@ -60,6 +60,14 @@ the appropriate string. For example if your clang++ is called ++clang
 then LLVM_CC_NAME should be set to ++clang.
 
 `
+const explainLLVMFNAME = `
+
+If your flang compiler is not called flang, but something else,
+then you will need to set the environment variable LLVM_F_NAME to
+the appropriate string. For example if your flang is called flang-7
+then LLVM_F_NAME should be set to flang-7.
+
+`
 
 const explainLLVMCOMPILERPATH = `
 
@@ -170,16 +178,26 @@ func checkCompilers() bool {
 
 	cxx := GetCompilerExecName("clang++")
 	cxxOK, cxxVersion, _ := checkExecutable(cxx, "-v")
-	if !ccOK {
+	if !cxxOK {
 		informUser("The CXX compiler %s was not found or not executable.\nBetter not try using gclang++!\n", cxx)
 		informUser(explainLLVMCOMPILERPATH)
 		informUser(explainLLVMCXXNAME)
 	} else {
 		informUser("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}
+	f := GetCompilerExecName("flang")
+        fOK, fVersion, _ := checkExecutable(f, "-v")
+        if !fOK {
+                informUser("The Fortran compiler %s was not found or not executable.\nBetter not try using gfortran!\n", cxx)
+                informUser(explainLLVMCOMPILERPATH)
+                informUser(explainLLVMFNAME)
+        } else {
+                informUser("The Fortran compiler %s is:\n\n\t%s\n\n", f, extractLine(fVersion, 0))
+        }
+
 
 	//FIXME: why "or" rather than "and"? BECAUSE: if you only need CC, not having CXX is not an error.
-	return ccOK || cxxOK
+	return ccOK || cxxOK || fOK
 }
 
 func extractLine(version string, n int) string {

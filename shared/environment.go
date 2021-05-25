@@ -59,6 +59,9 @@ var LLVMCCName string
 //LLVMCXXName is the user configured name of the clang++ compiler.
 var LLVMCXXName string
 
+//LLVMFName is the user configered name of the flang compiler.
+var LLVMFName string
+
 //LLVMARName is the user configured name of the llvm-ar.
 var LLVMARName string
 
@@ -93,6 +96,7 @@ const (
 	envpath    = "LLVM_COMPILER_PATH"
 	envcc      = "LLVM_CC_NAME"
 	envcxx     = "LLVM_CXX_NAME"
+	envf	   = "LLVM_F_NAME"
 	envar      = "LLVM_AR_NAME"
 	envlnk     = "LLVM_LINK_NAME"
 	envcfg     = "WLLVM_CONFIGURE_ONLY"
@@ -116,7 +120,7 @@ func init() {
 
 // PrintEnvironment is used for printing the aspects of the environment that concern us
 func PrintEnvironment() {
-	vars := []string{envpath, envcc, envcxx, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen, envltolink}
+	vars := []string{envpath, envcc, envcxx, envf, envar, envlnk, envcfg, envbc, envlvl, envfile, envobjcopy, envld, envbcgen, envltolink}
 
 	informUser("\nLiving in this environment:\n\n")
 	for _, v := range vars {
@@ -135,6 +139,7 @@ func ResetEnvironment() {
 	LLVMToolChainBinDir = ""
 	LLVMCCName = ""
 	LLVMCXXName = ""
+	LLVMFName = ""
 	LLVMARName = ""
 	LLVMLINKName = ""
 	LLVMConfigureOnly = ""
@@ -152,6 +157,7 @@ func FetchEnvironment() {
 	LLVMToolChainBinDir = os.Getenv(envpath)
 	LLVMCCName = os.Getenv(envcc)
 	LLVMCXXName = os.Getenv(envcxx)
+	LLVMFName = os.Getenv(envf)
 	LLVMARName = os.Getenv(envar)
 	LLVMLINKName = os.Getenv(envlnk)
 

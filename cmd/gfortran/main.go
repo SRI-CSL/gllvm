@@ -33,10 +33,22 @@
 
 package main
 
-import "github.com/alexbernat/gllvm/shared"
+import (
+	"github.com/alexbernat/gllvm/shared"
+	"os"
+)
 
 func main() {
+	shared.LogInfo("Entering fortran %v\n", os.Args[1:])
+	// Parse command line
+	args := os.Args
+	args = args[1:]
 
-	shared.SanityCheck()
+	exitCode := shared.Compile(args, "flang")
+
+	shared.LogDebug("Calling %v returned %v\n", os.Args, exitCode)
+
+	//important to pretend to look like the actual wrapped command
+	os.Exit(exitCode)
 
 }
