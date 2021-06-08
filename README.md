@@ -17,10 +17,12 @@ bitcode in parallel, and is faster. A comparison between the two tools can be gl
 |-----------------------------|-----------------------------|
 |  wllvm                      | gclang                      |
 |  wllvm++                    | gclang++                    |
+|                             | gflang                      |
 |  extract-bc                 | get-bc                      |
 |  wllvm-sanity-checker       | gsanity-check               |
 |  LLVM_COMPILER_PATH         | LLVM_COMPILER_PATH          |
 |  LLVM_CC_NAME      ...      | LLVM_CC_NAME          ...   |
+|                             | LLVM_F_NAME                 |
 |  WLLVM_CONFIGURE_ONLY       | WLLVM_CONFIGURE_ONLY        |
 |  WLLVM_OUTPUT_LEVEL         | WLLVM_OUTPUT_LEVEL          |
 |  WLLVM_OUTPUT_FILE          | WLLVM_OUTPUT_FILE           |
@@ -52,7 +54,7 @@ For more details see [wllvm](https://github.com/SRI-CSL/whole-program-llvm).
 
 To install `gllvm` you need the go language [tool](https://golang.org/doc/install).
 
-To use `gllvm` you need clang/clang++ and the llvm tools llvm-link and llvm-ar.
+To use `gllvm` you need clang/clang++/flang and the llvm tools llvm-link and llvm-ar.
 `gllvm` is agnostic to the actual llvm version. `gllvm` also relies on standard build
 tools such as `objcopy` and `ld`.
 
@@ -63,7 +65,7 @@ To install, simply do (making sure to include those `...`)
 ```
 go get github.com/SRI-CSL/gllvm/cmd/...
 ```
-This should install four binaries: `gclang`, `gclang++`, `get-bc`, and `gsanity-check`
+This should install five binaries: `gclang`, `gclang++`, `gflang`, `get-bc`, and `gsanity-check`
 in the `$GOPATH/bin` directory.
 
 If you are using `go 1.16` you may be forced to install it like this:
@@ -74,7 +76,9 @@ Hopefully we will have a better fix for this [soon](https://github.com/golang/go
 ## Usage
 
 `gclang` and
-`gclang++` are the wrappers used to compile C and C++.  `get-bc` is used for
+`gclang++` are the wrappers used to compile C and C++.  
+`gflang` is the wrapper used to compile Fortran.
+`get-bc` is used for
 extracting the bitcode from a build product (either an object file, executable, library
 or archive). `gsanity-check` can be used for detecting configuration errors.
 
@@ -106,8 +110,8 @@ environment variables.
    contains the compiler and the other LLVM tools to be used.
 
  * `LLVM_CC_NAME` can be set if your clang compiler is not called `clang` but
-    something like `clang-3.7`. Similarly `LLVM_CXX_NAME` can be used to
-    describe what the C++ compiler is called. We also pay attention to the
+    something like `clang-3.7`. Similarly `LLVM_CXX_NAME` and `LLVM_F_NAME` can be used to
+    describe what the C++ and Fortran compilers are called, respectively. We also pay attention to the
     environment variables `LLVM_LINK_NAME` and `LLVM_AR_NAME` in an
     analogous way.
 
@@ -263,7 +267,7 @@ This will at least preserve the bitcode files, even if `get-bc` will not be able
 
 Debugging usually boils down to looking in the logs, maybe adding a print statement or two.
 There is an additional executable, not mentioned above, called `gparse` that gets installed 
-along with `gclang`, `gclang++`, `get-bc` and `gsanity-check`. `gparse` takes the command line
+along with `gclang`, `gclang++`, `gflang`, `get-bc` and `gsanity-check`. `gparse` takes the command line
 arguments to the compiler, and outputs how it parsed them. This can sometimes be helpful.
 
 ## License

@@ -33,7 +33,7 @@
 
 package main
 
-import "github.com/alexbernat/gllvm/shared"
+import "github.com/SRI-CSL/gllvm/shared"
 
 func main() {
 
