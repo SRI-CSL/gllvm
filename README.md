@@ -17,7 +17,7 @@ bitcode in parallel, and is faster. A comparison between the two tools can be gl
 |-----------------------------|-----------------------------|
 |  wllvm                      | gclang                      |
 |  wllvm++                    | gclang++                    |
-|                             | gflang                      |
+|  wfortran                   | gflang                      |
 |  extract-bc                 | get-bc                      |
 |  wllvm-sanity-checker       | gsanity-check               |
 |  LLVM_COMPILER_PATH         | LLVM_COMPILER_PATH          |
