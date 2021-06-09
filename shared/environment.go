@@ -96,7 +96,7 @@ const (
 	envpath    = "LLVM_COMPILER_PATH"
 	envcc      = "LLVM_CC_NAME"
 	envcxx     = "LLVM_CXX_NAME"
-	envf	   = "LLVM_F_NAME"
+	envf       = "LLVM_F_NAME"
 	envar      = "LLVM_AR_NAME"
 	envlnk     = "LLVM_LINK_NAME"
 	envcfg     = "WLLVM_CONFIGURE_ONLY"

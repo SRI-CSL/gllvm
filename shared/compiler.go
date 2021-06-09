@@ -387,9 +387,9 @@ func GetCompilerExecName(compiler string) string {
 		return filepath.Join(LLVMToolChainBinDir, compiler)
 	case "flang":
 		if LLVMFName != "" {
-                        return filepath.Join(LLVMToolChainBinDir, LLVMCCName)
-                }
-                return filepath.Join(LLVMToolChainBinDir, compiler)
+			return filepath.Join(LLVMToolChainBinDir, LLVMCCName)
+		}
+		return filepath.Join(LLVMToolChainBinDir, compiler)
 	default:
 		LogError("The compiler %s is not supported by this tool.", compiler)
 		return ""

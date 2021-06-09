@@ -186,15 +186,14 @@ func checkCompilers() bool {
 		informUser("The CXX compiler %s is:\n\n\t%s\n\n", cxx, extractLine(cxxVersion, 0))
 	}
 	f := GetCompilerExecName("flang")
-        fOK, fVersion, _ := checkExecutable(f, "-v")
-        if !fOK {
-                informUser("The Fortran compiler %s was not found or not executable.\nBetter not try using gflang!\n", f)
-                informUser(explainLLVMCOMPILERPATH)
-                informUser(explainLLVMFNAME)
-        } else {
-                informUser("The Fortran compiler %s is:\n\n\t%s\n\n", f, extractLine(fVersion, 0))
-        }
-
+	fOK, fVersion, _ := checkExecutable(f, "-v")
+	if !fOK {
+		informUser("The Fortran compiler %s was not found or not executable.\nBetter not try using gflang!\n", f)
+		informUser(explainLLVMCOMPILERPATH)
+		informUser(explainLLVMFNAME)
+	} else {
+		informUser("The Fortran compiler %s is:\n\n\t%s\n\n", f, extractLine(fVersion, 0))
+	}
 
 	//FIXME: why "or" rather than "and"? BECAUSE: if you only need CC, not having CXX is not an error.
 	return ccOK || cxxOK || fOK
