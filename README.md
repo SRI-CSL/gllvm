@@ -29,6 +29,7 @@ bitcode in parallel, and is faster. A comparison between the two tools can be gl
 |  LLVM_COMPILER              | *not supported* (clang only)|
 |  LLVM_GCC_PREFIX            | *not supported* (clang only)|
 |  LLVM_DRAGONEGG_PLUGIN      | *not supported* (clang only)|
+|  LLVM_LINK_FLAGS            | *not supported*             |
 
 
 This project, `gllvm`, provides tools for building whole-program (or
@@ -251,6 +252,11 @@ In some situations it is desirable to pass certain flags to `clang` in the step 
 produces the bitcode. This can be fulfilled by setting the
 `LLVM_BITCODE_GENERATION_FLAGS` environment variable to the desired
 flags, for example `"-flto -fwhole-program-vtables"`.
+
+In other situations it is desirable to pass certain flags to `llvm-link` in the step
+that merges multiple individual bitcode files together (i.e., within `get-bc`).
+This can be fulfilled by setting the `LLVM_LINK_FLAGS` environment variable to
+the desired flags, for example `"-internalize -only-needed"`.
 
 ## Beware of link time optimization.
 
