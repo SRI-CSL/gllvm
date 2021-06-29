@@ -243,7 +243,7 @@ func Parse(argList []string) ParserResult {
 		"-mskip-rax-setup":             {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 		"-mindirect-branch-register":   {0, pr.compileUnaryCallback}, //iam: linux kernel stuff
 
-		"-mllvm": {1, pr.compileUnaryCallback}, //iam: chromium
+		"-mllvm": {1, pr.compileBinaryCallback}, //iam: chromium
 
 		"-A": {1, pr.compileBinaryCallback},
 		"-D": {1, pr.compileBinaryCallback},
