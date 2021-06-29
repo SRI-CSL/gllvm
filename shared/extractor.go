@@ -661,6 +661,10 @@ func linkBitcodeFilesIncrementally(ea ExtractionArgs, filesToLink []string, argM
 	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
+
+	// Append any custom llvm-link flags requested by the user.
+	// We only do this for the last llvm-link invocation.
+	linkArgs = append(linkArgs, LLVMLINKFlags...)
 	linkArgs = append(linkArgs, tmpFileList...)
 
 	linkArgs = append(linkArgs, "-o", ea.OutputFile)
@@ -682,10 +686,15 @@ func linkBitcodeFiles(ea ExtractionArgs, filesToLink []string) (success bool) {
 	if ea.Verbose {
 		linkArgs = append(linkArgs, "-v")
 	}
+
 	if getsize(filesToLink) > argMax { //command line size too large for the OS (necessitated by chromium)
 		return linkBitcodeFilesIncrementally(ea, filesToLink, argMax, linkArgs)
 	}
 	var err error
+
+	// Append any custom llvm-link flags requested by the user.
+	// N.B. that we do this specially for the incremental link case.
+	linkArgs = append(linkArgs, LLVMLINKFlags...)
 	linkArgs = append(linkArgs, "-o", ea.OutputFile)
 	linkArgs = append(linkArgs, filesToLink...)
 	success, err = execCmd(ea.LlvmLinkerName, linkArgs, "")
