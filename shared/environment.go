@@ -68,6 +68,9 @@ var LLVMARName string
 //LLVMLINKName is the user configured name of the llvm-link.
 var LLVMLINKName string
 
+//LLVMLINKFlags is the user configured list of flags to append to llvm-link.
+var LLVMLINKFlags []string
+
 //LLVMConfigureOnly is the user configured flag indicating a single pass mode is required.
 var LLVMConfigureOnly string
 
@@ -99,6 +102,7 @@ const (
 	envf       = "LLVM_F_NAME"
 	envar      = "LLVM_AR_NAME"
 	envlnk     = "LLVM_LINK_NAME"
+	envlnkflgs = "LLVM_LINK_FLAGS"
 	envcfg     = "WLLVM_CONFIGURE_ONLY"
 	envbc      = "WLLVM_BC_STORE"
 	envlvl     = "WLLVM_OUTPUT_LEVEL"
@@ -142,6 +146,7 @@ func ResetEnvironment() {
 	LLVMFName = ""
 	LLVMARName = ""
 	LLVMLINKName = ""
+	LLVMLINKFlags = []string{}
 	LLVMConfigureOnly = ""
 	LLVMBitcodeStorePath = ""
 	LLVMLoggingLevel = ""
@@ -160,6 +165,7 @@ func FetchEnvironment() {
 	LLVMFName = os.Getenv(envf)
 	LLVMARName = os.Getenv(envar)
 	LLVMLINKName = os.Getenv(envlnk)
+	LLVMLINKFlags = strings.Fields(os.Getenv(envlnkflgs))
 
 	LLVMConfigureOnly = os.Getenv(envcfg)
 	LLVMBitcodeStorePath = os.Getenv(envbc)
