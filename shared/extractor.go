@@ -286,6 +286,9 @@ func handleExecutable(ea ExtractionArgs) (success bool) {
 		sort.Strings(artifactPaths)
 	}
 
+	// Deduplicate any files to link
+	dedupeStrings(&filesToLink)
+
 	// Write manifest
 	if ea.WriteManifest {
 		if !writeManifest(ea, filesToLink, artifactPaths) {
