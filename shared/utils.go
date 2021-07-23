@@ -75,3 +75,17 @@ func runCmd(cmdExecName string, args []string) (output string, err error) {
 	output = outb.String()
 	return
 }
+
+// Deduplicate a potentially unsorted list of strings in-place without changing their order
+func dedupeStrings(strings *[]string) {
+	seen := make(map[string]bool)
+	count := 0
+	for _, s := range *strings {
+		if _, exists := seen[s]; !exists {
+			seen[s] = true
+			(*strings)[count] = s
+			count++
+		}
+	}
+	*strings = (*strings)[:count]
+}
