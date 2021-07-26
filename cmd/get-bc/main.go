@@ -44,7 +44,7 @@ func main() {
 
 	exitCode := shared.Extract(args)
 
-	shared.LogInfo("Calling %v DID NOT TELL US WHAT HAPPENED\n", os.Args)
+	shared.LogInfo("Completed call: %v, exiting with %v\n", os.Args, exitCode)
 
 	os.Exit(exitCode)
 }
