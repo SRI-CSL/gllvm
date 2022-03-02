@@ -267,20 +267,7 @@ func compileTimeLinkFiles(compilerExecName string, pr ParserResult, objFiles []s
 	}
 }
 
-// Tries to build the specified source file to object
-func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, objFile string) (success bool) {
-	args := pr.CompileArgs[:]
-	args = append(args, srcFile, "-c", "-o", objFile)
-	LogDebug("buildObjectFile: %v", args)
-	success, err := execCmd(compilerExecName, args, "")
-	if !success {
-		LogError("Failed to build object file for %s because: %v\n", srcFile, err)
-		return
-	}
-	success = true
-	return
-}
-
+// Tries to build the specified source file to an object, returning a content-addressed path
 func buildObjectFileContentAddressed(compilerExecName string, pr ParserResult, srcFile string) (objFile string, success bool) {
 	objFile = ""
 	success = false
@@ -319,26 +306,10 @@ func buildObjectFileContentAddressed(compilerExecName string, pr ParserResult, s
 	return
 }
 
-// Tries to build the specified source file to bitcode
-func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, bcFile string) (success bool) {
-	args := pr.CompileArgs[:]
-	//iam: 03/24/2020 extend with the LLVM_BITCODE_GENERATION_FLAGS if any.
-	args = append(args, LLVMbcGen...)
-	args = append(args, "-emit-llvm", "-c", srcFile, "-o", bcFile)
-	success, err := execCmd(compilerExecName, args, "")
-	if !success {
-		LogError("Failed to build bitcode file for %s because: %v\n", srcFile, err)
-		return
-	}
-	success = true
-	return
-}
-
 // Tries to build the specified source file to bitcode, returning a content-addressed path
 func buildBitcodeFileContentAddressed(compilerExecName string, pr ParserResult, srcFile string) (bcFile string, success bool) {
 	bcFile = ""
 	success = false
-
 
 	// NOTE: We don't remove the temporary file because we rename it.
 	tempBcFile, err := ioutil.TempFile("", ".*.bc")
