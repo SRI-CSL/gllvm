@@ -34,13 +34,13 @@
 package shared
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 )
 
@@ -56,7 +56,8 @@ func Compile(args []string, compiler string) (exitCode int) {
 	// in the configureOnly case we have to know the exit code of the compile
 	// because that is how configure figures out what it can and cannot do.
 
-	ok := true
+	compileOk := true
+	attachOk := true
 
 	compilerExecName := GetCompilerExecName(compiler)
 
@@ -69,10 +70,10 @@ func Compile(args []string, compiler string) (exitCode int) {
 	// If configure only, emit-llvm, flto, or print only are set, just execute the compiler
 	if pr.SkipBitcodeGeneration() {
 		wg.Add(1)
-		go execCompile(compilerExecName, pr, &wg, &ok)
+		go execCompile(compilerExecName, pr, &wg, &compileOk)
 		wg.Wait()
 
-		if !ok {
+		if !compileOk {
 			exitCode = 1
 		}
 
@@ -82,12 +83,12 @@ func Compile(args []string, compiler string) (exitCode int) {
 		var newObjectFiles []string
 
 		wg.Add(2)
-		go execCompile(compilerExecName, pr, &wg, &ok)
-		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
+		go execCompile(compilerExecName, pr, &wg, &compileOk)
+		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg, &attachOk)
 		wg.Wait()
 
 		//grok the exit code
-		if !ok {
+		if !compileOk || !attachOk {
 			exitCode = 1
 		} else {
 			// When objects and bitcode are built we can attach bitcode paths
@@ -105,30 +106,29 @@ func Compile(args []string, compiler string) (exitCode int) {
 
 // Compiles bitcode files and mutates the list of bc->obj links to perform + the list of
 // new object files to link
-func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup) {
+func buildAndAttachBitcode(compilerExecName string, pr ParserResult, bcObjLinks *[]bitcodeToObjectLink, newObjectFiles *[]string, wg *sync.WaitGroup, ok *bool) {
 	defer (*wg).Done()
 
-	var hidden = !pr.IsCompileOnly
+	// var hidden = !pr.IsCompileOnly
+	var success bool
+	var objFile string
+	var bcFile string
 
-	if len(pr.InputFiles) == 1 && pr.IsCompileOnly {
-		var srcFile = pr.InputFiles[0]
-		objFile, bcFile := getArtifactNames(pr, 0, hidden)
-		buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
-		*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
-	} else {
-		for i, srcFile := range pr.InputFiles {
-			objFile, bcFile := getArtifactNames(pr, i, hidden)
-			if hidden {
-				buildObjectFile(compilerExecName, pr, srcFile, objFile)
-				*newObjectFiles = append(*newObjectFiles, objFile)
-			}
-			if strings.HasSuffix(srcFile, ".bc") {
-				*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: srcFile, objPath: objFile})
-			} else {
-				buildBitcodeFile(compilerExecName, pr, srcFile, bcFile)
-				*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
-			}
+	for _, srcFile := range pr.InputFiles {
+		objFile, success = buildObjectFileContentAddressed(compilerExecName, pr, srcFile)
+		if !success {
+			*ok = false
+			break
 		}
+
+		bcFile, success = buildBitcodeFileContentAddressed(compilerExecName, pr, srcFile)
+		if !success {
+			*ok = false
+			break
+		}
+
+		*newObjectFiles = append(*newObjectFiles, objFile)
+		*bcObjLinks = append(*bcObjLinks, bitcodeToObjectLink{bcPath: bcFile, objPath: objFile})
 	}
 }
 
@@ -281,6 +281,44 @@ func buildObjectFile(compilerExecName string, pr ParserResult, srcFile string, o
 	return
 }
 
+func buildObjectFileContentAddressed(compilerExecName string, pr ParserResult, srcFile string) (objFile string, success bool) {
+	objFile = ""
+	success = false
+
+	// NOTE: We don't remove the temporary file because we rename it.
+	tempObjFile, err := ioutil.TempFile("", ".*.o")
+	if err != nil {
+		return
+	}
+
+	args := pr.CompileArgs[:]
+	args = append(args, "-c", srcFile, "-o", tempObjFile.Name())
+	LogDebug("buildObjectFileContentAddressed: %v", args)
+
+	success, err = execCmd(compilerExecName, args, "")
+	if !success {
+		LogError("Failed to build object file for %s because: %v\n", srcFile, err)
+		return
+	}
+
+	bcContents := []byte{}
+	bcContents, err = ioutil.ReadFile(tempObjFile.Name())
+	if err != nil {
+		LogError("Failed to read temporary object for %s: %v\n", srcFile, err)
+		return
+	}
+
+	objFile = fmt.Sprintf(".%s.o", sha256Hash(bcContents))
+	err = os.Rename(tempObjFile.Name(), objFile)
+	if err != nil {
+		LogError("Failed to rename object for %s (%s -> %s): %v\n", srcFile, tempObjFile.Name(), objFile, err)
+		return
+	}
+
+	success = true
+	return
+}
+
 // Tries to build the specified source file to bitcode
 func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, bcFile string) (success bool) {
 	args := pr.CompileArgs[:]
@@ -292,6 +330,46 @@ func buildBitcodeFile(compilerExecName string, pr ParserResult, srcFile string, 
 		LogError("Failed to build bitcode file for %s because: %v\n", srcFile, err)
 		return
 	}
+	success = true
+	return
+}
+
+// Tries to build the specified source file to bitcode, returning a content-addressed path
+func buildBitcodeFileContentAddressed(compilerExecName string, pr ParserResult, srcFile string) (bcFile string, success bool) {
+	bcFile = ""
+	success = false
+
+
+	// NOTE: We don't remove the temporary file because we rename it.
+	tempBcFile, err := ioutil.TempFile("", ".*.bc")
+	if err != nil {
+		return
+	}
+
+	args := pr.CompileArgs[:]
+	args = append(args, LLVMbcGen...)
+	args = append(args, "-emit-llvm", "-c", srcFile, "-o", tempBcFile.Name())
+
+	success, err = execCmd(compilerExecName, args, "")
+	if !success {
+		LogError("Failed to build bitcode file for %s because: %v\n", srcFile, err)
+		return
+	}
+
+	bcContents := []byte{}
+	bcContents, err = ioutil.ReadFile(tempBcFile.Name())
+	if err != nil {
+		LogError("Failed to read temporary bitcode for %s: %v\n", srcFile, err)
+		return
+	}
+
+	bcFile = fmt.Sprintf(".%s.bc", sha256Hash(bcContents))
+	err = os.Rename(tempBcFile.Name(), bcFile)
+	if err != nil {
+		LogError("Failed to rename bitcode for %s (%s -> %s): %v\n", srcFile, tempBcFile.Name(), bcFile, err)
+		return
+	}
+
 	success = true
 	return
 }

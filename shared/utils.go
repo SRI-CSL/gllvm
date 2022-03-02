@@ -35,6 +35,8 @@ package shared
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"os/exec"
 )
@@ -88,4 +90,12 @@ func dedupeStrings(strings *[]string) {
 		}
 	}
 	*strings = (*strings)[:count]
+}
+
+func sha256Hash(data []byte) string {
+	hasher := sha256.New()
+	//Hash interface claims this never returns an error
+	hasher.Write(data)
+	hash := hex.EncodeToString(hasher.Sum(nil))
+	return hash
 }
