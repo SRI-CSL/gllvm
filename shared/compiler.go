@@ -81,10 +81,19 @@ func Compile(args []string, compiler string) (exitCode int) {
 		var bcObjLinks []bitcodeToObjectLink
 		var newObjectFiles []string
 
-		wg.Add(2)
-		go execCompile(compilerExecName, pr, &wg, &ok)
-		go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
-		wg.Wait()
+		if compiler == "flang" {
+			wg.Add(1)
+			go execCompile(compilerExecName, pr, &wg, &ok)
+			wg.Wait();
+			wg.Add(1);
+			go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
+			wg.Wait()
+		} else {
+			wg.Add(2)
+			go execCompile(compilerExecName, pr, &wg, &ok)
+			go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
+			wg.Wait()
+		}
 
 		//grok the exit code
 		if !ok {
