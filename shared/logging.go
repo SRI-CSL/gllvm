@@ -46,7 +46,7 @@ const (
 	debugV
 )
 
-//loggingLevels is the accepted logging levels.
+// loggingLevels is the accepted logging levels.
 var loggingLevels = map[string]int{
 	"ERROR":   errorV,
 	"WARNING": warningV,
@@ -61,10 +61,10 @@ var loggingPrefixes = map[int]string{
 	debugV:   "DEBUG:",
 }
 
-//loggingLevel is the user configured level of logging: ERROR, WARNING, INFO, DEBUG
+// loggingLevel is the user configured level of logging: ERROR, WARNING, INFO, DEBUG
 var loggingLevel = warningV
 
-//loggingFilePointer is where the logging is streamed too.
+// loggingFilePointer is where the logging is streamed too.
 var loggingFilePointer = os.Stderr
 
 func init() {
@@ -105,19 +105,19 @@ func makeLogger(lvl int) func(format string, a ...interface{}) {
 	}
 }
 
-//LogDebug logs to the configured stream if the logging level is DEBUG.
+// LogDebug logs to the configured stream if the logging level is DEBUG.
 var LogDebug = makeLogger(debugV)
 
-//LogInfo logs to the configured stream if the logging level is INFO or lower.
+// LogInfo logs to the configured stream if the logging level is INFO or lower.
 var LogInfo = makeLogger(infoV)
 
-//LogWarning logs to the configured stream if the logging level is WARNING or lower.
+// LogWarning logs to the configured stream if the logging level is WARNING or lower.
 var LogWarning = makeLogger(warningV)
 
-//LogError logs to the configured stream if the logging level is ERROR or lower.
+// LogError logs to the configured stream if the logging level is ERROR or lower.
 var LogError = makeLogger(errorV)
 
-//LogWrite writes to the logging stream, irregardless of levels.
+// LogWrite writes to the logging stream, irregardless of levels.
 var LogWrite = makeLogger(-1)
 
 func informUser(format string, a ...interface{}) {

@@ -44,7 +44,7 @@ import (
 	"strings"
 )
 
-//ParserResult is the result of parsing and partioning the command line arguments.
+// ParserResult is the result of parsing and partioning the command line arguments.
 type ParserResult struct {
 	InputList        []string
 	InputFiles       []string
@@ -113,7 +113,7 @@ type argPattern struct {
 	finfo   flagInfo
 }
 
-//SkipBitcodeGeneration indicates whether or not we should generate bitcode for these command line options.
+// SkipBitcodeGeneration indicates whether or not we should generate bitcode for these command line options.
 func (pr *ParserResult) SkipBitcodeGeneration() bool {
 	reason := "No particular reason"
 	retval := false
@@ -155,7 +155,7 @@ func (pr *ParserResult) SkipBitcodeGeneration() bool {
 	return retval
 }
 
-//Parse analyzes the command line aruguments and returns the result of that analysis.
+// Parse analyzes the command line aruguments and returns the result of that analysis.
 func Parse(argList []string) ParserResult {
 	var pr = ParserResult{}
 	pr.InputList = argList

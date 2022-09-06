@@ -102,13 +102,12 @@ type sanityArgs struct {
 
 // SanityCheck performs the environmental sanity check.
 //
-//        Performs the following checks in order:
-//        0. Check the logging
-//        1. Check that the OS is supported.
-//        2. Checks that the compiler settings make sense.
-//        3. Checks that the needed LLVM utilities exists.
-//        4. Check that the store, if set, exists.
-//
+//	Performs the following checks in order:
+//	0. Check the logging
+//	1. Check that the OS is supported.
+//	2. Checks that the compiler settings make sense.
+//	3. Checks that the needed LLVM utilities exists.
+//	4. Check that the store, if set, exists.
 func SanityCheck() {
 
 	sa := parseSanitySwitches()

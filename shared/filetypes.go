@@ -195,7 +195,7 @@ func MachoFileType(objectFile string) (code BinaryType, err error) {
 	return
 }
 
-//IsObjectFileForOS returns true if the given file is an object file for the given OS, using the debug/elf and debug/macho packages.
+// IsObjectFileForOS returns true if the given file is an object file for the given OS, using the debug/elf and debug/macho packages.
 func IsObjectFileForOS(objectFile string, operatingSys string) (ok bool, err error) {
 	plain := IsPlainFile(objectFile)
 	if !plain {
@@ -231,7 +231,7 @@ const (
 	fileTypeERROR
 )
 
-//iam: this is not that robust, because it depends on the file utility "file" which is
+// iam: this is not that robust, because it depends on the file utility "file" which is
 // often missing on docker images (the klee docker file had this problem)
 // this is only used in extraction, not in compilation.
 func getFileType(realPath string) (fileType int, err error) {

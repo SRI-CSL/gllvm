@@ -39,7 +39,6 @@ import (
 	"debug/macho"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -50,7 +49,7 @@ import (
 	"strings"
 )
 
-//ExtractionArgs encapsulate the results of parsing the commandline options
+// ExtractionArgs encapsulate the results of parsing the commandline options
 type ExtractionArgs struct {
 	Failure             bool // indicates failure in parsing the cmd line args
 	Verbose             bool // inform the user of what is going on
@@ -71,7 +70,7 @@ type ExtractionArgs struct {
 	Extractor           func(string) ([]string, bool)
 }
 
-//for printing out the parsed arguments, some have been skipped.
+// for printing out the parsed arguments, some have been skipped.
 func (ea ExtractionArgs) String() string {
 	format :=
 		`
@@ -93,7 +92,7 @@ ea.StrictExtract:      %v
 		ea.LlvmLinkerName, ea.ArchiverName, ea.StrictExtract)
 }
 
-//ParseSwitches parses the command line into an ExtractionArgs object.
+// ParseSwitches parses the command line into an ExtractionArgs object.
 func ParseSwitches(args []string) (ea ExtractionArgs) {
 
 	var flagSet *flag.FlagSet = flag.NewFlagSet(args[0], flag.ContinueOnError)
@@ -145,7 +144,7 @@ func ParseSwitches(args []string) (ea ExtractionArgs) {
 	return
 }
 
-//Extract extracts the LLVM bitcode according to the arguments it is passed.
+// Extract extracts the LLVM bitcode according to the arguments it is passed.
 func Extract(args []string) (exitCode int) {
 
 	exitCode = 1
@@ -443,20 +442,20 @@ func extractFiles(ea ExtractionArgs, inputFile string, toc map[string]int) (succ
 	return
 }
 
-//handleArchive processes an archive, and creates either a bitcode archive, or a module, depending on the flags used.
+// handleArchive processes an archive, and creates either a bitcode archive, or a module, depending on the flags used.
 //
-//    Archives are strange beasts. handleArchive processes the archive by:
+//	Archives are strange beasts. handleArchive processes the archive by:
 //
-//      1. first creating a table of contents of the archive, which maps file names (in the archive) to the number of
-//    times a file with that name is stored in the archive.
+//	  1. first creating a table of contents of the archive, which maps file names (in the archive) to the number of
+//	times a file with that name is stored in the archive.
 //
-//      2. for each OCCURRENCE of a file (name and count) it extracts the section from the object file, and adds the
-//    bitcode paths to the bitcode list.
+//	  2. for each OCCURRENCE of a file (name and count) it extracts the section from the object file, and adds the
+//	bitcode paths to the bitcode list.
 //
-//      3. it then either links all these bitcode files together using llvm-link,  or else is creates a bitcode
-//    archive using llvm-ar
+//	  3. it then either links all these bitcode files together using llvm-link,  or else is creates a bitcode
+//	archive using llvm-ar
 //
-//iam: 5/1/2018
+// iam: 5/1/2018
 func handleArchive(ea ExtractionArgs) (success bool) {
 	// List bitcode files to link
 	var bcFiles []string
@@ -467,7 +466,7 @@ func handleArchive(ea ExtractionArgs) (success bool) {
 	LogInfo("handleArchive: ExtractionArgs = %v\n", ea)
 
 	// Create tmp dir
-	tmpDirName, err := ioutil.TempDir("", "gllvm")
+	tmpDirName, err := os.MkdirTemp("", "gllvm")
 	if err != nil {
 		LogError("The temporary directory in which to extract object files could not be created.")
 		return
@@ -607,7 +606,7 @@ func fetchArgMax(ea ExtractionArgs) (argMax int) {
 func linkBitcodeFilesIncrementally(ea ExtractionArgs, filesToLink []string, argMax int, linkArgs []string) (success bool) {
 	var tmpFileList []string
 	// Create tmp dir
-	tmpDirName, err := ioutil.TempDir(".", "glinking")
+	tmpDirName, err := os.MkdirTemp(".", "glinking")
 	if err != nil {
 		LogError("The temporary directory in which to put temporary linking files could not be created.")
 		return
@@ -619,7 +618,7 @@ func linkBitcodeFilesIncrementally(ea ExtractionArgs, filesToLink []string, argM
 		LogInfo("Keeping the temporary folder")
 	}
 
-	tmpFile, err := ioutil.TempFile(tmpDirName, "tmp")
+	tmpFile, err := os.CreateTemp(tmpDirName, "tmp")
 	if err != nil {
 		LogError("The temporary linking file could not be created.")
 		return
@@ -643,7 +642,7 @@ func linkBitcodeFilesIncrementally(ea ExtractionArgs, filesToLink []string, argM
 			if ea.Verbose {
 				linkArgs = append(linkArgs, "-v")
 			}
-			tmpFile, err = ioutil.TempFile(tmpDirName, "tmp")
+			tmpFile, err = os.CreateTemp(tmpDirName, "tmp")
 			if err != nil {
 				LogError("Could not generate a temp file in %s because %v.\n", tmpDirName, err)
 				success = false
@@ -778,13 +777,13 @@ func writeManifest(ea ExtractionArgs, bcFiles []string, artifactFiles []string) 
 		section1 := "Physical location of extracted files:\n" + strings.Join(bcFiles, "\n") + "\n\n"
 		section2 := "Build-time location of extracted files:\n" + strings.Join(artifactFiles, "\n")
 		contents := []byte(section1 + section2)
-		if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
+		if err := os.WriteFile(manifestFilename, contents, 0644); err != nil {
 			LogError("There was an error while writing the manifest file: ", err)
 			return
 		}
 	} else {
 		contents := []byte("\n" + strings.Join(bcFiles, "\n") + "\n")
-		if err := ioutil.WriteFile(manifestFilename, contents, 0644); err != nil {
+		if err := os.WriteFile(manifestFilename, contents, 0644); err != nil {
 			LogError("There was an error while writing the manifest file: ", err)
 			return
 		}

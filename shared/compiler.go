@@ -35,7 +35,6 @@ package shared
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -49,7 +48,7 @@ type bitcodeToObjectLink struct {
 	objPath string
 }
 
-//Compile wraps a call to the compiler with the given args.
+// Compile wraps a call to the compiler with the given args.
 func Compile(args []string, compiler string) (exitCode int) {
 
 	exitCode = 0
@@ -84,8 +83,8 @@ func Compile(args []string, compiler string) (exitCode int) {
 		if compiler == "flang" {
 			wg.Add(1)
 			go execCompile(compilerExecName, pr, &wg, &ok)
-			wg.Wait();
-			wg.Add(1);
+			wg.Wait()
+			wg.Add(1)
 			go buildAndAttachBitcode(compilerExecName, pr, &bcObjLinks, &newObjectFiles, &wg)
 			wg.Wait()
 		} else {
@@ -191,7 +190,7 @@ func injectPath(extension, bcFile, objFile string) (success bool) {
 	// Store bitcode path to temp file
 	var absBcPath, _ = filepath.Abs(bcFile)
 	tmpContent := []byte(absBcPath + "\n")
-	tmpFile, err := ioutil.TempFile("", "gllvm")
+	tmpFile, err := os.CreateTemp("", "gllvm")
 	if err != nil {
 		LogError("attachBitcodePathToObject: %v\n", err)
 		return
@@ -313,10 +312,12 @@ func execCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, o
 	//     But for the now, we just remove forbidden arguments
 	var success bool
 	var err error
+	var linking = false
 	// start afresh
 	arguments := []string{}
 	// we are linking rather than compiling
 	if len(pr.InputFiles) == 0 && len(pr.LinkArgs) > 0 {
+		linking = true
 		if pr.IsLTO {
 			arguments = append(arguments, LLVMLtoLDFLAGS...)
 		}
@@ -338,45 +339,15 @@ func execCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, o
 	} else {
 		arguments = append(arguments, pr.InputList...)
 	}
+	if linking {
+		LogInfo("LINKING with %v using %v", compilerExecName, arguments)
+	} else {
+		LogInfo("COMPILING with %v using %v", compilerExecName, arguments)
+	}
 	LogDebug("Calling execCmd(%v, %v)", compilerExecName, arguments)
 	success, err = execCmd(compilerExecName, arguments, "")
 	if !success {
 		LogError("Failed to compile using given arguments:\n%v %v\nexit status: %v\n", compilerExecName, arguments, err)
-		*ok = false
-	}
-}
-
-// Tries to build object file
-
-func oldExecCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, ok *bool) {
-	defer (*wg).Done()
-	//iam: strickly speaking we should do more work here depending on whether this is
-	//     a compile only, a link only, or ...
-	//     But for the now, we just remove forbidden arguments
-	var success bool
-	var err error
-
-	if len(pr.ForbiddenFlags) > 0 {
-		filteredArgs := pr.InputList[:0]
-		for _, arg := range pr.InputList {
-			found := false
-			for _, bad := range pr.ForbiddenFlags {
-				if bad == arg {
-					found = true
-					break
-				}
-			}
-			if !found {
-				filteredArgs = append(filteredArgs, arg)
-			}
-		}
-		success, err = execCmd(compilerExecName, filteredArgs, "")
-	} else {
-		success, err = execCmd(compilerExecName, pr.InputList, "")
-	}
-
-	if !success {
-		LogError("Failed to compile using given arguments:\n%v %v\nexit status: %v\n", compilerExecName, pr.InputList, err)
 		*ok = false
 	}
 }
@@ -405,7 +376,7 @@ func GetCompilerExecName(compiler string) string {
 	}
 }
 
-//CheckDefer is used to check the return values of defers
+// CheckDefer is used to check the return values of defers
 func CheckDefer(f func() error) {
 	if err := f(); err != nil {
 		LogWarning("CheckDefer received error: %v\n", err)

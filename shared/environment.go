@@ -50,49 +50,49 @@ const (
 	DarwinSectionName = "__llvm_bc"
 )
 
-//LLVMToolChainBinDir is the user configured directory holding the LLVM binary tools.
+// LLVMToolChainBinDir is the user configured directory holding the LLVM binary tools.
 var LLVMToolChainBinDir string
 
-//LLVMCCName is the user configured name of the clang compiler.
+// LLVMCCName is the user configured name of the clang compiler.
 var LLVMCCName string
 
-//LLVMCXXName is the user configured name of the clang++ compiler.
+// LLVMCXXName is the user configured name of the clang++ compiler.
 var LLVMCXXName string
 
-//LLVMFName is the user configered name of the flang compiler.
+// LLVMFName is the user configered name of the flang compiler.
 var LLVMFName string
 
-//LLVMARName is the user configured name of the llvm-ar.
+// LLVMARName is the user configured name of the llvm-ar.
 var LLVMARName string
 
-//LLVMLINKName is the user configured name of the llvm-link.
+// LLVMLINKName is the user configured name of the llvm-link.
 var LLVMLINKName string
 
-//LLVMLINKFlags is the user configured list of flags to append to llvm-link.
+// LLVMLINKFlags is the user configured list of flags to append to llvm-link.
 var LLVMLINKFlags []string
 
-//LLVMConfigureOnly is the user configured flag indicating a single pass mode is required.
+// LLVMConfigureOnly is the user configured flag indicating a single pass mode is required.
 var LLVMConfigureOnly string
 
-//LLVMBitcodeStorePath is the user configured location of the bitcode archive.
+// LLVMBitcodeStorePath is the user configured location of the bitcode archive.
 var LLVMBitcodeStorePath string
 
-//LLVMLoggingLevel is the user configured logging level: ERROR, WARNING, INFO, DEBUG.
+// LLVMLoggingLevel is the user configured logging level: ERROR, WARNING, INFO, DEBUG.
 var LLVMLoggingLevel string
 
-//LLVMLoggingFile is the path to the optional logfile (useful when configuring)
+// LLVMLoggingFile is the path to the optional logfile (useful when configuring)
 var LLVMLoggingFile string
 
-//LLVMObjcopy is the path to the objcopy executable used to attach the bitcode on *nix.
+// LLVMObjcopy is the path to the objcopy executable used to attach the bitcode on *nix.
 var LLVMObjcopy string
 
-//LLVMLd is the path to the ld executable used to attach the bitcode on OSX.
+// LLVMLd is the path to the ld executable used to attach the bitcode on OSX.
 var LLVMLd string
 
-//LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
+// LLVMbcGen is the list of args to pass to clang during the bitcode generation step.
 var LLVMbcGen []string
 
-//LLVMLtoLDFLAGS is the list of extra flags to pass to the linking steps, when under -flto
+// LLVMLtoLDFLAGS is the list of extra flags to pass to the linking steps, when under -flto
 var LLVMLtoLDFLAGS []string
 
 const (
