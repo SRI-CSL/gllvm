@@ -150,6 +150,9 @@ func Test_file_type(t *testing.T) {
 		fmt.Printf("GetBinaryType(%v) = %v\n", exeFile, binaryFileType)
 	}
 
+	PlainFile(t, fictionalFile, dataDir, sourceFile, objectFile, exeFile)
+
+	/*
 	var plain bool
 	plain = shared.IsPlainFile(fictionalFile)
 
@@ -186,5 +189,45 @@ func Test_file_type(t *testing.T) {
 	} else if DEBUG {
 		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", exeFile, plain)
 	}
+	*/
 
+}
+
+func PlainFile(t *testing.T, fictionalFile string, dataDir string, sourceFile string, objectFile string, exeFile string) {
+	var plain bool
+	plain = shared.IsPlainFile(fictionalFile)
+
+	if plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", fictionalFile, plain)
+	} else if DEBUG {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", fictionalFile, plain)
+	}
+
+	plain = shared.IsPlainFile(dataDir)
+	if plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", dataDir, plain)
+	} else if DEBUG {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", dataDir, plain)
+	}
+
+	plain = shared.IsPlainFile(sourceFile)
+	if !plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", sourceFile, plain)
+	} else if DEBUG {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", sourceFile, plain)
+	}
+
+	plain = shared.IsPlainFile(objectFile)
+	if !plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", objectFile, plain)
+	} else if DEBUG {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", objectFile, plain)
+	}
+
+	plain = shared.IsPlainFile(exeFile)
+	if !plain {
+		t.Errorf("shared.IsPlainFile(%v) returned %v\n", exeFile, plain)
+	} else if DEBUG {
+		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", exeFile, plain)
+	}
 }
