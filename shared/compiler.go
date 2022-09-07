@@ -312,12 +312,12 @@ func execCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, o
 	//     But for the now, we just remove forbidden arguments
 	var success bool
 	var err error
-	var linking = false
+	var mode = "COMPILING"
 	// start afresh
 	arguments := []string{}
 	// we are linking rather than compiling
 	if len(pr.InputFiles) == 0 && len(pr.LinkArgs) > 0 {
-		linking = true
+		mode = "LINKING"
 		if pr.IsLTO {
 			arguments = append(arguments, LLVMLtoLDFLAGS...)
 		}
@@ -339,11 +339,7 @@ func execCompile(compilerExecName string, pr ParserResult, wg *sync.WaitGroup, o
 	} else {
 		arguments = append(arguments, pr.InputList...)
 	}
-	if linking {
-		LogInfo("LINKING with %v using %v", compilerExecName, arguments)
-	} else {
-		LogInfo("COMPILING with %v using %v", compilerExecName, arguments)
-	}
+	LogAudit("%v %v %v", mode, compilerExecName, arguments)
 	LogDebug("Calling execCmd(%v, %v)", compilerExecName, arguments)
 	success, err = execCmd(compilerExecName, arguments, "")
 	if !success {

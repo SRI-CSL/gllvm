@@ -42,6 +42,7 @@ import (
 const (
 	errorV = iota
 	warningV
+	auditV
 	infoV
 	debugV
 )
@@ -50,6 +51,7 @@ const (
 var loggingLevels = map[string]int{
 	"ERROR":   errorV,
 	"WARNING": warningV,
+	"AUDIT":   auditV,
 	"INFO":    infoV,
 	"DEBUG":   debugV,
 }
@@ -57,11 +59,12 @@ var loggingLevels = map[string]int{
 var loggingPrefixes = map[int]string{
 	errorV:   "ERROR:",
 	warningV: "WARNING:",
+	auditV:   "AUDIT:",
 	infoV:    "INFO:",
 	debugV:   "DEBUG:",
 }
 
-// loggingLevel is the user configured level of logging: ERROR, WARNING, INFO, DEBUG
+// loggingLevel is the user configured level of logging: ERROR, WARNING, AUDIT, INFO, DEBUG
 var loggingLevel = warningV
 
 // loggingFilePointer is where the logging is streamed too.
@@ -113,6 +116,9 @@ var LogInfo = makeLogger(infoV)
 
 // LogWarning logs to the configured stream if the logging level is WARNING or lower.
 var LogWarning = makeLogger(warningV)
+
+// LogAudit logs to the configured stream if the logging level is AUDIT or lower.
+var LogAudit = makeLogger(auditV)
 
 // LogError logs to the configured stream if the logging level is ERROR or lower.
 var LogError = makeLogger(errorV)

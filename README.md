@@ -175,6 +175,7 @@ variable to one of the following levels:
 
  * `ERROR`
  * `WARNING`
+ * `AUDIT`
  * `INFO`
  * `DEBUG`
 
@@ -184,6 +185,8 @@ For example:
 ```
 Output will be directed to the standard error stream, unless you specify the
 path of a logfile via the `WLLVM_OUTPUT_FILE` environment variable.
+The `AUDIT` level, new in 2022, logs only the calls to the compiler, and indicates 
+whether each call is *compiling* or *linking*, the compiler used, and the arguments provided.
 
 For example:
 ```
