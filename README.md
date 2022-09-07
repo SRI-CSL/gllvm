@@ -29,7 +29,7 @@ bitcode in parallel, and is faster. A comparison between the two tools can be gl
 |  LLVM_COMPILER              | *not supported* (clang only)|
 |  LLVM_GCC_PREFIX            | *not supported* (clang only)|
 |  LLVM_DRAGONEGG_PLUGIN      | *not supported* (clang only)|
-|  LLVM_LINK_FLAGS            | *not supported*             |
+|  LLVM_LINK_FLAGS            | LLVM_LINK_FLAGS             |
 
 
 This project, `gllvm`, provides tools for building whole-program (or
