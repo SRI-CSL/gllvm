@@ -105,18 +105,6 @@ func Test_obscure_functionality(t *testing.T) {
 	}
 }
 
-func Test_file_type(t *testing.T) {
-	fictionalFile := "HopefullyThereIsNotAFileCalledThisNearBy.txt"
-	dataDir := "../data"
-	sourceFile := "../data/helloworld.c"
-	objectFile := "../data/bhello.notanextensionthatwerecognize"
-	exeFile := "../data/bhello"
-
-	BinaryFile(t, fictionalFile, dataDir, sourceFile, objectFile, exeFile)
-	PlainFile(t, fictionalFile, dataDir, sourceFile, objectFile, exeFile)
-
-}
-
 func BinaryFile(t *testing.T, fictionalFile string, dataDir string, sourceFile string, objectFile string, exeFile string) {
 	var binaryFileType shared.BinaryType
 	binaryFileType = shared.GetBinaryType(fictionalFile)
@@ -195,3 +183,16 @@ func PlainFile(t *testing.T, fictionalFile string, dataDir string, sourceFile st
 		fmt.Printf("shared.IsPlainFile(%v) returned %v\n", exeFile, plain)
 	}
 }
+
+func Test_file_type(t *testing.T) {
+	fictionalFile := "HopefullyThereIsNotAFileCalledThisNearBy.txt"
+	dataDir := "../data"
+	sourceFile := "../data/helloworld.c"
+	objectFile := "../data/bhello.notanextensionthatwerecognize"
+	exeFile := "../data/bhello"
+
+	BinaryFile(t, fictionalFile, dataDir, sourceFile, objectFile, exeFile)
+	PlainFile(t, fictionalFile, dataDir, sourceFile, objectFile, exeFile)
+
+}
+
