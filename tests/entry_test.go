@@ -195,4 +195,3 @@ func Test_file_type(t *testing.T) {
 	PlainFile(t, fictionalFile, dataDir, sourceFile, objectFile, exeFile)
 
 }
-
