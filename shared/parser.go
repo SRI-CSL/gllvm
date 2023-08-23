@@ -174,6 +174,8 @@ func Parse(argList []string) ParserResult {
 		"--param":   {1, pr.defaultBinaryCallback},
 		"-aux-info": {1, pr.defaultBinaryCallback},
 
+		"-target": {1, pr.compileLinkBinaryCallback},
+
 		"--version": {0, pr.compileOnlyCallback},
 		"-v":        {0, pr.compileOnlyCallback},
 
