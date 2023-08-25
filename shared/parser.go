@@ -174,6 +174,8 @@ func Parse(argList []string) ParserResult {
 		"--param":   {1, pr.defaultBinaryCallback},
 		"-aux-info": {1, pr.defaultBinaryCallback},
 
+		"-target": {1, pr.compileLinkBinaryCallback},
+
 		"--version": {0, pr.compileOnlyCallback},
 		"-v":        {0, pr.compileOnlyCallback},
 
@@ -400,6 +402,8 @@ func Parse(argList []string) ParserResult {
 		{`^.+\.(o|lo|So|so|po|a|dylib|pico|nossppico)$`, flagInfo{0, pr.objectFileCallback}}, //iam: pico and nossppico are FreeBSD
 		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
+
+        {`^--target=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 	}
 
 	for len(argList) > 0 {
