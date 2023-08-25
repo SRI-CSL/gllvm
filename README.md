@@ -272,6 +272,23 @@ This can be done by setting the `LTO_LINKING_FLAGS` to be something like
 `"-g -Wl,-plugin-opt=save-temps"` which will be appended to the flags at link time.
 This will at least preserve the bitcode files, even if `get-bc` will not be able to retrieve them for you.
 
+## Cross-compilation notes
+
+When cross-compiling a project (i.e. you pass the `--target=` or `-target` flag to the compiler), 
+you'll need to set the `GLLVM_OBJCOPY` variable to either 
+* `llvm-objcopy` to use LLVM's objcopy, which naturally supports all targets that clang does.
+* `YOUR-TARGET-TRIPLE-objcopy` to use GNU's objcopy, since `objcopy` only supports the native architecture.
+
+Example:
+```sh
+# test program
+echo 'int main() { return 0; }' > a.c 
+clang --target=aarch64-linux-gnu a.c # works
+gclang --target=aarch64-linux-gnu a.c # breaks
+GLLVM_OBJCOPY=llvm-objcopy gclang --target=aarch64-linux-gnu a.c # works
+GLLVM_OBJCOPY=aarch64-linux-gnu-objcopy gclang --target=aarch64-linux-gnu a.c # works if you have GNU's arm64 toolchain
+```
+
 ## Developer tools
 
 Debugging usually boils down to looking in the logs, maybe adding a print statement or two.
