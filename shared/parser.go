@@ -403,7 +403,7 @@ func Parse(argList []string) ParserResult {
 		{`^.+\.dylib(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 		{`^.+\.(So|so)(\.\d)+$`, flagInfo{0, pr.objectFileCallback}},
 
-        {`^--target=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
+		{`^--target=.+$`, flagInfo{0, pr.compileLinkUnaryCallback}},
 	}
 
 	for len(argList) > 0 {
