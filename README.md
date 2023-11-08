@@ -80,7 +80,7 @@ Hopefully we will have a better fix for this [soon](https://github.com/golang/go
 `gflang` is the wrapper used to compile Fortran.
 `get-bc` is used for
 extracting the bitcode from a build product (either an object file, executable, library
-or archive). `gsanity-check` can be used for detecting configuration errors. `gparse` can be used to exam how `gllvm` parses compiler/linker lines.
+or archive). `gsanity-check` can be used for detecting configuration errors. `gparse` can be used to examine how `gllvm` parses compiler/linker lines.
 
 Here is a simple example. Assuming that clang is in your `PATH`, you can build
 bitcode for `pkg-config` as follows:
