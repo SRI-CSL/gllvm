@@ -64,15 +64,11 @@ tools such as `objcopy` and `ld`.
 
 To install, simply do (making sure to include those `...`)
 ```
-go get github.com/SRI-CSL/gllvm/cmd/...
+go install github.com/SRI-CSL/gllvm/cmd/...@latest
 ```
 This should install six binaries: `gclang`, `gclang++`, `gflang`, `get-bc`, `gparse`, and `gsanity-check`
 in the `$GOPATH/bin` directory. 
-If you are using `go 1.16` you may be forced to install it like this:
-```
-GO111MODULE=off go get github.com/SRI-CSL/gllvm/cmd/...
-```
-Hopefully we will have a better fix for this [soon](https://github.com/golang/go/issues/44776)?
+
 ## Usage
 
 `gclang` and
